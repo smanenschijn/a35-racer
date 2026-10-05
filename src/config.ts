@@ -105,6 +105,7 @@ export interface CarSpec {
   armor?: number; // damage multiplier (lower = tougher)
   trailerLength?: number; // towed caravan length (traffic)
   trailerText?: string; // lettering on a truck trailer
+  model?: string; // detailed Blender model in public/models/<model>.glb
 }
 
 /** Physics length including a towed caravan. */
@@ -117,7 +118,7 @@ export const CARS: Record<string, CarSpec> = {
   rx: {
     id: 'rx', name: 'Mazdo RX-Zeven', driver: 'Jij', color: 0xd81e1e,
     mass: 1250, length: 4.3, width: 1.78, topSpeed: 69, accelFactor: 1.0, gripFactor: 1.0,
-    ...coupe, plate: 'A35-RX-7',
+    ...coupe, plate: 'A35-RX-7', model: 'rx7',
   },
   supremo: {
     id: 'supremo', name: 'Toyoda Supremo', driver: 'Sanne', color: 0xf2c014,

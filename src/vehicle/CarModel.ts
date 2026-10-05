@@ -1,13 +1,16 @@
 import * as THREE from 'three';
 import { totalLength, type CarSpec } from '../config';
+import { getModel } from './models';
 import type { Vehicle, Zone } from './Vehicle';
 
 // Procedural low-poly 90s car. Body panels are subdivided boxes whose vertices get pushed
 // in on impact, so damage shows up as real dents.
 
 const plateCache = new Map<string, THREE.Texture>();
-function plateTexture(text: string): THREE.Texture {
-  let tex = plateCache.get(text);
+/** flipY = false for glTF meshes (their UVs use the glTF convention). */
+function plateTexture(text: string, flipY = true): THREE.Texture {
+  const key = `${text}|${flipY}`;
+  let tex = plateCache.get(key);
   if (tex) return tex;
   const c = document.createElement('canvas');
   c.width = 256;
@@ -30,7 +33,8 @@ function plateTexture(text: string): THREE.Texture {
   tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = 4;
-  plateCache.set(text, tex);
+  tex.flipY = flipY;
+  plateCache.set(key, tex);
   return tex;
 }
 
@@ -79,7 +83,7 @@ export class CarModel {
   private deformables: Deformable[] = [];
   private brakeMat: THREE.MeshStandardMaterial;
   private headMat: THREE.MeshStandardMaterial;
-  private paint: THREE.MeshPhysicalMaterial;
+  private paint: THREE.MeshStandardMaterial;
   private beacons: THREE.MeshStandardMaterial[] = [];
   private wheelSpin = 0;
   private wheelR = 0.33;
@@ -106,10 +110,60 @@ export class CarModel {
     this.headMat = new THREE.MeshStandardMaterial({ color: 0xfff6dd, emissive: 0xfff2cc, emissiveIntensity: 2.2 });
     this.brakeMat = new THREE.MeshStandardMaterial({ color: 0x550000, emissive: 0xff1a1a, emissiveIntensity: 1.2 });
 
-    if (spec.kind === 'truck') this.buildTruck();
+    const template = spec.model ? getModel(spec.model) : undefined;
+    if (template) this.buildFromModel(template);
+    else if (spec.kind === 'truck') this.buildTruck();
     else this.buildCar();
     if (spec.trailerLength) this.buildCaravan();
     this.root.add(this.body);
+  }
+
+  /** Detailed Blender model: per-instance paint and geometry, wheels on steering hubs. */
+  private buildFromModel(template: THREE.Object3D): void {
+    const spec = this.spec;
+    const car = template.clone(true);
+    const plateMat = new THREE.MeshStandardMaterial({ map: plateTexture(spec.plate, false), roughness: 0.5 });
+    car.traverse((o) => {
+      if (!(o instanceof THREE.Mesh)) return;
+      o.castShadow = true;
+      const mat = o.material as THREE.MeshStandardMaterial;
+      switch (mat.name) {
+        case 'Paint':
+          if (this.paint.name !== 'Paint') {
+            this.paint = mat.clone();
+            this.paint.color.setHex(spec.color);
+          }
+          o.material = this.paint;
+          break;
+        case 'BrakeLight':
+          o.material = this.brakeMat;
+          break;
+        case 'HeadLight':
+          o.material = this.headMat;
+          break;
+        case 'Plate':
+          o.material = plateMat;
+          break;
+      }
+      if (o.userData.deform) {
+        o.geometry = o.geometry.clone();
+        const pos = o.geometry.attributes.position as THREE.BufferAttribute;
+        this.deformables.push({ mesh: o, original: Float32Array.from(pos.array as Float32Array) });
+      }
+    });
+    // Hubs (steering pivots with a spinning wheel) go on the root so they don't lean with the body.
+    for (const child of [...car.children]) {
+      if (child.name.startsWith('hub_')) {
+        this.root.add(child);
+        if (child.userData.steer) this.frontWheelPivots.push(child);
+        const wheel = child.children.find((c) => c.userData.spin);
+        if (wheel) this.wheels.push(wheel);
+      } else {
+        this.body.add(child);
+        if (child.userData.detach) this.detachables.push(child);
+      }
+    }
+    this.wheelR = 0.31;
   }
 
   private addWheel(x: number, z: number, r: number, steer: boolean, width = 0.24): void {
@@ -440,6 +494,7 @@ export class CarModel {
   zoneDamaged(zone: Zone, level: number): THREE.Object3D | null {
     if (level < 60) return null;
     const candidates = this.detachables.filter((o) => o.parent === this.body && o.visible).filter((o) => {
+      if (o.userData.zone) return o.userData.zone === zone;
       if (zone === 'front') return o.position.z > 1;
       if (zone === 'rear') return o.position.z < -1 || o.position.y > 1;
       if (zone === 'left') return o.position.x > 0.5;
