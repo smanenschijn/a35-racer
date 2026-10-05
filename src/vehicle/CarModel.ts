@@ -50,7 +50,13 @@ export class CarModel {
   private headMat: THREE.MeshStandardMaterial;
   private paint: THREE.MeshPhysicalMaterial;
   private wheelSpin = 0;
-  private lean = 0;
+  // Suspension springs (angle + angular velocity) for roll and pitch.
+  private roll = 0;
+  private rollVel = 0;
+  private pitchBody = 0;
+  private pitchVel = 0;
+  private bounce = 0;
+  private bounceVel = 0;
   private pendingDents: { lx: number; lz: number; amount: number }[] = [];
   private spec: CarSpec;
   readonly detachables: THREE.Object3D[] = [];
@@ -189,6 +195,18 @@ export class CarModel {
     }
   }
 
+  /** Jolt the suspension from an impact at world offset (wx, wz) from the car centre. */
+  kick(wx: number, wz: number, v: Vehicle, strength: number): void {
+    const fx = Math.sin(v.heading);
+    const fz = Math.cos(v.heading);
+    const lx = wx * -fz + wz * fx;
+    const lz = wx * fx + wz * fz;
+    const s = Math.min(1.2, strength * 0.06);
+    this.rollVel += Math.sign(lx) * s * (Math.abs(lx) > 0.5 ? 1 : 0.3);
+    this.pitchVel += Math.sign(lz) * s * 0.6;
+    this.bounceVel += s * 0.8;
+  }
+
   /** Queue a dent at a local contact point (lx right, lz forward). */
   dent(amount: number, lx: number, lz: number): void {
     this.pendingDents.push({ lx, lz, amount });
@@ -259,11 +277,23 @@ export class CarModel {
     this.root.rotation.set(0, v.heading, 0);
     this.root.rotateX(v.pitch);
 
-    // Body lean from lateral acceleration (visual only).
+    // Body roll and pitch on soft, slightly underdamped springs: the car feels heavy.
     const latAcc = v.forwardSpeed * v.angVel;
-    this.lean += (Math.max(-0.09, Math.min(0.09, latAcc * 0.006)) - this.lean) * Math.min(1, dt * 6);
-    this.body.rotation.z = this.lean;
-    this.body.rotation.x = v.braking ? 0.025 : v.input.throttle > 0 && v.forwardSpeed < 20 ? -0.02 : 0;
+    const rollTarget = Math.max(-0.11, Math.min(0.11, latAcc * 0.009));
+    const pitchTarget = Math.max(-0.05, Math.min(0.06, v.accelLong * -0.0035));
+    const k = 55; // stiffness
+    const c = 7; // damping
+    if (dt > 0) {
+      this.rollVel += ((rollTarget - this.roll) * k - this.rollVel * c) * dt;
+      this.roll += this.rollVel * dt;
+      this.pitchVel += ((pitchTarget - this.pitchBody) * k - this.pitchVel * c) * dt;
+      this.pitchBody += this.pitchVel * dt;
+      this.bounceVel += (-this.bounce * 90 - this.bounceVel * 9) * dt;
+      this.bounce += this.bounceVel * dt;
+    }
+    this.body.rotation.z = this.roll;
+    this.body.rotation.x = this.pitchBody; // positive = nose down (braking)
+    this.body.position.y = this.bounce;
 
     this.wheelSpin += (v.forwardSpeed / 0.33) * dt;
     for (const w of this.wheels) w.rotation.x = this.wheelSpin;

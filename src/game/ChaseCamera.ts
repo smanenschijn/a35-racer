@@ -33,7 +33,7 @@ export class ChaseCamera {
     if (!this.initialized) this.yaw = targetYaw;
     let dy = targetYaw - this.yaw;
     dy = Math.atan2(Math.sin(dy), Math.cos(dy));
-    this.yaw += dy * Math.min(1, dt * 5);
+    this.yaw += dy * Math.min(1, dt * 3.5);
 
     const speedT = Math.min(1, speed / 70);
     const dist = tuning.camDistance + speedT * 1.4;
@@ -48,7 +48,7 @@ export class ChaseCamera {
       this.look.copy(lookTarget);
       this.initialized = true;
     }
-    this.pos.lerp(target, Math.min(1, dt * 9));
+    this.pos.lerp(target, Math.min(1, dt * 6));
     this.pos.y += (target.y - this.pos.y) * Math.min(1, dt * 4);
     this.look.lerp(lookTarget, Math.min(1, dt * 14));
 

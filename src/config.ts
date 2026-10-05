@@ -2,16 +2,16 @@
 
 export const tuning = {
   // Handling
-  engineAccel: 13, // m/s² at standstill
-  brakeDecel: 22,
+  engineAccel: 11, // m/s² at standstill
+  brakeDecel: 18,
   dragCoef: 0.0016, // aerodynamic drag factor (per m)
   rollingDecel: 0.6,
-  grip: 9, // lateral velocity damping (1/s)
+  grip: 7.5, // lateral velocity damping (1/s)
   handbrakeGrip: 1.3,
   driftGripFactor: 0.65, // grip multiplier while already sliding (keeps drifts alive)
-  steerRateLow: 1.7, // max yaw rate (rad/s) at low speed
-  steerRateHigh: 0.62, // max yaw rate (rad/s) at top speed
-  yawResponse: 7, // how fast yaw rate follows steering (1/s)
+  steerRateLow: 1.4, // max yaw rate (rad/s) at low speed
+  steerRateHigh: 0.52, // max yaw rate (rad/s) at top speed
+  yawResponse: 4, // how fast yaw rate follows steering (1/s)
   handbrakeYawBoost: 1.55,
 
   // Nitro
@@ -28,21 +28,26 @@ export const tuning = {
   ramDuration: 0.32,
   ramCooldown: 2,
   ramMassFactor: 2.5, // rammer counts as this much heavier during a hit
-  ramDamageFactor: 1.8,
+  aggressorRecoil: 0.65, // share of the impulse the aggressor does NOT feel (keeps its line)
+  ramDamageFactor: 1.4,
+  ramShoveSpeed: 11, // m/s sideways a rammed car gets launched with
+  ramDamage: 30, // damage points a landed ram deals to the victim
 
   // Collisions & damage
-  carRestitution: 0.25,
+  carRestitution: 0.1,
   carFriction: 0.35,
-  railRestitution: 0.2,
+  railRestitution: 0.06,
+  railGlide: 8, // how fast the car straightens along a rail it touches (1/s)
   railFriction: 0.25, // fraction of tangential speed lost per hard hit
   damagePerImpulse: 0.0008, // damage points per N·s of impulse
   railDamagePerSpeed: 1.8, // damage points per m/s of normal impact speed
   railScrapeDamage: 0.03, // damage points per m/s per second while scraping
   takedownWindow: 2, // seconds a hit counts as cause for a rail wreck
-  takedownRailBonus: 1.6, // rail damage multiplier when recently rammed by someone
+  takedownRailBonus: 1.2, // rail damage multiplier when recently rammed by someone
   playerDamageFactor: 0.6,
   aiDamageFactor: 1.0,
-  stunTime: 0.45, // seconds of reduced control after a hard hit
+  stunTime: 0.45,
+  wreckTotal: 45, // average damage over all zones that also means total loss // seconds of reduced control after a hard hit
 
   // AI
   aiCornerLatAccel: 13,

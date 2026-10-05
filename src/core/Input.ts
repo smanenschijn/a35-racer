@@ -66,7 +66,7 @@ export class Input {
     const left = this.key('ArrowLeft', 'KeyA');
     const right = this.key('ArrowRight', 'KeyD');
     const target = (right ? 1 : 0) - (left ? 1 : 0);
-    const rate = target === 0 || Math.sign(target) !== Math.sign(this.kbSteer) ? 7 : 3.2;
+    const rate = target === 0 || Math.sign(target) !== Math.sign(this.kbSteer) ? 5 : 2.4;
     this.kbSteer += Math.max(-rate * dt, Math.min(rate * dt, target - this.kbSteer));
     c.steer = this.kbSteer;
     c.throttle = this.key('ArrowUp', 'KeyW') ? 1 : 0;

@@ -113,11 +113,8 @@ export class Hud {
     this.stage.innerHTML = `<div class="stage-name">ETAPPE 5/5 · HENGELO → ENSCHEDE</div>
       <div class="stage-info"><span>${(Math.max(0, distanceLeft) / 1000).toFixed(2)} km</span><span>${fmtTime(raceTime)}</span></div>`;
 
-    let maxD = 0;
-    for (const z of Object.keys(this.zones) as Zone[]) {
-      this.zones[z].style.fill = zoneColor(player.damage[z]);
-      maxD = Math.max(maxD, player.damage[z]);
-    }
+    for (const z of Object.keys(this.zones) as Zone[]) this.zones[z].style.fill = zoneColor(player.damage[z]);
+    const maxD = player.wreckLevel;
     this.dmgPct.textContent = `${Math.round(maxD)}%`;
     this.dmgPct.classList.toggle('critical', maxD > 75);
     this.boostFill.style.width = `${player.nitro * 100}%`;

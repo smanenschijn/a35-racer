@@ -16,6 +16,8 @@ export class AIDriver {
   private laneTimer = 0;
   private stuckTime = 0;
   private attackTimer = 6 + Math.random() * 4; // no shoving right off the grid
+  private seenHitTime = -99;
+  private recoverTimer = 0;
   /** Set when the AI wants to be reset onto the road. */
   needsReset = false;
 
@@ -65,7 +67,14 @@ export class AIDriver {
     // Aggressive drivers steer into the player when alongside, and use the ram.
     let lineD = this.targetD;
     const aggro = p.aggression * tuning.aiAggression;
-    if (victim && aggro > 0) {
+    // Just got shoved: no counter-attack until we've regained control.
+    if (v.lastHitTime !== this.seenHitTime) {
+      this.seenHitTime = v.lastHitTime;
+      this.recoverTimer = 1.2;
+    }
+    this.recoverTimer -= dt;
+    const recovering = v.stun > 0 || this.recoverTimer > 0;
+    if (victim && aggro > 0 && !recovering) {
       const dir = Math.sign(victim.d - v.d);
       // Rivals mostly gang up on the player; AI-vs-AI fights are rarer.
       const vsPlayer = victim === player ? 1 : 0.3;

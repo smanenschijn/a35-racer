@@ -136,6 +136,8 @@ export class Race {
       const n = Math.min(60, Math.floor(e.strength * 2.5));
       fx.sparkBurst(e.x, e.y, e.z, n, (e.a.vx + (e.b?.vx ?? e.a.vx)) * 0.4, (e.a.vz + (e.b?.vz ?? e.a.vz)) * 0.4);
       if (e.strength > 10) fx.debris(e.x, e.y, e.z, 8, e.a.vx, e.a.vz);
+      this.models.get(e.a)?.kick(e.x - e.a.x, e.z - e.a.z, e.a, e.strength);
+      if (e.b) this.models.get(e.b)?.kick(e.x - e.b.x, e.z - e.b.z, e.b, e.strength);
       const involvesPlayer = e.a === this.player || e.b === this.player;
       const dist = Math.hypot(e.x - this.player.x, e.z - this.player.z);
       if (dist < 120) audio.crash(e.strength * (involvesPlayer ? 1 : Math.max(0.2, 1 - dist / 120)));
@@ -317,7 +319,7 @@ export class Race {
         this.respawn(v, false);
       }
     }
-    for (const v of this.vehicles) v.update(dt, this.simTime, t, this.d.events);
+    for (const v of this.vehicles) v.update(dt, this.simTime, t, this.d.events, this.vehicles);
     for (let i = 0; i < this.vehicles.length; i++) {
       for (let j = i + 1; j < this.vehicles.length; j++) {
         collideVehicles(this.vehicles[i], this.vehicles[j], this.simTime, this.d.events);

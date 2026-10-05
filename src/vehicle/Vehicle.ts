@@ -47,9 +47,15 @@ export class Vehicle {
   nitro = 0.35;
   nitroActive = false;
   ramTimer = 0;
+  /** Short window after a ram lands during which we still count as the rammer. */
+  ramHitTimer = 0;
   ramCooldown = 0;
   ramDir = 0;
+  /** Car we're shoving into (null = short dodge without target). */
+  ramTarget: Vehicle | null = null;
   private wasRamming = false;
+  /** Longitudinal acceleration of the last step, used for visual body pitch. */
+  accelLong = 0;
   stun = 0;
   wrecked = false;
   wreckTime = 0;
@@ -97,6 +103,12 @@ export class Vehicle {
     return (d.front + d.rear + d.left + d.right) / 4;
   }
 
+  /** 0..100: how close the car is to total loss (worst zone or overall wear). */
+  get wreckLevel(): number {
+    const d = this.damage;
+    return Math.min(100, Math.max(d.front, d.rear, d.left, d.right, (this.totalDamage / tuning.wreckTotal) * 100));
+  }
+
   place(track: Track, s: number, d: number, speed = 0): void {
     const fr = track.frame(s, this.fr);
     this.x = fr.x + fr.rx * d;
@@ -127,7 +139,7 @@ export class Vehicle {
     const credit = attacker ?? (time - this.lastHitTime < tuning.takedownWindow ? this.lastHitBy : null);
     if (credit && credit !== this) credit.nitro = Math.min(1, credit.nitro + dmg * tuning.nitroFillPerDamage);
 
-    if (this.damage[zone] >= 100) {
+    if (this.wreckLevel >= 100) {
       this.wrecked = true;
       this.wreckTime = time;
       this.nitroActive = false;
@@ -146,7 +158,7 @@ export class Vehicle {
     return lx > 0 ? 'right' : 'left';
   }
 
-  update(dt: number, time: number, track: Track, events: EventBus): void {
+  update(dt: number, time: number, track: Track, events: EventBus, others: Vehicle[] = []): void {
     const inp = this.input;
     const active = !this.wrecked && !this.frozen;
     const dmg = this.damage;
@@ -162,6 +174,7 @@ export class Vehicle {
     this.stun = Math.max(0, this.stun - dt);
     this.ramCooldown = Math.max(0, this.ramCooldown - dt);
     this.ramTimer = Math.max(0, this.ramTimer - dt);
+    this.ramHitTimer = Math.max(0, this.ramHitTimer - dt);
 
     // --- Nitro ---
     this.nitroActive = active && inp.nitro && this.nitro > 0.01 && vF > 3;
@@ -188,6 +201,7 @@ export class Vehicle {
       aF -= tuning.brakeDecel * Math.sign(vF);
     }
     aF -= tuning.rollingDecel * Math.sign(vF) + tuning.dragCoef * vF * Math.abs(vF);
+    this.accelLong = aF;
     const newVF = vF + aF * dt;
     vF = Math.sign(newVF) !== Math.sign(vF) && Math.abs(vF) < 1 && !(active && (inp.throttle > 0 || inp.brake > 0)) ? 0 : newVF;
 
@@ -224,22 +238,40 @@ export class Vehicle {
     // Arcade: part of the lost slide becomes forward speed so drifts don't kill momentum.
     if (active && vF > 5) vF += Math.abs(vLBefore - vL) * 0.25;
 
-    // --- Ram attack: a short sideways shove ---
+    // --- Ram attack: a sideways shove that locks on to a car beside you ---
     if (active && this.ramCooldown <= 0 && (inp.ramLeft || inp.ramRight)) {
       this.ramDir = inp.ramRight ? 1 : -1;
-      this.ramTimer = tuning.ramDuration;
-      this.ramCooldown = tuning.ramCooldown;
+      this.ramTarget = this.findRamTarget(others);
+      if (this.ramTarget) {
+        this.ramTimer = tuning.ramDuration;
+        this.ramCooldown = tuning.ramCooldown;
+      } else {
+        // Nobody there: just a small feint, so you don't throw yourself into the rail.
+        this.ramTimer = 0.14;
+        this.ramCooldown = 0.6;
+      }
       events.emit('ram', { vehicle: this, dir: this.ramDir });
     }
     inp.ramLeft = inp.ramRight = false;
+    // Never shove ourselves into the rail.
+    if (this.ramTimer > 0 && this.ramDir * this.proj.d > ROAD.halfWidth - this.halfW - 0.5) this.ramTimer = 0;
     if (this.ramTimer > 0) {
-      vL += (this.ramDir * tuning.ramSideSpeed - vL) * Math.min(1, 45 * dt);
-      this.angVel *= Math.exp(-10 * dt); // stay straight while shoving
+      const target = this.ramTarget;
+      const sideSpeed = target ? tuning.ramSideSpeed : 4;
+      vL += (this.ramDir * sideSpeed - vL) * Math.min(1, 45 * dt);
+      if (target) {
+        // Match the target's position along the road so the hit lands door-to-door.
+        const ds = target.proj.s - this.proj.s;
+        vF += clamp(target.forwardSpeed + ds * 2 - vF, -8, 8) * Math.min(1, 5 * dt);
+      }
+      this.angVel *= Math.exp(-12 * dt); // stay straight while shoving
       this.wasRamming = true;
     } else if (this.wasRamming) {
       // Snap back after the shove so the rammer doesn't follow the victim into the rail.
       this.wasRamming = false;
-      vL *= 0.25;
+      this.ramTarget = null;
+      vL *= 0.2;
+      this.angVel *= 0.3;
     }
 
     this.drifting = active && speed > 15 && Math.abs(vL) > 4;
@@ -260,12 +292,30 @@ export class Vehicle {
   }
 
   get ramming(): boolean {
-    return this.ramTimer > 0;
+    return this.ramTimer > 0 || this.ramHitTimer > 0;
+  }
+
+  private findRamTarget(others: Vehicle[]): Vehicle | null {
+    let best: Vehicle | null = null;
+    let bestScore = Infinity;
+    for (const o of others) {
+      if (o === this || o.wrecked) continue;
+      const ds = o.proj.s - this.proj.s;
+      const side = (o.proj.d - this.proj.d) * this.ramDir;
+      if (Math.abs(ds) > 6 || side < 0.8 || side > 6) continue;
+      const score = Math.abs(ds) + side;
+      if (score < bestScore) {
+        bestScore = score;
+        best = o;
+      }
+    }
+    return best;
   }
 
   /** The shove landed: end it a moment later so the impact transfers but we don't keep pushing. */
   ramLanded(): void {
-    this.ramTimer = Math.min(this.ramTimer, 0.05);
+    if (this.ramTimer > 0) this.ramHitTimer = 0.15;
+    this.ramTimer = 0; // stop pushing immediately, the impact already transferred
   }
 
   private collideRails(track: Track, dt: number, time: number, events: EventBus): void {
@@ -328,13 +378,23 @@ export class Vehicle {
         this.vz -= tz * loss;
 
         const impact = -vn;
-        if (impact > 2) {
+        const threshold = this.isPlayer ? 3.5 : 2;
+        if (impact > threshold) {
           const bonus = recentlyHit ? tuning.takedownRailBonus : 1;
-          this.addDamage(zone, (impact - 2) * tuning.railDamagePerSpeed * bonus, lx, lz, null, time, events);
+          this.addDamage(zone, (impact - threshold) * tuning.railDamagePerSpeed * bonus, lx, lz, null, time, events);
           if (impact > 5) this.stun = Math.max(this.stun, tuning.stunTime * 0.6);
           events.emit('impact', {
             x: this.x + cx, y: this.y + 0.5, z: this.z + cz, strength: impact, kind: 'rail', a: this,
           });
+        }
+      }
+      // Glide: turn the nose parallel to the rail instead of bouncing back into it.
+      if (!this.wrecked) {
+        let err = this.heading - fr.heading;
+        err = Math.atan2(Math.sin(err), Math.cos(err));
+        if (-side * err > 0 && Math.abs(err) < 1.2 && vt > 5) {
+          this.heading -= err * Math.min(1, tuning.railGlide * dt);
+          this.angVel *= Math.exp(-8 * dt);
         }
       }
       // Continuous scraping: damage, speed loss and sparks.
