@@ -1,8 +1,9 @@
-import { tuning, ROAD, type CarSpec } from '../config';
+import { tuning, ROAD, totalLength, type CarSpec } from '../config';
 import type { EventBus } from '../core/Events';
 import type { Projection, Track, TrackFrame } from '../track/Track';
 
 export type Zone = 'front' | 'rear' | 'left' | 'right';
+export type VehicleRole = 'racer' | 'traffic' | 'police';
 
 export interface VehicleInput {
   throttle: number;
@@ -28,6 +29,7 @@ const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 export class Vehicle {
   readonly spec: CarSpec;
   readonly isPlayer: boolean;
+  readonly role: VehicleRole;
   readonly halfL: number;
   readonly halfW: number;
   readonly mass: number;
@@ -77,13 +79,26 @@ export class Vehicle {
 
   private fr = {} as TrackFrame;
 
-  constructor(spec: CarSpec, isPlayer: boolean) {
+  /** Inactive vehicles (parked traffic/police) are skipped by physics and hidden. */
+  active = true;
+  /** Police: lights and siren on. */
+  sirenOn = false;
+  /** Time penalties (seconds) collected from police fines. */
+  penalty = 0;
+
+  constructor(spec: CarSpec, isPlayer: boolean, role: VehicleRole = 'racer') {
     this.spec = spec;
     this.isPlayer = isPlayer;
-    this.halfL = spec.length / 2;
+    this.role = role;
+    const len = totalLength(spec);
+    this.halfL = len / 2;
     this.halfW = spec.width / 2;
     this.mass = spec.mass;
-    this.inertia = (this.mass * (spec.length ** 2 + spec.width ** 2)) / 12;
+    this.inertia = (this.mass * (len ** 2 + spec.width ** 2)) / 12;
+  }
+
+  get isRacer(): boolean {
+    return this.role === 'racer';
   }
 
   get s(): number {
@@ -130,7 +145,7 @@ export class Vehicle {
 
   addDamage(zone: Zone, amount: number, lx: number, lz: number, attacker: Vehicle | null, time: number, events: EventBus): void {
     if (this.wrecked || amount <= 0) return;
-    const factor = this.isPlayer ? tuning.playerDamageFactor : tuning.aiDamageFactor;
+    const factor = (this.isPlayer ? tuning.playerDamageFactor : tuning.aiDamageFactor) * (this.spec.armor ?? 1);
     const dmg = amount * factor;
     this.damage[zone] = Math.min(100, this.damage[zone] + dmg);
     this.onDamage?.(dmg, zone, lx, lz);
@@ -144,7 +159,7 @@ export class Vehicle {
       this.wreckTime = time;
       this.nitroActive = false;
       this.angVel += (Math.random() - 0.5) * 4;
-      if (credit && credit !== this) {
+      if (credit && credit !== this && this.isRacer) {
         credit.takedowns++;
         credit.nitro = Math.min(1, credit.nitro + tuning.nitroFillTakedown);
       }
@@ -299,7 +314,8 @@ export class Vehicle {
     let best: Vehicle | null = null;
     let bestScore = Infinity;
     for (const o of others) {
-      if (o === this || o.wrecked) continue;
+      if (o === this || o.wrecked || !o.active) continue;
+      if (this.role === 'police' && !o.isPlayer) continue; // police only go for the player
       const ds = o.proj.s - this.proj.s;
       const side = (o.proj.d - this.proj.d) * this.ramDir;
       if (Math.abs(ds) > 6 || side < 0.8 || side > 6) continue;

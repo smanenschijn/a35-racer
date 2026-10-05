@@ -2,8 +2,13 @@
 // No sample files needed; real recorded sounds and music come in milestone 4.
 
 export class GameAudio {
-  private ctx: AudioContext | null = null;
+  ctx: AudioContext | null = null;
   private master!: GainNode;
+  /** Music goes through its own bus so it has a separate volume. */
+  musicBus!: GainNode;
+  private sirenGain!: GainNode;
+  /** Called once the AudioContext exists (first user gesture). */
+  onReady: (() => void) | null = null;
   private engineOsc: OscillatorNode[] = [];
   private engineGain!: GainNode;
   private engineFilter!: BiquadFilterNode;
@@ -23,6 +28,9 @@ export class GameAudio {
     this.master.gain.value = this.muted ? 0 : 0.6;
     const comp = ctx.createDynamicsCompressor();
     this.master.connect(comp).connect(ctx.destination);
+    this.musicBus = ctx.createGain();
+    this.musicBus.gain.value = this.muted ? 0 : 1;
+    this.musicBus.connect(ctx.destination);
 
     // White noise buffer shared by crash/scrape.
     this.noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
@@ -61,11 +69,57 @@ export class GameAudio {
     this.scrapeGain.gain.value = 0;
     scrape.connect(this.scrapeFilter).connect(this.scrapeGain).connect(this.master);
     scrape.start();
+
+    // Siren: two-tone, frequency switched by a slow square LFO.
+    const siren = ctx.createOscillator();
+    siren.type = 'sawtooth';
+    siren.frequency.value = 520;
+    const lfo = ctx.createOscillator();
+    lfo.type = 'square';
+    lfo.frequency.value = 0.85;
+    const depth = ctx.createGain();
+    depth.gain.value = 85;
+    lfo.connect(depth).connect(siren.frequency);
+    const sf = ctx.createBiquadFilter();
+    sf.type = 'lowpass';
+    sf.frequency.value = 2200;
+    this.sirenGain = ctx.createGain();
+    this.sirenGain.gain.value = 0;
+    siren.connect(sf).connect(this.sirenGain).connect(this.master);
+    siren.start();
+    lfo.start();
+    this.onReady?.();
+  }
+
+  /** 0..1 loudness of the nearest police siren. */
+  siren(level: number): void {
+    if (!this.ctx) return;
+    this.sirenGain.gain.setTargetAtTime(level * 0.07, this.ctx.currentTime, 0.1);
+  }
+
+  /** Speed camera: shutter click and a bright ping. */
+  flash(): void {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(2400, t);
+    o.frequency.exponentialRampToValueAtTime(900, t + 0.15);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.25, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    o.connect(g).connect(this.master);
+    o.start(t);
+    o.stop(t + 0.25);
   }
 
   setMuted(m: boolean): void {
     this.muted = m;
-    if (this.ctx) this.master.gain.setTargetAtTime(m ? 0 : 0.6, this.ctx.currentTime, 0.05);
+    if (this.ctx) {
+      this.master.gain.setTargetAtTime(m ? 0 : 0.6, this.ctx.currentTime, 0.05);
+      this.musicBus.gain.setTargetAtTime(m ? 0 : 1, this.ctx.currentTime, 0.05);
+    }
   }
 
   /** speed in m/s, throttle 0..1 */

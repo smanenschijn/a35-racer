@@ -13,6 +13,10 @@ export interface Controls {
   pause: boolean;
   mute: boolean;
   debug: boolean;
+  nextTrack: boolean;
+  volumeUp: boolean;
+  volumeDown: boolean;
+  confirm: boolean;
   any: boolean;
 }
 
@@ -25,6 +29,13 @@ const EDGE_KEYS: Record<string, keyof Controls> = {
   KeyP: 'pause',
   KeyM: 'mute',
   KeyT: 'debug',
+  KeyN: 'nextTrack',
+  Equal: 'volumeUp',
+  NumpadAdd: 'volumeUp',
+  Minus: 'volumeDown',
+  NumpadSubtract: 'volumeDown',
+  Enter: 'confirm',
+  Space: 'confirm',
 };
 
 // Standard gamepad mapping button indices.
@@ -59,7 +70,8 @@ export class Input {
   poll(dt: number): Controls {
     const c: Controls = {
       throttle: 0, brake: 0, steer: 0, handbrake: false, nitro: false, ramLeft: false, ramRight: false,
-      reset: false, restart: false, pause: false, mute: false, debug: false, any: false,
+      reset: false, restart: false, pause: false, mute: false, debug: false,
+      nextTrack: false, volumeUp: false, volumeDown: false, confirm: false, any: false,
     };
 
     // Keyboard: smoothed steering so taps make small corrections.
@@ -99,6 +111,8 @@ export class Input {
       c.reset ||= pressed(PAD.y);
       c.restart ||= pressed(PAD.select);
       c.pause ||= pressed(PAD.start);
+      c.confirm ||= pressed(PAD.a) || pressed(PAD.start);
+      c.nextTrack ||= pressed(PAD.x);
       c.any ||= pad.buttons.some((_, i) => pressed(i));
       this.padPrev = pad.buttons.map((b) => b.pressed);
     }

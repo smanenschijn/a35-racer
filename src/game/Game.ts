@@ -7,6 +7,7 @@ import {
 import { GameAudio } from '../core/Audio';
 import { EventBus } from '../core/Events';
 import { Input } from '../core/Input';
+import { MusicPlayer } from '../core/Music';
 import { Effects } from '../fx/Particles';
 import { Track } from '../track/Track';
 import { TrackBuilder } from '../track/TrackBuilder';
@@ -27,6 +28,7 @@ export class Game {
   private fill = new THREE.DirectionalLight(0x9fb8ff, 0.9);
   private input = new Input();
   private audio = new GameAudio();
+  private music = new MusicPlayer(this.audio);
   private events = new EventBus();
   private track = new Track();
   private hud: Hud;
@@ -70,11 +72,15 @@ export class Game {
       fx,
       hud: this.hud,
       audio: this.audio,
+      music: this.music,
       cam: this.cam,
       rumble: (s, w, ms) => this.input.rumble(s, w, ms),
     });
     this.debug = new DebugPanel(() => this.race.reset());
     this.hud.showTitle(false);
+    this.music.onTrack = (t) => this.hud.showNowPlaying(t.title);
+    this.audio.onReady = () => this.music.resume();
+    this.music.playTitle();
 
     window.addEventListener('resize', () => this.resize());
     // Expose for debugging in the console.

@@ -5,17 +5,15 @@ Zie [docs/GDD.md](docs/GDD.md) voor het volledige game design.
 
 **Speel:** https://smanenschijn.github.io/a35-racer/
 
-## Status: mijlpaal 1 (rijden + beuken)
+## Status: mijlpaal 2 (verkeer, politie en muziek)
 
 Grey-box stuk A35 (Hengelo-Zuid → Enschede) met:
 
-- Semi-arcade handling (gewicht, handrem-drift), chase cam met camera-shake
-- 3 AI-tegenstanders (Sanne, Henk-Jan, Gerrit) die racen, inhalen, blokkeren en rammen
-- Botsingen auto–auto en auto–vangrail, zijwaartse ram-aanval (Q/E)
-- Schade per zone (voor/achter/links/rechts) met effect op rijgedrag, deuken, losse onderdelen, rook en vuur
-- Takedowns met slow-mo, total loss → respawn
-- Nitro, gevuld door beuken, rakelings passeren en driften
-- Toetsenbord + gamepad, HUD, gesynthetiseerd geluid, tuningpaneel (T)
+- 8 coureurs: jij en 7 tegenstanders met eigen rijstijl en scheldteksten
+- Verkeer in jouw richting dat je kunt beuken en als wapen kunt gebruiken, plus tegenliggers op de andere rijbaan
+- Politie: wanted level door chaos en flitspalen, achtervolging, wegblokkades vanaf 3 sterren, boete als je wordt klemgezet
+- Semi-arcade handling, rammen (Q/E), schade per zone, takedowns, nitro
+- Muziekspeler (de nummers zelf komen nog, zie [docs/muziek.md](docs/muziek.md))
 
 ## Besturing
 
@@ -30,6 +28,8 @@ Grey-box stuk A35 (Hengelo-Zuid → Enschede) met:
 | Herstart | R | Select |
 | Pauze | Esc / P | Start |
 | Geluid aan/uit | M | |
+| Volgend nummer | N | ▢ / X |
+| Muziekvolume | − / + | |
 | Tuningpaneel | T | |
 
 ## Ontwikkelen
@@ -43,6 +43,7 @@ npm run dev
 - `?autopilot` achter de URL laat een AI jouw auto besturen (handig om te testen)
 - In de console is `game` beschikbaar voor debuggen
 - Push naar `main` deployt automatisch naar GitHub Pages
+- Muziek: zet de mp3's in `public/music/` (namen in [docs/muziek.md](docs/muziek.md)); ontbrekende nummers worden overgeslagen
 
 ## Techniek
 
@@ -54,6 +55,6 @@ auto's zijn 2D rigid bodies met impuls-botsingen, vangrails zijn zijdelingse gre
 | `src/track` | Wegspline, projectie, wereldopbouw, procedurele texturen |
 | `src/vehicle` | Auto-physics, schade, AI, procedurele 3D-modellen met deuken |
 | `src/physics` | Botsingen tussen auto's |
-| `src/game` | Game loop, race-logica, camera |
+| `src/game` | Game loop, race-logica, camera, verkeer, politie |
 | `src/fx`, `src/ui`, `src/core` | Particles, HUD, tuning, invoer, audio, events |
 | `src/config.ts` | Alle tuningwaarden, auto's en AI-persoonlijkheden |

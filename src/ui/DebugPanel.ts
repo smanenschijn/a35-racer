@@ -11,9 +11,10 @@ export class DebugPanel {
     const groups: [string, string[], number, number, number][] = [
       ['Handling', ['engineAccel', 'brakeDecel', 'grip', 'handbrakeGrip', 'driftGripFactor', 'steerRateLow', 'steerRateHigh', 'yawResponse', 'handbrakeYawBoost'], 0, 30, 0.05],
       ['Nitro', ['nitroAccel', 'nitroTopSpeedFactor', 'nitroDrain', 'nitroFillPerDamage', 'nitroFillTakedown', 'nitroFillNearMiss', 'nitroFillDriftPerSec'], 0, 20, 0.001],
-      ['Rammen', ['ramSideSpeed', 'ramDuration', 'ramCooldown', 'ramMassFactor', 'ramDamageFactor'], 0, 20, 0.01],
-      ['Schade', ['damagePerImpulse', 'railDamagePerSpeed', 'railScrapeDamage', 'takedownRailBonus', 'playerDamageFactor', 'aiDamageFactor', 'stunTime', 'carRestitution', 'railRestitution', 'railFriction'], 0, 5, 0.0001],
+      ['Rammen', ['ramSideSpeed', 'ramDuration', 'ramCooldown', 'ramShoveSpeed', 'ramDamage', 'ramMassFactor', 'ramDamageFactor', 'aggressorRecoil'], 0, 40, 0.01],
+      ['Schade', ['damagePerImpulse', 'railDamagePerSpeed', 'railScrapeDamage', 'takedownRailBonus', 'playerDamageFactor', 'aiDamageFactor', 'stunTime', 'wreckTotal', 'carRestitution', 'railRestitution', 'railFriction', 'railGlide'], 0, 5, 0.0001],
       ['AI', ['aiCornerLatAccel', 'aiAggression', 'rubberBandBehind', 'rubberBandAhead'], 0, 25, 0.01],
+      ['Politie', ['heatDecayDelay', 'heatDecay', 'speedCameraKmh', 'bustSeconds', 'bustPenalty'], 0, 200, 0.01],
       ['Camera', ['camDistance', 'camHeight', 'camFov', 'camFovNitro'], 0, 120, 0.1],
     ];
     for (const [name, keys, min, max, step] of groups) {

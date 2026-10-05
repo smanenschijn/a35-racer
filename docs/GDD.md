@@ -185,12 +185,18 @@ Een grey-box stuk A35 (2x2 met vangrail, ongeveer 3 km, een paar bochten en een 
 
 **Klaar als:** het rijden lekker voelt en iemand de vangrail in duwen bevredigend is.
 
-### M2: Verkeer, politie en het volledige veld
+### M2: Verkeer, politie, het volledige veld en muziek *(afgerond, oktober 2026)*
 
-- 7 tegenstanders met verschillende rijstijlen en lichte rubber-banding
-- Verkeer in alle richtingen, beukbaar, met bijna-botsing-detectie
-- Politie met wanted level, achtervolging en wegblokkades
-- Muziek: een titelloop en twee racenummers met zang (zie [muziek.md](muziek.md)), een muziekspeler met eigen volume, "Nu speelt"-melding en volgende nummer, en een gedempt (gefilterd) geluid tijdens pauze en slow-motion
+- [x] 7 tegenstanders met eigen rijstijl (Sanne, Henk-Jan, Joost, Mehmet, Bennie, Gerrit, Tante Riek) en lichte rubber-banding
+- [x] Verkeer in jouw richting (personenauto's, bestelbussen, vrachtwagens, auto's met caravan): beukbaar, houdt rechts, haalt in, wijkt uit voor obstakels
+- [x] Tegenliggers op de andere rijbaan
+- [x] Bijna-botsingen met verkeer vullen nitro
+- [x] Politie met wanted level (1 tot 5 sterren), achtervolging met PIT-manoeuvres, wegblokkades vanaf 3 sterren, klemzetten geeft een tijdstraf
+- [x] Flitspalen langs de weg
+- [x] Muziekspeler: titelloop, twee racenummers, "Nu speelt"-melding, volgend nummer (N), eigen volume (−/+), gedempt bij pauze en slow-motion
+- [x] Tegenstanders schelden je uit als ze je rammen
+
+**Nog nodig van buiten:** de drie muzieknummers (zie [muziek.md](muziek.md)).
 
 ### M3: De echte etappe Hengelo → Enschede
 

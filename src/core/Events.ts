@@ -9,6 +9,8 @@ export interface GameEventMap {
   ram: { vehicle: Vehicle; dir: number };
   nearMiss: { vehicle: Vehicle; other: Vehicle };
   message: { text: string; color?: string; big?: boolean };
+  flash: { kmh: number };
+  busted: { penalty: number };
 }
 
 type Handler<T> = (payload: T) => void;

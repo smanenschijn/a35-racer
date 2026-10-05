@@ -8,6 +8,20 @@ export interface StandingRow {
   finished: boolean;
   time?: number;
   takedowns: number;
+  penalty: number;
+}
+
+export interface HudState {
+  player: Vehicle;
+  position: number;
+  total: number;
+  rows: StandingRow[];
+  distanceLeft: number;
+  raceTime: number;
+  stars: number;
+  heat: number;
+  sirenNear: boolean;
+  bust: number;
 }
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html = ''): HTMLElementTagNameMap[K] => {
@@ -44,7 +58,13 @@ export class Hud {
   private messages = el('div', 'hud-messages');
   private overlay = el('div', 'overlay');
   private help = el('div', 'hud-help');
+  private wanted = el('div', 'hud-wanted');
+  private bustBar = el('div', 'bust', '<span>KLEMGEZET</span><div class="bust-fill"></div>');
+  private policeGlow = el('div', 'police-glow');
+  private flashEl = el('div', 'cam-flash');
+  private nowPlaying = el('div', 'now-playing');
   private lastPos = 0;
+  private lastStars = -1;
 
   constructor(parent: HTMLElement) {
     parent.appendChild(this.root);
@@ -86,13 +106,27 @@ export class Hud {
     side.append(el('div', 'dmg-label', 'SCHADE'), this.dmgPct, boost, rams);
     bl.append(side);
 
+    const top = el('div', 'hud-top');
+    top.append(this.wanted, this.bustBar);
+    this.root.append(this.policeGlow, this.flashEl, top, this.nowPlaying);
+
     this.help.innerHTML =
-      '↑↓ / WS gas-rem &nbsp;·&nbsp; ←→ / AD sturen &nbsp;·&nbsp; SPATIE handrem &nbsp;·&nbsp; SHIFT nitro &nbsp;·&nbsp; Q/E rammen &nbsp;·&nbsp; ⌫ terug op weg &nbsp;·&nbsp; R herstart &nbsp;·&nbsp; M geluid &nbsp;·&nbsp; T tuning';
+      '↑↓ / WS gas-rem &nbsp;·&nbsp; ←→ / AD sturen &nbsp;·&nbsp; SPATIE handrem &nbsp;·&nbsp; SHIFT nitro &nbsp;·&nbsp; Q/E rammen &nbsp;·&nbsp; ⌫ terug op weg &nbsp;·&nbsp; R herstart &nbsp;·&nbsp; M geluid &nbsp;·&nbsp; N volgend nummer &nbsp;·&nbsp; −/+ muziekvolume';
 
     this.root.append(tl, tr, br, bl, this.messages, this.help, this.overlay);
   }
 
-  update(player: Vehicle, position: number, total: number, rows: StandingRow[], distanceLeft: number, raceTime: number): void {
+  update(h: HudState): void {
+    const { player, position, total, rows, distanceLeft, raceTime } = h;
+    if (h.stars !== this.lastStars) {
+      this.lastStars = h.stars;
+      this.wanted.innerHTML = Array.from({ length: 5 }, (_, i) => `<span class="${i < h.stars ? 'on' : ''}">★</span>`).join('');
+      this.wanted.classList.toggle('active', h.stars > 0);
+    }
+    this.wanted.style.setProperty('--next', `${(h.heat % 1) * 100}%`);
+    this.policeGlow.classList.toggle('on', h.sirenNear && h.stars > 0);
+    this.bustBar.classList.toggle('show', h.bust > 0.02);
+    (this.bustBar.lastElementChild as HTMLElement).style.width = `${h.bust * 100}%`;
     const kmh = Math.round(player.speed * 3.6);
     this.speed.textContent = String(kmh);
     const frac = Math.min(1, kmh / 300);
@@ -138,8 +172,8 @@ export class Hud {
     this.overlay.className = 'overlay show title';
     this.overlay.innerHTML = `
       <div class="logo"><span class="a35">A35</span><span class="racer">RACER</span></div>
-      <div class="sub">Mijlpaal 1 · rijden & beuken · Hengelo → Enschede</div>
-      <div class="press">${gamepad ? 'Druk op een knop' : 'Druk op een toets'} om te starten</div>
+      <div class="sub">Mijlpaal 2 · verkeer, politie & muziek · Hengelo → Enschede</div>
+      <div class="press">${gamepad ? 'Druk op ✕ / A' : 'Druk op ENTER'} om te starten</div>
       <div class="controls">
         <div><b>↑ ↓ / W S</b> gas & rem</div>
         <div><b>← → / A D</b> sturen</div>
@@ -147,8 +181,11 @@ export class Hud {
         <div><b>SHIFT</b> nitro</div>
         <div><b>Q / E</b> ram links / rechts</div>
         <div><b>⌫</b> terug op de weg</div>
+        <div><b>N</b> volgend nummer</div>
+        <div><b>− / +</b> muziekvolume</div>
+        <div><b>M</b> geluid aan/uit</div>
       </div>
-      <div class="tip">Duw ze de vangrail in. Nitro vul je door te beuken, rakelings te passeren en te driften.</div>`;
+      <div class="tip">Duw ze de vangrail in. Nitro vul je door te beuken, rakelings te passeren en te driften. Te veel chaos of te hard langs een flitspaal? Dan komt de politie.</div>`;
   }
 
   showPause(on: boolean): void {
@@ -171,7 +208,7 @@ export class Hud {
         ${rows
           .map(
             (r, i) => `<tr class="${r.isPlayer ? 'me' : ''}"><td>${i + 1}</td><td>${r.name}</td><td>${r.car}</td><td>${
-              r.wrecked ? 'WRAK' : r.finished && r.time !== undefined ? fmtTime(r.time) : '—'
+              r.wrecked ? 'WRAK' : r.finished && r.time !== undefined ? fmtTime(r.time) + (r.penalty ? ` <em>(+${r.penalty}s)</em>` : '') : '—'
             }</td><td>${r.takedowns}</td></tr>`,
           )
           .join('')}
@@ -182,6 +219,28 @@ export class Hud {
   hideOverlay(): void {
     this.overlay.className = 'overlay';
     this.overlay.innerHTML = '';
+  }
+
+  /** A rival talking trash: smaller, subtitle-style. */
+  taunt(name: string, text: string): void {
+    const m = el('div', 'msg taunt', `<b>${name}</b> “${text}”`);
+    m.style.animationDuration = '2.2s';
+    this.messages.appendChild(m);
+    setTimeout(() => m.remove(), 2200);
+  }
+
+  /** Speed camera flash. */
+  flash(): void {
+    this.flashEl.classList.remove('go');
+    void this.flashEl.offsetWidth;
+    this.flashEl.classList.add('go');
+  }
+
+  showNowPlaying(title: string): void {
+    this.nowPlaying.innerHTML = `<span>♪ Nu speelt</span>${title}`;
+    this.nowPlaying.classList.remove('show');
+    void this.nowPlaying.offsetWidth;
+    this.nowPlaying.classList.add('show');
   }
 
   countdown(text: string, go = false): void {
