@@ -134,7 +134,7 @@ Voorbeelden van taunts: *"Gas geaven!"*, *"Kump wal goed!"*, *"Wat mot dat noe?"
 
 - **Visuele stijl:** moderne arcade zoals het conceptplaatje. Felle kleuren, bloom, vonken, motion blur en speed lines.
 - **Licht:** **zonsondergang** in alle etappes, het gouden uur. Landmarks zoals de Grolsj Veste zijn verlicht.
-- **Muziek:** **90s eurodance/techno**. Royalty-free of zelf gemaakt, zodat er geen auteursrechtelijk beschermde tracks in zitten.
+- **Muziek:** eigen nummers in de stijl van 90s Nederlandse eurodance en happy hardcore, met Nederlandstalige zang door een vrouwenstem over de route en het beuken. Gemaakt met een AI-muziekplatform; teksten en stijlomschrijvingen staan in [muziek.md](muziek.md).
 - **Geluid:** het motorgeluid wordt gesynthetiseerd met de Web Audio API (toerental-afhankelijk). Verder crashes, metaalgeschraap langs de vangrail, sirenes en een omroeper met Twentse kreten.
 - **Taal:** Nederlands met Twentse humor.
 - **Merknamen:** **parodienamen** (Grolsj, Heraklus, Thuisbesteld.nl). Dat past bij de humor en is veilig als de game ooit gepubliceerd wordt.
@@ -190,6 +190,7 @@ Een grey-box stuk A35 (2x2 met vangrail, ongeveer 3 km, een paar bochten en een 
 - 7 tegenstanders met verschillende rijstijlen en lichte rubber-banding
 - Verkeer in alle richtingen, beukbaar, met bijna-botsing-detectie
 - Politie met wanted level, achtervolging en wegblokkades
+- Muziek: een titelloop en twee racenummers met zang (zie [muziek.md](muziek.md)), een muziekspeler met eigen volume, "Nu speelt"-melding en volgende nummer, en een gedempt (gefilterd) geluid tijdens pauze en slow-motion
 
 ### M3: De echte etappe Hengelo → Enschede
 
@@ -202,7 +203,7 @@ Een grey-box stuk A35 (2x2 met vangrail, ongeveer 3 km, een paar bochten en een 
 
 - Checkpoint-timer, finish en top-3-regel
 - Twentse personages met hun taunts, en een omroeper
-- Muziek en geluidseffecten
+- Geluidseffecten (opgenomen samples in plaats van synthese)
 - Menu's, autokeuze, lokale highscores
 - Touch-besturing voor mobiel
 
@@ -218,4 +219,4 @@ Een grey-box stuk A35 (2x2 met vangrail, ongeveer 3 km, een paar bochten en een 
 - **GitHub:** publieke repo `a35-racer`, met automatische deploy naar GitHub Pages.
 - **Snelheden:** de km/u op de HUD worden overdreven weergegeven (topsnelheid rond 250+ km/u) voor het arcadegevoel.
 - **Checkpointtijden** en de **balans van schade en boost** stellen we af tijdens het testen.
-- **Muziek:** de bron is nog niet gekozen. Opties zijn zelf maken, een royalty-free bibliotheek of een muzikant.
+- **Muziek:** zelf gemaakt met een AI-muziekplatform. Bij publicatie moeten de gebruiksrechten van dat platform kloppen (zie [muziek.md](muziek.md)).
