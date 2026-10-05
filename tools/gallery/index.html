@@ -1,0 +1,328 @@
+<title>A35 Racer Garage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Russo+One&family=Barlow:wght@400;500;600&display=swap">
+<style>
+  /* Layout: one showroom stage up top (3D viewer + spec sheet), the fleet as a grid of cards below,
+     then the landmarks still to come. Committed single dark "night garage" look, like the game. */
+  :root {
+    color-scheme: dark;
+    --bg: #0c0e15;
+    --panel: #151925;
+    --line: #262c3c;
+    --fg: #edebe4;
+    --muted: #9ba1b0;
+    --accent: #ff8a00;
+    --accent-2: #ffd400;
+    --sky-top: #1d2a4a;
+    --sky-mid: #7a4a5c;
+    --sky-low: #f0915a;
+    --font-display: 'Bangers', 'Impact', 'Arial Black', sans-serif;
+    --font-label: 'Russo One', 'Arial Black', system-ui, sans-serif;
+    --font-body: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --step-0: 0.95rem;
+    --step-1: 1.15rem;
+    --step-2: 1.6rem;
+    --step-3: clamp(2.4rem, 6vw, 4.2rem);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: var(--step-0);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-inline: max(16px, 3vw); padding-block: 28px 56px; display: grid; gap: 40px; }
+
+  header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+  .logo { font-family: var(--font-display); font-size: var(--step-3); line-height: 0.85; letter-spacing: 2px; margin: 0; transform: rotate(-3deg); transform-origin: left bottom; }
+  .logo .a35 { color: var(--accent); }
+  .logo .sub { color: var(--fg); }
+  .intro { max-width: 52ch; color: var(--muted); margin: 0; }
+  .intro b { color: var(--fg); font-weight: 600; }
+
+  /* Showroom */
+  .showroom { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--panel); }
+  .stage { position: relative; min-width: 0; aspect-ratio: 16 / 10; max-height: 560px; width: 100%;
+    background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 58%, var(--sky-low) 100%); }
+  .stage canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  .stage canvas:active { cursor: grabbing; }
+  .stage .status { position: absolute; left: 16px; bottom: 14px; font-family: var(--font-label); font-size: 0.75rem; letter-spacing: 2px; color: var(--fg); background: rgba(12, 14, 21, 0.6); padding: 4px 10px; border-radius: 4px; }
+  .stage .hint { position: absolute; right: 16px; bottom: 14px; font-size: 0.8rem; color: var(--fg); opacity: 0.75; }
+  .sheet { padding: 22px 22px 24px; display: grid; gap: 18px; align-content: start; border-left: 1px solid var(--line); min-width: 0; }
+  .sheet h2 { font-family: var(--font-display); font-size: var(--step-2); letter-spacing: 1px; margin: 0; line-height: 1; text-wrap: balance; }
+  .sheet .driver { color: var(--accent-2); font-family: var(--font-label); font-size: 0.78rem; letter-spacing: 2px; text-transform: uppercase; margin-top: 6px; }
+  .sheet p { margin: 0; color: var(--muted); }
+  dl.specs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+  dl.specs div { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
+  dl.specs dt { font-family: var(--font-label); font-size: 0.66rem; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+  dl.specs dd { margin: 2px 0 0; font-size: var(--step-1); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .control { display: grid; gap: 6px; }
+  .control label { font-family: var(--font-label); font-size: 0.7rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+  button.chip { font: inherit; font-size: 0.85rem; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+  button.chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  button:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+
+  /* Fleet */
+  section > h3 { font-family: var(--font-label); font-size: 0.8rem; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; font-weight: normal; }
+  .fleet { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .car { all: unset; cursor: pointer; display: grid; gap: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel); min-width: 0; }
+  .car:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+  .car[aria-current="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .car img { display: block; width: 100%; aspect-ratio: 760 / 442; object-fit: cover; background: #2b2826; }
+  .car .meta { padding: 10px 12px 12px; display: grid; gap: 2px; }
+  .car .name { font-weight: 600; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+  .car .swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; border: 1px solid rgba(255,255,255,0.25); }
+  .car .who { font-size: 0.82rem; color: var(--muted); }
+
+  /* Landmarks */
+  .landmarks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .landmark { border: 1px dashed var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 4px; min-width: 0; }
+  .landmark b { font-weight: 600; }
+  .landmark span { color: var(--muted); font-size: 0.85rem; }
+  .pill { justify-self: start; font-family: var(--font-label); font-size: 0.62rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent-2); border: 1px solid currentColor; border-radius: 999px; padding: 2px 8px; margin-top: 4px; }
+
+  footer { color: var(--muted); font-size: 0.82rem; border-top: 1px solid var(--line); padding-top: 16px; }
+
+  @media (max-width: 900px) {
+    .showroom { grid-template-columns: minmax(0, 1fr); }
+    .sheet { border-left: 0; border-top: 1px solid var(--line); }
+    .fleet { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .landmarks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 460px) {
+    .landmarks { grid-template-columns: minmax(0, 1fr); }
+    .stage .hint { display: none; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1 class="logo"><span class="a35">A35</span> <span class="sub">RACER GARAGE</span></h1>
+    <p class="intro">Alle auto's uit de game, in Blender opgebouwd uit <b>90 tot 130 losse onderdelen</b>. Draai ze rond, zoom in, of trek ze uit elkaar om te zien uit welke stukken ze bestaan.</p>
+  </header>
+
+  <div class="showroom">
+    <div class="stage">
+      <canvas id="view" aria-label="3D-weergave van de geselecteerde auto"></canvas>
+      <div class="status" id="status">LADEN…</div>
+      <div class="hint">Slepen = draaien · scrollen = zoomen</div>
+    </div>
+    <aside class="sheet">
+      <div>
+        <h2 id="car-name">Mazdo RX-Zeven</h2>
+        <div class="driver" id="car-driver">Jij</div>
+      </div>
+      <p id="car-desc"></p>
+      <dl class="specs">
+        <div><dt>Lengte</dt><dd id="spec-length">–</dd></div>
+        <div><dt>Onderdelen</dt><dd id="spec-parts">–</dd></div>
+        <div><dt>Driehoeken</dt><dd id="spec-tris">–</dd></div>
+        <div><dt>Velgen</dt><dd id="spec-wheels">–</dd></div>
+      </dl>
+      <div class="control">
+        <label for="explode"><span>Uit elkaar</span><span id="explode-val">0%</span></label>
+        <input id="explode" type="range" min="0" max="100" value="0">
+      </div>
+      <div class="buttons">
+        <button class="chip" id="spin" aria-pressed="true" type="button">Draaitafel</button>
+        <button class="chip" id="reset" type="button">Beginpositie</button>
+      </div>
+    </aside>
+  </div>
+
+  <section>
+    <h3>Het startveld</h3>
+    <div class="fleet" id="fleet"></div>
+  </section>
+
+  <section>
+    <h3>Landmarks · mijlpaal 3</h3>
+    <div class="landmarks">
+      <div class="landmark"><b>Metropool Hengelo</b><span>Concertgebouw bij de start, met lichtletters op het dak</span><em class="pill">In de maak</em></div>
+      <div class="landmark"><b>Twentekanaal</b><span>De brug over het kanaal, met een binnenvaartschip eronder</span><em class="pill">In de maak</em></div>
+      <div class="landmark"><b>Universiteit Twente</b><span>Campusgebouwen naast de snelweg</span><em class="pill">In de maak</em></div>
+      <div class="landmark"><b>Grolsj Veste</b><span>Het stadion, rode stoelen onder een stalen dak</span><em class="pill">In de maak</em></div>
+      <div class="landmark"><b>Grolsj-brouwerij Boekelo</b><span>Gistingstanks en een reuzenbeugelfles</span><em class="pill">In de maak</em></div>
+      <div class="landmark"><b>Thuisbesteld.nl</b><span>Het hoofdkantoor aan de De Ruyterlaan, bij de finish</span><em class="pill">In de maak</em></div>
+    </div>
+  </section>
+
+  <footer>Gebouwd met Python-scripts in Blender 5.2 (blender/carbuilder.py en designs.py in de repo). Alle auto's en merknamen zijn verzonnen parodieën.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/environments/RoomEnvironment.js"></script>
+<script>
+const CARS = [
+  { id: 'rx7', name: 'Mazdo RX-Zeven', driver: 'Jij', color: '#d81e1e', length: 4.30, parts: 128, tris: 39464, wheels: '10 spaken',
+    desc: 'Lage wig met klapkoplampen, vleugelspoiler met derde remlicht, vier ronde achterlichten en rode kuipstoelen.' },
+  { id: 'supremo', name: 'Toyoda Supremo', driver: 'Sanne', color: '#f2c014', length: 4.52, parts: 104, tris: 38676, wheels: '5 spaken',
+    desc: 'Lange neus, hoge hoepelspoiler en vier ovale achterlichten. De snelste van het veld.' },
+  { id: 'golv', name: 'Wolfsburg Golv G60', driver: 'Henk-Jan', color: '#1d4fd8', length: 4.00, parts: 100, tris: 39304, wheels: 'kruisspaak',
+    desc: 'Driedeurs hatchback met dikke C-stijl, ronde lampen in een zwarte grille met rode streep en zwarte bumpers.' },
+  { id: 'civik', name: 'Hondo Civik', driver: 'Joost', color: '#8fd3ff', length: 4.10, parts: 89, tris: 37348, wheels: '5 spaken',
+    desc: 'Aflopende hatchback met een lichtbalk achter, dakspoiler en een extra dikke tuning-uitlaat.' },
+  { id: 'corso', name: 'Opal Corso', driver: 'Mehmet', color: '#ff6a00', length: 3.90, parts: 100, tris: 43824, wheels: 'staal',
+    desc: 'Kleine hatchback met stalen velgen, zwarte bumpers en de Thuisbesteld-bezorgbox op het dak.' },
+  { id: 'calibro', name: 'Opal Calibro', driver: 'Bennie', color: '#111111', length: 4.50, parts: 98, tris: 38624, wheels: 'turbine',
+    desc: 'Zwarte wig met witte strepen over motorkap, dak en achterklep, smalle koplampen en een kleine eendenstaart.' },
+  { id: 'volvi', name: 'Volvi 240 Kombi', driver: 'Gerrit', color: '#24563a', length: 4.80, parts: 109, tris: 37172, wheels: 'wieldoppen',
+    desc: 'De baksteen: eierkratgrille, chromen bumpers met rubberstrip, dakdragers en staande achterlichten.' },
+  { id: 'spacewagen', name: 'Mitsubushi Space Wagen', driver: 'Tante Riek', color: '#b03a7a', length: 4.60, parts: 99, tris: 36876, wheels: 'wieldoppen',
+    desc: 'Hoge MPV met dakrails, een glimmende grille en staande achterlichten. Remt op onverwachte momenten.' },
+];
+
+const nf = new Intl.NumberFormat('nl-NL');
+const $ = (id) => document.getElementById(id);
+
+// ---- Fleet cards ----
+const fleet = $('fleet');
+for (const car of CARS) {
+  const b = document.createElement('button');
+  b.className = 'car';
+  b.type = 'button';
+  b.dataset.id = car.id;
+  b.innerHTML = `<img src="img/${car.id}_front.jpg" alt="${car.name}, render van voren" loading="lazy">
+    <span class="meta"><span class="name"><span class="swatch" style="background:${car.color}"></span>${car.name}</span>
+    <span class="who">${car.driver} · ${nf.format(car.parts)} onderdelen</span></span>`;
+  b.addEventListener('click', () => select(car.id, true));
+  fleet.appendChild(b);
+}
+
+// ---- 3D showroom ----
+const canvas = $('view');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.72;
+renderer.shadowMap.enabled = true;
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new THREE.RoomEnvironment(), 0.04).texture;
+const camera = new THREE.PerspectiveCamera(35, 1.6, 0.1, 100);
+const HOME = new THREE.Vector3(-5.6, 2.2, -6.4);
+camera.position.copy(HOME);
+const controls = new THREE.OrbitControls(camera, canvas);
+controls.target.set(0, 0.6, 0);
+controls.enableDamping = true;
+controls.minDistance = 3;
+controls.maxDistance = 14;
+controls.maxPolarAngle = Math.PI * 0.49;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+controls.autoRotate = !reduceMotion;
+controls.autoRotateSpeed = 0.9;
+$('spin').setAttribute('aria-pressed', String(controls.autoRotate));
+
+const sun = new THREE.DirectionalLight(0xffc796, 2.4);
+sun.position.set(-6, 7, -4);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -5, right: 5, top: 5, bottom: -5, near: 1, far: 30 });
+scene.add(sun, new THREE.HemisphereLight(0xb8c4ff, 0x3a2a24, 0.6));
+
+// Turntable
+const table = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.5, 0.08, 64),
+  new THREE.MeshStandardMaterial({ color: 0x141824, metalness: 0.0, roughness: 0.85 }));
+table.position.y = -0.04;
+table.receiveShadow = true;
+const ring = new THREE.Mesh(new THREE.TorusGeometry(3.45, 0.02, 8, 96),
+  new THREE.MeshBasicMaterial({ color: 0xff8a00 }));
+ring.rotation.x = Math.PI / 2;
+scene.add(table, ring);
+
+const loader = new THREE.GLTFLoader();
+const cache = new Map();
+let current = null;   // { root, parts: [{obj, base, dir}] }
+
+// Models ship as base64 inside JSON (the artifact host serves .json but not .glb).
+async function loadModel(id) {
+  const res = await fetch(`models/${id}.json`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const { glb } = await res.json();
+  const bin = Uint8Array.from(atob(glb), (c) => c.charCodeAt(0));
+  return new Promise((resolve, reject) => loader.parse(bin.buffer, '', resolve, reject));
+}
+
+function prepare(gltf) {
+  const root = gltf.scene.children.length === 1 ? gltf.scene.children[0] : gltf.scene;
+  root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  const parts = [];
+  for (const obj of root.children) {
+    const box = new THREE.Box3().setFromObject(obj);
+    const c = box.getCenter(new THREE.Vector3());
+    const dir = new THREE.Vector3(c.x * 1.4, (c.y - 0.55) * 1.2 + 0.15, c.z * 0.55);
+    if (dir.lengthSq() < 0.01) dir.set(0, 0.6, 0);
+    parts.push({ obj, base: obj.position.clone(), dir });
+  }
+  return { root, parts };
+}
+
+function applyExplode() {
+  if (!current) return;
+  const k = Number($('explode').value) / 100;
+  $('explode-val').textContent = `${Math.round(k * 100)}%`;
+  for (const p of current.parts) p.obj.position.copy(p.base).addScaledVector(p.dir, k * 1.1);
+}
+
+async function select(id, fromClick) {
+  const car = CARS.find((c) => c.id === id);
+  document.querySelectorAll('.car').forEach((b) => b.setAttribute('aria-current', String(b.dataset.id === id)));
+  $('car-name').textContent = car.name;
+  $('car-driver').textContent = car.driver;
+  $('car-desc').textContent = car.desc;
+  $('spec-length').textContent = `${car.length.toFixed(2).replace('.', ',')} m`;
+  $('spec-parts').textContent = nf.format(car.parts);
+  $('spec-tris').textContent = nf.format(car.tris);
+  $('spec-wheels').textContent = car.wheels;
+  $('status').hidden = false;
+  $('status').textContent = 'LADEN…';
+  if (fromClick) document.querySelector('.showroom').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+  try {
+    if (!cache.has(id)) cache.set(id, prepare(await loadModel(id)));
+    if (current) scene.remove(current.root);
+    current = cache.get(id);
+    scene.add(current.root);
+    applyExplode();
+    $('status').hidden = true;
+  } catch (e) {
+    $('status').textContent = 'MODEL KON NIET LADEN';
+  }
+}
+
+$('explode').addEventListener('input', applyExplode);
+$('spin').addEventListener('click', () => {
+  controls.autoRotate = !controls.autoRotate;
+  $('spin').setAttribute('aria-pressed', String(controls.autoRotate));
+});
+$('reset').addEventListener('click', () => {
+  camera.position.copy(HOME);
+  controls.target.set(0, 0.6, 0);
+  $('explode').value = 0;
+  applyExplode();
+});
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (!w || !h) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(canvas);
+resize();
+
+renderer.setAnimationLoop(() => {
+  controls.update();
+  renderer.render(scene, camera);
+});
+
+select('rx7', false);
+</script>

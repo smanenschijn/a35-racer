@@ -4,3 +4,4 @@ dist
 *.log
 *.blend1
 __pycache__/
+tools/gallery/out/
