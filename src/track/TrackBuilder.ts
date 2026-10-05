@@ -93,7 +93,9 @@ export class TrackBuilder {
 
     // --- Road surfaces ---
     this.ribbon({ dL: -6, dR: 6, yL: h, yR: h, step: 2 }, road);
-    this.ribbon({ dL: OPP_IN, dR: OPP_OUT, yL: h, yR: h, uL: 0, uR: 1, step: 2 }, road);
+    // Left edge must have the smaller d, otherwise the surface faces down and gets culled.
+    // u runs 1→0 so the markings mirror for traffic in the other direction.
+    this.ribbon({ dL: OPP_OUT, dR: OPP_IN, yL: h, yR: h, uL: 1, uR: 0, step: 2 }, road);
 
     // --- Median and verges ---
     const verge = (s: number) => h(s) - 0.06;
