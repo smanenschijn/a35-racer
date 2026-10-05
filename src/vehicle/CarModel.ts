@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { totalLength, type CarSpec } from '../config';
 import { getModel } from './models';
 import type { Vehicle, Zone } from './Vehicle';
@@ -163,7 +164,49 @@ export class CarModel {
         if (child.userData.detach) this.detachables.push(child);
       }
     }
-    this.wheelR = 0.31;
+    this.wheelR = car.userData.wheel_r ?? 0.31;
+    this.mergeStatic();
+  }
+
+  /**
+   * Merge every body part that can't break off into one mesh per material. A detailed car
+   * has ~100 parts; this brings it down to a dozen draw calls. Dents keep working because
+   * the merged meshes become the deformables.
+   */
+  private mergeStatic(): void {
+    const groups = new Map<THREE.Material, THREE.BufferGeometry[]>();
+    const deformMats = new Set<THREE.Material>();
+    const merged: THREE.Object3D[] = [];
+    this.body.updateMatrixWorld(true);
+    const toBody = new THREE.Matrix4().copy(this.body.matrixWorld).invert();
+    const m = new THREE.Matrix4();
+    for (const child of this.body.children) {
+      if (this.detachables.includes(child)) continue;
+      child.traverse((o) => {
+        if (!(o instanceof THREE.Mesh)) return;
+        const g = o.geometry.clone();
+        g.applyMatrix4(m.multiplyMatrices(toBody, o.matrixWorld));
+        for (const name of Object.keys(g.attributes)) if (name !== 'position' && name !== 'normal') g.deleteAttribute(name);
+        const mat = o.material as THREE.Material;
+        if (!groups.has(mat)) groups.set(mat, []);
+        groups.get(mat)!.push(g.index ? g : g.setIndex([...Array(g.attributes.position.count).keys()]));
+        if (o.userData.deform) deformMats.add(mat);
+      });
+      merged.push(child);
+    }
+    for (const c of merged) this.body.remove(c);
+    this.deformables = [];
+    for (const [mat, geos] of groups) {
+      const geo = mergeGeometries(geos, false);
+      if (!geo) continue;
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.castShadow = true;
+      this.body.add(mesh);
+      if (deformMats.has(mat)) {
+        const pos = geo.attributes.position as THREE.BufferAttribute;
+        this.deformables.push({ mesh, original: Float32Array.from(pos.array as Float32Array) });
+      }
+    }
   }
 
   private addWheel(x: number, z: number, r: number, steer: boolean, width = 0.24): void {

@@ -4,19 +4,36 @@ De voertuigen worden in Blender opgebouwd uit veel kleine, losse onderdelen. In 
 
 ## Bouwen
 
-Vanuit de root van de repo:
+Alle auto's worden gemaakt met één algemene bouwer (`carbuilder.py`). De ontwerpen staan in `designs.py`. Vanuit de root van de repo:
 
 ```bash
-/Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python blender/build_rx7.py
+/Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python blender/build_cars.py
 ```
 
-Dat levert:
+Wil je maar een paar auto's bouwen, zet dan hun namen achter `--`, bijvoorbeeld `... --python blender/build_cars.py -- golv volvi`.
+
+Per auto levert dat:
 
 | Bestand | Inhoud |
 |---|---|
-| `assets/blender/rx7.blend` | Alle onderdelen als losse objecten, om te openen en te bewerken |
-| `public/models/rx7.glb` | Het model dat de game laadt |
-| `assets/renders/rx7_*.png` | Voorbeeldrenders (voor, achter, zij) |
+| `assets/blender/<naam>.blend` | Alle onderdelen als losse objecten, om te openen en te bewerken |
+| `public/models/<naam>.glb` | Het model dat de game laadt |
+| `assets/renders/<naam>_*.png` | Voorbeeldrenders (voor, achter, zij) |
+
+## Het wagenpark
+
+| Naam | Auto | Kenmerken |
+|---|---|---|
+| `rx7` | Mazdo RX-Zeven (jij) | Klapkoplampen, vleugelspoiler, vier ronde achterlichten, velgen met tien spaken |
+| `supremo` | Toyoda Supremo (Sanne) | Lange neus, hoge hoepelspoiler, ovale achterlichten |
+| `golv` | Wolfsburg Golv G60 (Henk-Jan) | Driedeurs hatchback, ronde lampen in een zwarte grille met rode streep, zwarte bumpers, kruisspaakvelgen |
+| `civik` | Hondo Civik (Joost) | Aflopende hatchback, lichtbalk achter, dikke uitlaat |
+| `corso` | Opal Corso (Mehmet) | Kleine hatchback, stalen velgen, Thuisbesteld-dakbox |
+| `calibro` | Opal Calibro (Bennie) | Zwarte wig met witte strepen, smalle lampen, turbinevelgen |
+| `volvi` | Volvi 240 Kombi (Gerrit) | Hoekige stationwagon, eierkratgrille, chromen bumpers, dakdragers, wieldoppen |
+| `spacewagen` | Mitsubushi Space Wagen (Tante Riek) | Hoge MPV, dakrails, staande achterlichten |
+
+Een ontwerp bestaat uit profielcurves (breedte, hoogte, onderkant, schouderlijn, dakhoogte en dakbreedte langs de lengte), de raamindeling met stijlen, en stijlkeuzes voor neus, achterkant, bumpers, spoiler, uitlaat, velgen en extra's.
 
 ## Stijl
 
@@ -47,4 +64,4 @@ De carrosserie heeft een hoekige doorsnede met scherpe vouwlijnen: de sideskirt-
 
 ## Met de hand bijwerken
 
-Je kunt het `.blend`-bestand openen en onderdelen aanpassen. Houd daarbij de objectnamen, custom properties en materiaalnamen aan. Exporteer daarna via *File → Export → glTF 2.0*, met *Include → Custom Properties* aan. Let op: als je het bouwscript daarna opnieuw draait, overschrijft het je handmatige wijzigingen.
+Je kunt het `.blend`-bestand openen en onderdelen aanpassen. Houd daarbij de objectnamen, custom properties en materiaalnamen aan. Exporteer daarna via *File → Export → glTF 2.0*, met *Include → Custom Properties* aan. Let op: als je `build_cars.py` daarna opnieuw draait, overschrijft het je handmatige wijzigingen.

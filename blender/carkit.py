@@ -190,11 +190,29 @@ class Curve:
         self.xs = [k[0] for k in keys]
         self.ys = [k[1] for k in keys]
         n = len(keys)
-        d = [(self.ys[i + 1] - self.ys[i]) / (self.xs[i + 1] - self.xs[i]) for i in range(n - 1)]
-        m = [d[0]] + [0.0] * (n - 2) + [d[-1]]
+        h = [self.xs[i + 1] - self.xs[i] for i in range(n - 1)]
+        d = [(self.ys[i + 1] - self.ys[i]) / h[i] for i in range(n - 1)]
+        # PCHIP (Fritsch-Butland): weighted harmonic mean of the neighbouring slopes, so the
+        # curve never overshoots, even next to a steep drop.
+        m = [0.0] * n
         for i in range(1, n - 1):
-            m[i] = 0.0 if d[i - 1] * d[i] <= 0 else (d[i - 1] + d[i]) / 2
+            if d[i - 1] * d[i] <= 0:
+                m[i] = 0.0
+            else:
+                w1, w2 = 2 * h[i] + h[i - 1], h[i] + 2 * h[i - 1]
+                m[i] = (w1 + w2) / (w1 / d[i - 1] + w2 / d[i])
+        m[0] = d[0] if n == 2 else self._end_slope(h[0], h[1], d[0], d[1])
+        m[-1] = d[-1] if n == 2 else self._end_slope(h[-1], h[-2], d[-1], d[-2])
         self.m = m
+
+    @staticmethod
+    def _end_slope(h0, h1, d0, d1):
+        m = ((2 * h0 + h1) * d0 - h0 * d1) / (h0 + h1)
+        if m * d0 <= 0:
+            return 0.0
+        if d0 * d1 <= 0 and abs(m) > abs(3 * d0):
+            return 3 * d0
+        return m
 
     def __call__(self, x):
         xs, ys, m = self.xs, self.ys, self.m
