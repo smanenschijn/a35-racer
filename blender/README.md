@@ -18,11 +18,17 @@ Dat levert:
 | `public/models/rx7.glb` | Het model dat de game laadt |
 | `assets/renders/rx7_*.png` | Voorbeeldrenders (voor, achter, zij) |
 
+## Stijl
+
+De carrosserie heeft een hoekige doorsnede met scherpe vouwlijnen: de sideskirt-rand, de schouderlijn en de rand van de motorkap of achterklep. Die vouwen zijn als *sharp* gemarkeerd, zodat ze in de game strak oplichten. Daarbovenop liggen paneelnaden, spatbordranden, een interieur achter getint glas en gedetailleerde wielen.
+
 ## Opbouw van een auto
 
 - **Carrosserie:** één gladde loft die in panelen is geknipt: `nose`, `hood`, `fender_L/R`, `door_L/R`, `quarter_L/R`, `deck_lid`, `tail`, `tub` en `underbody`.
 - **Cabine:** `cabin_glass`, `cabin_roof` en `cabin_seal`.
-- **Losse details:** klapkoplampen, lampen, grille, spoiler, spiegels, sideskirts, kentekenplaten, uitlaten en wielkastvoeringen.
+- **Losse details:** klapkoplampen met ronde lampen, grille met lamellen, mistlampen, remkoeling, splitter, ventilatieroosters, ruitenwissers, spoiler met vleugelprofiel en derde remlicht, spiegels, sideskirts, tankdop, antenne, achterlichten met chromen ringen, diffuser met vinnen, uitlaten en kentekenplaten met houders.
+- **Paneelnaden:** `gap_*`, donkere stroken op de carrosserie.
+- **Interieur:** dashboard, stuur, kuipstoelen, middenconsole en hoedenplank.
 - **Wielen:** per wiel een `hub_XX` (stuurt), met daaronder `wheel_XX` (draait: band, velg, remschijf) en `caliper_XX` (draait niet mee).
 
 ## Afspraken met de game
@@ -37,7 +43,7 @@ Dat levert:
   - `Paint` krijgt per auto de juiste kleur.
   - `BrakeLight` en `HeadLight` worden door de game aangestuurd.
   - `Plate` krijgt de kentekentekst.
-  - De overige materialen (`Glass`, `Trim`, `Chrome`, `Tyre`, `Rim`, `Caliper`, `Indicator`) blijven zoals ze zijn.
+  - De overige materialen (`Glass`, `Trim`, `Chrome`, `Tyre`, `Rim`, `Caliper`, `Indicator`, `Reverse`, `Interior`, `Seat`) blijven zoals ze zijn.
 
 ## Met de hand bijwerken
 

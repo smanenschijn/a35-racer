@@ -404,3 +404,95 @@ def studio(target_height=0.6, cam_loc=(4.6, -5.4, 1.9), resolution=(1400, 800)):
     for o in (ground, sun_obj, fill_obj, cam_obj):
         o['preview_only'] = 1
     return cam_obj
+
+
+# ---------------------------------------------------------------------------
+# Angular modelling helpers
+# ---------------------------------------------------------------------------
+
+def densify(points, steps):
+    """Polyline through `points` with `steps[i]` subdivisions per segment (keeps the corners)."""
+    out = [points[0]]
+    for (a, b), n in zip(zip(points, points[1:]), steps):
+        for k in range(1, n + 1):
+            f = k / n
+            out.append(tuple(a[i] + (b[i] - a[i]) * f for i in range(len(a))))
+    return out
+
+
+def mark_sharp(obj, angle_deg=28):
+    """Mark edges sharper than `angle_deg` so creases render crisp (exported as split normals)."""
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    limit = math.radians(angle_deg)
+    for e in bm.edges:
+        if len(e.link_faces) == 2 and e.calc_face_angle(0) > limit:
+            e.smooth = False
+        elif len(e.link_faces) < 2:
+            e.smooth = False
+    bm.to_mesh(obj.data)
+    bm.free()
+    for p in obj.data.polygons:
+        p.use_smooth = True
+    return obj
+
+
+def extrude_yz(name, profile, x0, x1, mat, col=None, props=None, location=(0, 0, 0)):
+    """Extrude a closed (y, z) polygon along X from x0 to x1 (spoilers, splitters, sills)."""
+    n = len(profile)
+    verts = [(x0, y, z) for y, z in profile] + [(x1, y, z) for y, z in profile]
+    faces = [tuple(range(n))[::-1], tuple(range(n, 2 * n))]
+    for i in range(n):
+        j = (i + 1) % n
+        faces.append((i, j, n + j, n + i))
+    obj = mesh_object(name, verts, faces, [mat], col=col, props=props)
+    obj.location = location
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(obj.data)
+    bm.free()
+    return obj
+
+
+def arc_band(name, center_yz, radius, thick, a0, a1, x_in, x_out, mat, col=None, steps=18, props=None):
+    """A rectangular-section band following a circular arc in the YZ plane (wheel-arch flares)."""
+    cy, cz = center_yz
+    verts, faces = [], []
+    for k in range(steps + 1):
+        a = a0 + (a1 - a0) * k / steps
+        ca, sa = math.cos(a), math.sin(a)
+        for r, x in ((radius, x_in), (radius, x_out), (radius + thick, x_out), (radius + thick, x_in)):
+            verts.append((x, cy + ca * r, cz + sa * r))
+    for k in range(steps):
+        b, c = k * 4, (k + 1) * 4
+        for i in range(4):
+            j = (i + 1) % 4
+            faces.append((b + i, b + j, c + j, c + i))
+    faces.append((0, 1, 2, 3)[::-1])
+    faces.append(tuple(range(steps * 4, steps * 4 + 4)))
+    obj = mesh_object(name, verts, faces, [mat], col=col, props=props)
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(obj.data)
+    bm.free()
+    return mark_sharp(obj, 40)
+
+
+def torus_x(name, major, minor, location, mat, col=None, segments=32, ring=8, props=None):
+    """Torus around the X axis (steering wheel, lamp bezels after rotation)."""
+    profile = [(major + minor * math.cos(2 * math.pi * k / ring), minor * math.sin(2 * math.pi * k / ring))
+               for k in range(ring + 1)]
+    bm = lathe(profile, segments)
+    return bm_object(name, bm, [mat], col=col, smooth=True, props=props, location=location)
+
+
+def set_transparent(mat, alpha):
+    bsdf = next(n for n in mat.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    bsdf.inputs['Alpha'].default_value = alpha
+    for attr, value in (('surface_render_method', 'BLENDED'), ('blend_method', 'BLEND')):
+        try:
+            setattr(mat, attr, value)
+        except Exception:
+            pass
