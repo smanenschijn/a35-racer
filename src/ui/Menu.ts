@@ -1,12 +1,12 @@
 import { CARS, RIVALS, type CarSpec } from '../config';
-import type { Controls } from '../core/Input';
+import { BIND_LABELS, keyName, type BindAction, type Controls, type Input } from '../core/Input';
 import { addScore, getScores, lastInitials, qualifies, rememberInitials, type Score } from '../core/Highscores';
 import { clearedStages, isUnlocked, lifetime, UNLOCKS } from '../core/Progress';
 import type { RaceResult } from '../game/Race';
 import type { Stage } from '../track/Track';
 
 export type MenuScreen =
-  | 'title' | 'main' | 'stages' | 'cars' | 'scores' | 'stats' | 'controls' | 'pause' | 'initials' | 'results';
+  | 'title' | 'main' | 'stages' | 'cars' | 'scores' | 'stats' | 'controls' | 'keys' | 'pause' | 'initials' | 'results';
 
 export interface MenuActions {
   startStage: (index: number, campaign: boolean) => void;
@@ -57,8 +57,12 @@ export class Menu {
   private gamepad = false;
   private scoreStage = 5;
   private note = '';
+  /** When the current screen opened: a handbrake tap at the finish mustn't click the result away. */
+  private openedAt = 0;
+  /** Rebinding: the action waiting for a key press. */
+  private capturing: BindAction | null = null;
 
-  constructor(private a: MenuActions, private stages: Stage[]) {
+  constructor(private a: MenuActions, private stages: Stage[], private input: Input) {
     this.root.className = 'menu';
     document.body.appendChild(this.root);
     this.root.addEventListener('click', (e) => {
@@ -86,8 +90,12 @@ export class Menu {
   }
 
   open(screen: MenuScreen): void {
+    if (this.capturing) this.input.cancelRebind();
+    this.capturing = null;
     this.screen = screen;
     this.index = 0;
+    this.note = '';
+    this.openedAt = performance.now();
     if (screen === 'cars') {
       this.carIndex = CAR_ORDER.indexOf(this.playerCar);
       this.a.previewCar(CAR_ORDER[this.carIndex]);
@@ -138,12 +146,30 @@ export class Menu {
         return ch(-1);
       case 'letter-next':
         return this.nextLetter();
+      case 'key-cancel':
+        this.input.cancelRebind();
+        this.capturing = null;
+        return this.render();
       default:
         if (name.startsWith('slot-')) {
           this.initialPos = Number(name.slice(5));
           this.render();
         }
     }
+  }
+
+  private startRebind(action: BindAction): void {
+    const index = this.index;
+    this.capturing = action;
+    this.note = '';
+    this.render();
+    this.input.rebind(action, (ok) => {
+      this.capturing = null;
+      this.note = ok ? '' : 'Niet gewijzigd: geannuleerd, of die toets heeft al een vaste functie.';
+      this.render();
+      this.index = index;
+      this.move(0);
+    });
   }
 
   private stepCar(d: number): void {
@@ -176,6 +202,11 @@ export class Menu {
   handle(c: Controls): boolean {
     if (!this.screen) return false;
     const s = this.screen;
+    if (this.capturing) return true; // the next key press is being bound
+    // Space doubles as the handbrake: ignore confirms for a moment after a race ends.
+    if ((s === 'results' || s === 'initials') && performance.now() - this.openedAt < 900) {
+      c = { ...c, confirm: false, any: false, navRight: false };
+    }
     if (s === 'title') {
       if (c.confirm || c.any) this.open('main');
       return true;
@@ -208,6 +239,7 @@ export class Menu {
     }
     if (c.back || (c.pause && s === 'pause')) {
       if (s === 'pause') this.a.resume();
+      else if (s === 'keys') this.open('controls');
       else if (s !== 'main' && s !== 'results') this.open('main');
     }
     return true;
@@ -338,22 +370,48 @@ export class Menu {
           ${this.list([{ label: 'Terug', action: () => this.open('main') }])}`;
         break;
       }
-      case 'controls':
+      case 'controls': {
+        const k = (a: BindAction) => [...new Set(this.input.bindings[a].map(keyName))].join(' / ') || '—';
         this.root.innerHTML = `
           <div class="menu-title">Besturing</div>
           <div class="controls">
-            <div><b>↑ ↓ / W S</b> gas & rem</div><div><b>← → / A D</b> sturen</div>
-            <div><b>SPATIE</b> handrem (drift)</div><div><b>SHIFT</b> nitro</div>
-            <div><b>C</b> bullet time</div><div></div>
-            <div><b>Q / E</b> ram links / rechts</div><div><b>⌫ / F</b> terug op de weg</div>
-            <div><b>ESC / P</b> pauze</div><div><b>R</b> opnieuw</div>
+            <div><b>${k('throttle')} · ${k('brake')}</b> gas & rem</div><div><b>${k('left')} · ${k('right')}</b> sturen</div>
+            <div><b>${k('handbrake')}</b> handrem (drift)</div><div><b>${k('nitro')}</b> nitro</div>
+            <div><b>${k('ramLeft')} / ${k('ramRight')}</b> ram links / rechts</div><div><b>${k('bulletTime')}</b> bullet time</div>
+            <div><b>${k('lookBack')}</b> achterom kijken (vasthouden)</div><div><b>${k('reset')}</b> terug op de weg</div>
+            <div><b>ESC / P</b> pauze</div><div><b>R vasthouden</b> opnieuw</div>
             <div><b>N</b> volgend nummer</div><div><b>− / +</b> muziekvolume</div>
           </div>
-          <div class="tip">Gamepad: R2/L2 gas en rem, ✕ handrem, ○ nitro, L1/R1 rammen, linkerstick indrukken voor bullet time. Telefoon: knoppen op het scherm, liefst liggend.</div>
+          <div class="tip">Gamepad: R2/L2 gas en rem, ✕ handrem, ○ nitro, L1/R1 rammen, L3 of R3 bullet time, rechterstick naar beneden om achterom te kijken, △ terug op de weg, Select vasthouden om opnieuw te beginnen. Telefoon: knoppen op het scherm (liefst liggend); schuif met je duim tussen ◀ en ▶, de RAM-knop kiest zelf de kant, en AUTO GAS houdt het gas voor je ingedrukt.</div>
+          <div class="tip">Rammen: als Q of E geel oplicht, staat er iemand binnen bereik. Gele pijlen aan de rand van het scherm: er rijdt een rivaal naast je.</div>
           <div class="tip">Slipstream: blijf even vlak achter een auto hangen en stuur er dan uit voor een slingshot. Achteropgeraakt na een crash? Het veld wacht een beetje op je.</div>
           <div class="tip">Op de N35 rijdt het tegenverkeer naast je: inhalen kan, maar kijk uit. Haal de checkpoints op tijd en eindig bij de eerste drie.</div>
-          ${this.list([{ label: 'Terug', action: () => this.open('main') }])}`;
+          ${this.list([
+            { label: 'Toetsen instellen', action: () => this.open('keys') },
+            { label: 'Terug', action: () => this.open('main') },
+          ])}`;
         break;
+      }
+      case 'keys': {
+        const actions = Object.keys(BIND_LABELS) as BindAction[];
+        const items = actions.map((a) => ({
+          label: `${BIND_LABELS[a]} <span class="key">${this.capturing === a ? 'druk op een toets…' : [...new Set(this.input.bindings[a].map(keyName))].join(' / ') || '—'}</span>`,
+          action: () => this.startRebind(a),
+        }));
+        items.push({ label: 'Standaard herstellen', action: () => {
+          this.input.resetBindings();
+          this.note = 'Standaardtoetsen hersteld.';
+          this.render();
+        } });
+        items.push({ label: 'Terug', action: () => this.open('controls') });
+        this.root.innerHTML = `
+          <div class="menu-title">Toetsen instellen</div>
+          ${this.list(items)}
+          <div class="hint">${this.capturing
+            ? `Druk op de nieuwe toets voor <b>${BIND_LABELS[this.capturing]}</b> · ESC annuleert <button type="button" data-act="key-cancel">Annuleren</button>`
+            : 'Kies een actie en druk op de nieuwe toets. ESC, P, R, M, N, T, ENTER, ⌫ en −/+ hebben een vaste functie.'}</div>`;
+        break;
+      }
       case 'pause':
         this.root.innerHTML = `<div class="big-title">PAUZE</div>
           ${this.list([

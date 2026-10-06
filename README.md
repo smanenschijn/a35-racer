@@ -24,15 +24,19 @@ Kaartdata © [OpenStreetMap](https://www.openstreetmap.org/copyright)-bijdragers
 | Sturen | ← → of A D | linkerstick |
 | Handrem | Spatie | ✕ / A |
 | Nitro | Shift | ○ / B |
-| Bullet time (slow-motion) | C | linkerstick indrukken (L3) |
-| Ram links / rechts | Q / E | L1 / R1 |
-| Terug op de weg | Backspace of F (of de ↺-knop) | △ / Y |
-| Herstart | R | Select |
+| Bullet time (slow-motion) | C | L3 of R3 (stick indrukken) |
+| Ram links / rechts | Q / E (licht geel op als er iemand binnen bereik is) | L1 / R1 |
+| Achterom kijken | V (vasthouden) | rechterstick naar beneden |
+| Terug op de weg | F (of de ↺-knop; gaat ook vanzelf als je vastzit) | △ / Y |
+| Herstart | R vasthouden | Select vasthouden |
 | Pauze | Esc / P | Start |
 | Geluid aan/uit | M | |
 | Volgend nummer | N | ▢ / X |
 | Muziekvolume | − / + | |
 | Tuningpaneel | T | |
+
+De rijtoetsen zijn te wijzigen via *Besturing → Toetsen instellen* (bewaard in de browser).
+Op een telefoon kun je met je duim tussen ◀ en ▶ schuiven, kiest de RAM-knop zelf de kant en houdt AUTO GAS het gas voor je ingedrukt.
 
 ## Ontwikkelen
 

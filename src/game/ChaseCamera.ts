@@ -10,6 +10,9 @@ export class ChaseCamera {
   private yaw = 0;
   private shake = 0;
   private initialized = false;
+  /** Held by the player: look over the rear bumper. */
+  lookBack = false;
+  private wasLookingBack = false;
 
   constructor(aspect: number) {
     this.camera = new THREE.PerspectiveCamera(tuning.camFov, aspect, 0.3, 2800) // fog ends at 2600;
@@ -38,11 +41,20 @@ export class ChaseCamera {
     const speedT = Math.min(1, speed / 70);
     const dist = tuning.camDistance + speedT * 1.4;
     const height = tuning.camHeight + speedT * 0.3;
-    const fx = Math.sin(this.yaw);
-    const fz = Math.cos(this.yaw);
-    const target = new THREE.Vector3(v.x - fx * dist, v.y + height, v.z - fz * dist);
+    // Looking back: the same rig turned around, a little closer so the car stays out of the way.
+    const back = this.lookBack;
+    const camYaw = back ? v.heading + Math.PI : this.yaw;
+    const fx = Math.sin(camYaw);
+    const fz = Math.cos(camYaw);
+    const camDist = back ? dist * 0.8 : dist;
+    const target = new THREE.Vector3(v.x - fx * camDist, v.y + height, v.z - fz * camDist);
     const lookTarget = new THREE.Vector3(v.x + fx * 6, v.y + 1.1, v.z + fz * 6);
 
+    // Cut, don't swing, when switching between forward and backward views.
+    if (back !== this.wasLookingBack) {
+      this.wasLookingBack = back;
+      this.initialized = false;
+    }
     if (!this.initialized) {
       this.pos.copy(target);
       this.look.copy(lookTarget);

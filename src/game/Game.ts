@@ -101,6 +101,7 @@ export class Game {
       announcer: this.announcer,
       cam: this.cam,
       rumble: (s, w, ms) => this.input.rumble(s, w, ms),
+      keyLabel: (a) => this.input.label(a),
     });
     this.debug = new DebugPanel(() => this.race.reset());
     this.music.onTrack = (t) => this.hud.showNowPlaying(t.title);
@@ -141,7 +142,7 @@ export class Game {
         this.previewId = id;
       },
       sound: () => this.toggleSound(),
-    }, this.track.features.stages);
+    }, this.track.features.stages, this.input);
     this.race.onFinished = (r) => {
       const stageId = this.track.features.stages[r.stage].id;
       const unlocked = recordRace(stageId, r.position, r.qualified, r.takedowns, r.stats);
@@ -307,6 +308,7 @@ export class Game {
     this.time += realDt;
 
     this.adaptResolution(realDt);
+    this.input.vehicleSpeed = this.race.player.speed;
     const controls = this.input.poll(realDt);
     if (controls.any) this.audio.start();
     if (controls.debug) this.debug.toggle();

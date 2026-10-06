@@ -124,11 +124,12 @@ Voorbeelden van taunts: *"Gas geaven!"*, *"Kump wal goed!"*, *"Wat mot dat noe?"
 | Handrem (drift) | Spatie | ✕ / A |
 | Nitro | Shift | ○ / B |
 | Ram links / rechts | Q / E | L1 / R1 |
+| Achterom kijken | V | Rechterstick omlaag |
 | Pauze | Esc | Options / Start |
 
 - **Touch (mobiel):** knoppen op het scherm voor sturen, gas/rem, nitro en ram. Kantelbesturing is optioneel.
 - **Gamepad:** trillen waar de browser dat ondersteunt.
-- **Camera:** alleen een chase cam achter de auto. Die schudt bij botsingen, en het beeldveld wordt breder bij nitro.
+- **Camera:** een chase cam achter de auto, met een knop om achterom te kijken. Die schudt bij botsingen, en het beeldveld wordt breder bij nitro.
 
 ## 5. Presentatie
 
@@ -232,6 +233,23 @@ Opgenomen geluidssamples (in plaats van synthese) en echte stemopnames voor de o
 - [x] Sterkere rubberbanding (een weggereden veld wacht, de speler krijgt wat extra vermogen als hij ver achter ligt), slipstream met slingshot, een ↺-knop en hint om weer recht op de weg te komen
 
 Tussen de etappes zit een uitslagscherm met "Volgende etappe". Een echt naadloze overgang, waarbij je doorrijdt zonder laadmoment, is nog open.
+
+### Besturing en balans na de speelreview *(oktober 2026)*
+
+- [x] Sturen met toetsenbord en touch: zachter en minder ver bij hoge snelheid, sneller terug naar het midden; touch heeft nu dezelfde smoothing
+- [x] Herstarten alleen door R / Select vast te houden; Backspace is geen reset meer; bevestigen is even geblokkeerd na de finish (handrem = spatie)
+- [x] Toetsen herbindbaar in het menu
+- [x] Achterom kijken (V / rechterstick), ram-indicator die oplicht bij een doelwit, pijlen bij rivalen naast je
+- [x] Gamepad: bullet time ook op R3
+- [x] Touch: duim schuift tussen ◀ en ▶, één RAM-knop die zelf de kant kiest, AUTO GAS
+- [x] Drift-economie: handrem minder abrupt, drift geeft minder gratis snelheid en vult nitro pas na een volgehouden drift
+- [x] Rubberbanding milder (een weggereden speler wordt niet meer zo hard ingehaald door wachtende rivalen)
+- [x] Total loss kost je nitro; speler iets kwetsbaarder
+- [x] Politie: rivalen rammen geeft geen heat meer, een takedown weinig; bekeuring 3 s per ster
+- [x] Ruimere checkpointtijd en één "laatste kans" per race (+12 s tijd, 10 s straf)
+- [x] Bullet time vertraagt de checkpointklok niet meer
+- [x] Automatisch terug op de weg als je vastzit; reset met 80 km/u
+- [x] Hints op het moment dat een knop nuttig wordt (rammen, nitro, bullet time, achterom kijken)
 
 ## 9. Open punten en aannames
 
