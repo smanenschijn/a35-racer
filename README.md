@@ -5,15 +5,14 @@ Zie [docs/GDD.md](docs/GDD.md) voor het volledige game design.
 
 **Speel:** https://smanenschijn.github.io/a35-racer/
 
-## Status: mijlpaal 2 (verkeer, politie en muziek)
+## Status: mijlpaal 3 (de echte route met landmarks)
 
-Grey-box stuk A35 (Hengelo-Zuid → Enschede) met:
+- De echte A35 van Hengelo naar Enschede uit OpenStreetMap, met bruggen, viaducten, het Twentekanaal en de echte afritten
+- Landmarks gebouwd in Blender: Metropool, Universiteit Twente, Grolsj Veste, Grolsj-brouwerij, Thuisbesteld-hoofdkantoor en een binnenvaartschip
+- 8 coureurs in gedetailleerde Blender-auto's, verkeer, tegenliggers, politie met wanted level, flitspalen en wegblokkades
+- Muziekspeler (zie [docs/muziek.md](docs/muziek.md))
 
-- 8 coureurs: jij en 7 tegenstanders met eigen rijstijl en scheldteksten
-- Verkeer in jouw richting dat je kunt beuken en als wapen kunt gebruiken, plus tegenliggers op de andere rijbaan
-- Politie: wanted level door chaos en flitspalen, achtervolging, wegblokkades vanaf 3 sterren, boete als je wordt klemgezet
-- Semi-arcade handling, rammen (Q/E), schade per zone, takedowns, nitro
-- Muziekspeler (de nummers zelf komen nog, zie [docs/muziek.md](docs/muziek.md))
+Kaartdata © [OpenStreetMap](https://www.openstreetmap.org/copyright)-bijdragers (ODbL). De route opnieuw opbouwen: `python3 tools/osm/build_route.py`.
 
 ## Besturing
 

@@ -1,0 +1,4974 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-10-05T20:47:51Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "way",
+  "id": 6652624,
+  "bounds": {
+    "minlat": 52.1992574,
+    "minlon": 6.8908801,
+    "maxlat": 52.1993082,
+    "maxlon": 6.8910544
+  },
+  "geometry": [
+    { "lat": 52.1992574, "lon": 6.8908801 },
+    { "lat": 52.1993082, "lon": 6.8910544 }
+  ],
+  "tags": {
+    "bicycle": "no",
+    "carriageway_ref": "a",
+    "foot": "no",
+    "highway": "motorway_link",
+    "junction": "intersection",
+    "maxspeed": "50",
+    "maxspeed:type": "sign",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Gemeente Enschede",
+    "ref": "N35",
+    "surface": "asphalt",
+    "zone:traffic": "NL:urban"
+  }
+},
+{
+  "type": "way",
+  "id": 6656117,
+  "bounds": {
+    "minlat": 52.2093808,
+    "minlon": 6.8119317,
+    "maxlat": 52.2107633,
+    "maxlon": 6.8155379
+  },
+  "geometry": [
+    { "lat": 52.2093808, "lon": 6.8155379 },
+    { "lat": 52.2097337, "lon": 6.8145378 },
+    { "lat": 52.2101046, "lon": 6.8135541 },
+    { "lat": 52.2103927, "lon": 6.8128291 },
+    { "lat": 52.2107633, "lon": 6.8119317 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|merge_to_left"
+  }
+},
+{
+  "type": "way",
+  "id": 6656575,
+  "bounds": {
+    "minlat": 52.2185941,
+    "minlon": 6.7717698,
+    "maxlat": 52.2330775,
+    "maxlon": 6.7991378
+  },
+  "geometry": [
+    { "lat": 52.2330775, "lon": 6.7717698 },
+    { "lat": 52.2322782, "lon": 6.7738215 },
+    { "lat": 52.2307306, "lon": 6.7781604 },
+    { "lat": 52.2301178, "lon": 6.7799193 },
+    { "lat": 52.2296612, "lon": 6.7811680 },
+    { "lat": 52.2290658, "lon": 6.7827166 },
+    { "lat": 52.2285400, "lon": 6.7840128 },
+    { "lat": 52.2279957, "lon": 6.7852960 },
+    { "lat": 52.2274062, "lon": 6.7865537 },
+    { "lat": 52.2268724, "lon": 6.7876147 },
+    { "lat": 52.2263710, "lon": 6.7885435 },
+    { "lat": 52.2259875, "lon": 6.7892055 },
+    { "lat": 52.2254209, "lon": 6.7901329 },
+    { "lat": 52.2248987, "lon": 6.7909526 },
+    { "lat": 52.2245338, "lon": 6.7914608 },
+    { "lat": 52.2240038, "lon": 6.7922184 },
+    { "lat": 52.2232867, "lon": 6.7931765 },
+    { "lat": 52.2205275, "lon": 6.7966749 },
+    { "lat": 52.2185941, "lon": 6.7991378 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6669949,
+  "bounds": {
+    "minlat": 52.2330775,
+    "minlon": 6.7683012,
+    "maxlat": 52.2346148,
+    "maxlon": 6.7717698
+  },
+  "geometry": [
+    { "lat": 52.2346148, "lon": 6.7683012 },
+    { "lat": 52.2341867, "lon": 6.7691938 },
+    { "lat": 52.2338420, "lon": 6.7699522 },
+    { "lat": 52.2334663, "lon": 6.7708218 },
+    { "lat": 52.2330775, "lon": 6.7717698 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|merge_to_left"
+  }
+},
+{
+  "type": "way",
+  "id": 6669951,
+  "bounds": {
+    "minlat": 52.2187034,
+    "minlon": 6.7710050,
+    "maxlat": 52.2335942,
+    "maxlon": 6.7993687
+  },
+  "geometry": [
+    { "lat": 52.2187034, "lon": 6.7993687 },
+    { "lat": 52.2194141, "lon": 6.7984521 },
+    { "lat": 52.2214688, "lon": 6.7958425 },
+    { "lat": 52.2234381, "lon": 6.7933345 },
+    { "lat": 52.2242423, "lon": 6.7922631 },
+    { "lat": 52.2247399, "lon": 6.7915558 },
+    { "lat": 52.2252564, "lon": 6.7907899 },
+    { "lat": 52.2256801, "lon": 6.7901290 },
+    { "lat": 52.2260698, "lon": 6.7894774 },
+    { "lat": 52.2267395, "lon": 6.7882914 },
+    { "lat": 52.2271538, "lon": 6.7875070 },
+    { "lat": 52.2276835, "lon": 6.7864353 },
+    { "lat": 52.2281659, "lon": 6.7853760 },
+    { "lat": 52.2286653, "lon": 6.7842179 },
+    { "lat": 52.2291287, "lon": 6.7830721 },
+    { "lat": 52.2296773, "lon": 6.7816515 },
+    { "lat": 52.2305852, "lon": 6.7791561 },
+    { "lat": 52.2311773, "lon": 6.7774729 },
+    { "lat": 52.2319093, "lon": 6.7753852 },
+    { "lat": 52.2324484, "lon": 6.7739244 },
+    { "lat": 52.2330234, "lon": 6.7724142 },
+    { "lat": 52.2335942, "lon": 6.7710050 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "120 @ (19:00-06:00)",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672412,
+  "bounds": {
+    "minlat": 52.2392400,
+    "minlon": 6.7631387,
+    "maxlat": 52.2393201,
+    "maxlon": 6.7634100
+  },
+  "geometry": [
+    { "lat": 52.2392400, "lon": 6.7634100 },
+    { "lat": 52.2393201, "lon": 6.7631387 }
+  ],
+  "tags": {
+    "bicycle": "use_sidepath",
+    "foot": "use_sidepath",
+    "highway": "motorway_link",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "mofa": "use_sidepath",
+    "moped": "use_sidepath",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Provincie Overijssel",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672418,
+  "bounds": {
+    "minlat": 52.2371825,
+    "minlon": 6.7617688,
+    "maxlat": 52.2372775,
+    "maxlon": 6.7620880
+  },
+  "geometry": [
+    { "lat": 52.2372775, "lon": 6.7617688 },
+    { "lat": 52.2371825, "lon": 6.7620880 }
+  ],
+  "tags": {
+    "bicycle": "use_sidepath",
+    "foot": "use_sidepath",
+    "highway": "motorway_link",
+    "lanes": "2",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "mofa": "use_sidepath",
+    "moped": "use_sidepath",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Provincie Overijssel",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672436,
+  "bounds": {
+    "minlat": 52.2456634,
+    "minlon": 6.7542687,
+    "maxlat": 52.2504446,
+    "maxlon": 6.7561450
+  },
+  "geometry": [
+    { "lat": 52.2504446, "lon": 6.7542687 },
+    { "lat": 52.2496836, "lon": 6.7545459 },
+    { "lat": 52.2487777, "lon": 6.7548461 },
+    { "lat": 52.2473873, "lon": 6.7553688 },
+    { "lat": 52.2464530, "lon": 6.7557763 },
+    { "lat": 52.2456634, "lon": 6.7561450 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672438,
+  "bounds": {
+    "minlat": 52.2393996,
+    "minlon": 6.7601327,
+    "maxlat": 52.2410232,
+    "maxlon": 6.7628724
+  },
+  "geometry": [
+    { "lat": 52.2393996, "lon": 6.7628724 },
+    { "lat": 52.2395380, "lon": 6.7624093 },
+    { "lat": 52.2397839, "lon": 6.7617854 },
+    { "lat": 52.2401100, "lon": 6.7612300 },
+    { "lat": 52.2403985, "lon": 6.7608404 },
+    { "lat": 52.2410232, "lon": 6.7601327 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "destination": "Amsterdam;Almelo;Oldenzaal",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "2",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672439,
+  "bounds": {
+    "minlat": 52.2385943,
+    "minlon": 6.7593856,
+    "maxlat": 52.2413881,
+    "maxlon": 6.7623577
+  },
+  "geometry": [
+    { "lat": 52.2385943, "lon": 6.7623577 },
+    { "lat": 52.2389720, "lon": 6.7619092 },
+    { "lat": 52.2393121, "lon": 6.7615085 },
+    { "lat": 52.2402277, "lon": 6.7605109 },
+    { "lat": 52.2408497, "lon": 6.7598844 },
+    { "lat": 52.2413881, "lon": 6.7593856 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672440,
+  "bounds": {
+    "minlat": 52.2384044,
+    "minlon": 6.7590443,
+    "maxlat": 52.2411844,
+    "maxlon": 6.7606239
+  },
+  "geometry": [
+    { "lat": 52.2411844, "lon": 6.7590443 },
+    { "lat": 52.2407911, "lon": 6.7593494 },
+    { "lat": 52.2400086, "lon": 6.7599294 },
+    { "lat": 52.2395804, "lon": 6.7602261 },
+    { "lat": 52.2393476, "lon": 6.7603548 },
+    { "lat": 52.2391000, "lon": 6.7604567 },
+    { "lat": 52.2388713, "lon": 6.7605246 },
+    { "lat": 52.2384044, "lon": 6.7606239 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "2",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672441,
+  "bounds": {
+    "minlat": 52.2384102,
+    "minlon": 6.7584427,
+    "maxlat": 52.2421139,
+    "maxlon": 6.7622367
+  },
+  "geometry": [
+    { "lat": 52.2421139, "lon": 6.7584427 },
+    { "lat": 52.2411093, "lon": 6.7593130 },
+    { "lat": 52.2400659, "lon": 6.7603350 },
+    { "lat": 52.2391103, "lon": 6.7613982 },
+    { "lat": 52.2384102, "lon": 6.7622367 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "destination": "Münster;Enschede",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672443,
+  "bounds": {
+    "minlat": 52.2351907,
+    "minlon": 6.7647136,
+    "maxlat": 52.2383694,
+    "maxlon": 6.7678038
+  },
+  "geometry": [
+    { "lat": 52.2351907, "lon": 6.7678038 },
+    { "lat": 52.2358256, "lon": 6.7667550 },
+    { "lat": 52.2361082, "lon": 6.7663002 },
+    { "lat": 52.2362432, "lon": 6.7661027 },
+    { "lat": 52.2364578, "lon": 6.7658479 },
+    { "lat": 52.2366271, "lon": 6.7656631 },
+    { "lat": 52.2368722, "lon": 6.7654401 },
+    { "lat": 52.2371816, "lon": 6.7652139 },
+    { "lat": 52.2375769, "lon": 6.7649854 },
+    { "lat": 52.2381178, "lon": 6.7647908 },
+    { "lat": 52.2383694, "lon": 6.7647136 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "destination": "Hengelo-Zuid",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "1",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672445,
+  "bounds": {
+    "minlat": 52.2381230,
+    "minlon": 6.7623577,
+    "maxlat": 52.2385943,
+    "maxlon": 6.7629566
+  },
+  "geometry": [
+    { "lat": 52.2381230, "lon": 6.7629566 },
+    { "lat": 52.2385943, "lon": 6.7623577 }
+  ],
+  "tags": {
+    "bridge": "yes",
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "2",
+    "layer": "1",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672446,
+  "bounds": {
+    "minlat": 52.2379467,
+    "minlon": 6.7622367,
+    "maxlat": 52.2384102,
+    "maxlon": 6.7628368
+  },
+  "geometry": [
+    { "lat": 52.2384102, "lon": 6.7622367 },
+    { "lat": 52.2379467, "lon": 6.7628368 }
+  ],
+  "tags": {
+    "bridge": "yes",
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "2",
+    "layer": "1",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672447,
+  "bounds": {
+    "minlat": 52.2348641,
+    "minlon": 6.7629566,
+    "maxlat": 52.2381230,
+    "maxlon": 6.7682397
+  },
+  "geometry": [
+    { "lat": 52.2348641, "lon": 6.7682397 },
+    { "lat": 52.2350648, "lon": 6.7678435 },
+    { "lat": 52.2355839, "lon": 6.7668889 },
+    { "lat": 52.2361013, "lon": 6.7659627 },
+    { "lat": 52.2365874, "lon": 6.7651720 },
+    { "lat": 52.2374839, "lon": 6.7638280 },
+    { "lat": 52.2381230, "lon": 6.7629566 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "destination": "Amsterdam;Almelo;Oldenzaal",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672448,
+  "bounds": {
+    "minlat": 52.2347469,
+    "minlon": 6.7628368,
+    "maxlat": 52.2379467,
+    "maxlon": 6.7680390
+  },
+  "geometry": [
+    { "lat": 52.2379467, "lon": 6.7628368 },
+    { "lat": 52.2375830, "lon": 6.7633249 },
+    { "lat": 52.2371546, "lon": 6.7639371 },
+    { "lat": 52.2366201, "lon": 6.7647355 },
+    { "lat": 52.2361722, "lon": 6.7654554 },
+    { "lat": 52.2354008, "lon": 6.7667802 },
+    { "lat": 52.2350014, "lon": 6.7675339 },
+    { "lat": 52.2347469, "lon": 6.7680390 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672449,
+  "bounds": {
+    "minlat": 52.2367167,
+    "minlon": 6.7624638,
+    "maxlat": 52.2370823,
+    "maxlon": 6.7635921
+  },
+  "geometry": [
+    { "lat": 52.2370823, "lon": 6.7624638 },
+    { "lat": 52.2369851, "lon": 6.7628104 },
+    { "lat": 52.2368666, "lon": 6.7631938 },
+    { "lat": 52.2367167, "lon": 6.7635921 }
+  ],
+  "tags": {
+    "carriageway_ref": "b",
+    "destination": "Enschede;Münster",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "2",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672484,
+  "bounds": {
+    "minlat": 52.2436745,
+    "minlon": 6.7560382,
+    "maxlat": 52.2465029,
+    "maxlon": 6.7575980
+  },
+  "geometry": [
+    { "lat": 52.2436745, "lon": 6.7575980 },
+    { "lat": 52.2445001, "lon": 6.7570820 },
+    { "lat": 52.2454258, "lon": 6.7565571 },
+    { "lat": 52.2463740, "lon": 6.7560957 },
+    { "lat": 52.2465029, "lon": 6.7560382 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "change:lanes": "no|yes|yes",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|merge_to_left",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672565,
+  "bounds": {
+    "minlat": 52.2655609,
+    "minlon": 6.7494744,
+    "maxlat": 52.2657794,
+    "maxlon": 6.7494917
+  },
+  "geometry": [
+    { "lat": 52.2657794, "lon": 6.7494917 },
+    { "lat": 52.2655947, "lon": 6.7494744 },
+    { "lat": 52.2655609, "lon": 6.7494799 }
+  ],
+  "tags": {
+    "bicycle": "no",
+    "destination": "Enschede",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Provincie Overijssel",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672579,
+  "bounds": {
+    "minlat": 52.2657133,
+    "minlon": 6.7517968,
+    "maxlat": 52.2659428,
+    "maxlon": 6.7518009
+  },
+  "geometry": [
+    { "lat": 52.2657133, "lon": 6.7518009 },
+    { "lat": 52.2659122, "lon": 6.7518005 },
+    { "lat": 52.2659428, "lon": 6.7517968 }
+  ],
+  "tags": {
+    "bicycle": "no",
+    "destination": "Borne;Oldenzaal;Almelo;Amsterdam",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Provincie Overijssel",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672580,
+  "bounds": {
+    "minlat": 52.2616475,
+    "minlon": 6.7509139,
+    "maxlat": 52.2654411,
+    "maxlon": 6.7516066
+  },
+  "geometry": [
+    { "lat": 52.2616475, "lon": 6.7516066 },
+    { "lat": 52.2627634, "lon": 6.7513942 },
+    { "lat": 52.2654411, "lon": 6.7509139 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "destination": "Hengelo;Oldenzaal;Almelo;Amsterdam",
+    "destination:int_ref": "E30",
+    "destination:ref": "A35",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672583,
+  "bounds": {
+    "minlat": 52.2629653,
+    "minlon": 6.7506448,
+    "maxlat": 52.2654248,
+    "maxlon": 6.7510843
+  },
+  "geometry": [
+    { "lat": 52.2654248, "lon": 6.7506448 },
+    { "lat": 52.2629653, "lon": 6.7510843 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "120 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672586,
+  "bounds": {
+    "minlat": 52.2609730,
+    "minlon": 6.7513888,
+    "maxlat": 52.2613522,
+    "maxlon": 6.7514666
+  },
+  "geometry": [
+    { "lat": 52.2613522, "lon": 6.7513888 },
+    { "lat": 52.2609730, "lon": 6.7514666 }
+  ],
+  "tags": {
+    "bridge": "yes",
+    "carriageway_ref": "Re",
+    "change:lanes": "no|not_right|no",
+    "highway": "motorway",
+    "lanes": "3",
+    "layer": "1",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672588,
+  "bounds": {
+    "minlat": 52.2609767,
+    "minlon": 6.7516605,
+    "maxlat": 52.2613603,
+    "maxlon": 6.7517375
+  },
+  "geometry": [
+    { "lat": 52.2609767, "lon": 6.7517375 },
+    { "lat": 52.2613603, "lon": 6.7516605 }
+  ],
+  "tags": {
+    "bridge": "yes",
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "3",
+    "layer": "1",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|slight_right"
+  }
+},
+{
+  "type": "way",
+  "id": 6672590,
+  "bounds": {
+    "minlat": 52.2606386,
+    "minlon": 6.7514666,
+    "maxlat": 52.2609730,
+    "maxlon": 6.7515402
+  },
+  "geometry": [
+    { "lat": 52.2609730, "lon": 6.7514666 },
+    { "lat": 52.2606386, "lon": 6.7515402 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "change:lanes": "no|not_right|no",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672591,
+  "bounds": {
+    "minlat": 52.2516396,
+    "minlon": 6.7520899,
+    "maxlat": 52.2593614,
+    "maxlon": 6.7541766
+  },
+  "geometry": [
+    { "lat": 52.2516396, "lon": 6.7541766 },
+    { "lat": 52.2529130, "lon": 6.7537938 },
+    { "lat": 52.2540730, "lon": 6.7534483 },
+    { "lat": 52.2554755, "lon": 6.7530583 },
+    { "lat": 52.2571225, "lon": 6.7526335 },
+    { "lat": 52.2593614, "lon": 6.7520899 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672601,
+  "bounds": {
+    "minlat": 52.2613603,
+    "minlon": 6.7516066,
+    "maxlat": 52.2616475,
+    "maxlon": 6.7516605
+  },
+  "geometry": [
+    { "lat": 52.2613603, "lon": 6.7516605 },
+    { "lat": 52.2616475, "lon": 6.7516066 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|slight_right"
+  }
+},
+{
+  "type": "way",
+  "id": 6672603,
+  "bounds": {
+    "minlat": 52.2654123,
+    "minlon": 6.7494799,
+    "maxlat": 52.2655609,
+    "maxlon": 6.7495033
+  },
+  "geometry": [
+    { "lat": 52.2655609, "lon": 6.7494799 },
+    { "lat": 52.2654364, "lon": 6.7495006 },
+    { "lat": 52.2654123, "lon": 6.7495033 }
+  ],
+  "tags": {
+    "carriageway_ref": "b",
+    "destination": "Enschede;Münster",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672604,
+  "bounds": {
+    "minlat": 52.2621024,
+    "minlon": 6.7516419,
+    "maxlat": 52.2637444,
+    "maxlon": 6.7519114
+  },
+  "geometry": [
+    { "lat": 52.2621024, "lon": 6.7516561 },
+    { "lat": 52.2624591, "lon": 6.7516419 },
+    { "lat": 52.2628190, "lon": 6.7516504 },
+    { "lat": 52.2630700, "lon": 6.7516900 },
+    { "lat": 52.2637444, "lon": 6.7519114 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672606,
+  "bounds": {
+    "minlat": 52.2656236,
+    "minlon": 6.7518009,
+    "maxlat": 52.2657133,
+    "maxlon": 6.7518130
+  },
+  "geometry": [
+    { "lat": 52.2656236, "lon": 6.7518130 },
+    { "lat": 52.2656839, "lon": 6.7518046 },
+    { "lat": 52.2657133, "lon": 6.7518009 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "foot": "no",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "left",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672607,
+  "bounds": {
+    "minlat": 52.2654248,
+    "minlon": 6.7505390,
+    "maxlat": 52.2660427,
+    "maxlon": 6.7506448
+  },
+  "geometry": [
+    { "lat": 52.2660427, "lon": 6.7505390 },
+    { "lat": 52.2654248, "lon": 6.7506448 }
+  ],
+  "tags": {
+    "bridge": "yes",
+    "bridge:name": "Kamphorst",
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "2",
+    "layer": "1",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "120 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672608,
+  "bounds": {
+    "minlat": 52.2654411,
+    "minlon": 6.7508078,
+    "maxlat": 52.2660585,
+    "maxlon": 6.7509139
+  },
+  "geometry": [
+    { "lat": 52.2654411, "lon": 6.7509139 },
+    { "lat": 52.2660585, "lon": 6.7508078 }
+  ],
+  "tags": {
+    "bridge": "yes",
+    "bridge:name": "Kamphorst",
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "2",
+    "layer": "1",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672613,
+  "bounds": {
+    "minlat": 52.2675390,
+    "minlon": 6.7494337,
+    "maxlat": 52.2695827,
+    "maxlon": 6.7498005
+  },
+  "geometry": [
+    { "lat": 52.2695827, "lon": 6.7497492 },
+    { "lat": 52.2693424, "lon": 6.7497721 },
+    { "lat": 52.2690358, "lon": 6.7498005 },
+    { "lat": 52.2687171, "lon": 6.7497853 },
+    { "lat": 52.2684871, "lon": 6.7497535 },
+    { "lat": 52.2682882, "lon": 6.7497018 },
+    { "lat": 52.2678904, "lon": 6.7495604 },
+    { "lat": 52.2675390, "lon": 6.7494337 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "100",
+    "maxspeed:conditional": "120 @ (19:00-06:00)",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672614,
+  "bounds": {
+    "minlat": 52.2660427,
+    "minlon": 6.7497857,
+    "maxlat": 52.2701288,
+    "maxlon": 6.7505390
+  },
+  "geometry": [
+    { "lat": 52.2701288, "lon": 6.7497857 },
+    { "lat": 52.2660427, "lon": 6.7505390 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "destination": "Münster;Enschede;Hengelo-Zuid",
+    "destination:ref": "A35",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "120 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 6672615,
+  "bounds": {
+    "minlat": 52.2661457,
+    "minlon": 6.7503473,
+    "maxlat": 52.2693354,
+    "maxlon": 6.7517666
+  },
+  "geometry": [
+    { "lat": 52.2661457, "lon": 6.7517666 },
+    { "lat": 52.2666938, "lon": 6.7516732 },
+    { "lat": 52.2669400, "lon": 6.7516188 },
+    { "lat": 52.2671321, "lon": 6.7515382 },
+    { "lat": 52.2672888, "lon": 6.7514426 },
+    { "lat": 52.2674409, "lon": 6.7513368 },
+    { "lat": 52.2679119, "lon": 6.7509826 },
+    { "lat": 52.2681934, "lon": 6.7507927 },
+    { "lat": 52.2683634, "lon": 6.7506895 },
+    { "lat": 52.2686215, "lon": 6.7505723 },
+    { "lat": 52.2688461, "lon": 6.7504831 },
+    { "lat": 52.2693354, "lon": 6.7503473 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 6672618,
+  "bounds": {
+    "minlat": 52.2660585,
+    "minlon": 6.7500755,
+    "maxlat": 52.2700683,
+    "maxlon": 6.7508078
+  },
+  "geometry": [
+    { "lat": 52.2660585, "lon": 6.7508078 },
+    { "lat": 52.2700683, "lon": 6.7500755 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 45206505,
+  "bounds": {
+    "minlat": 52.2009559,
+    "minlon": 6.8384425,
+    "maxlat": 52.2040017,
+    "maxlon": 6.8801603
+  },
+  "geometry": [
+    { "lat": 52.2040017, "lon": 6.8384425 },
+    { "lat": 52.2037087, "lon": 6.8404570 },
+    { "lat": 52.2033872, "lon": 6.8429194 },
+    { "lat": 52.2031029, "lon": 6.8453687 },
+    { "lat": 52.2026141, "lon": 6.8501156 },
+    { "lat": 52.2024946, "lon": 6.8513372 },
+    { "lat": 52.2023712, "lon": 6.8527569 },
+    { "lat": 52.2022571, "lon": 6.8541163 },
+    { "lat": 52.2021705, "lon": 6.8551266 },
+    { "lat": 52.2019950, "lon": 6.8575894 },
+    { "lat": 52.2018276, "lon": 6.8601211 },
+    { "lat": 52.2017164, "lon": 6.8620027 },
+    { "lat": 52.2015360, "lon": 6.8657640 },
+    { "lat": 52.2014375, "lon": 6.8684594 },
+    { "lat": 52.2013392, "lon": 6.8715374 },
+    { "lat": 52.2012205, "lon": 6.8748845 },
+    { "lat": 52.2009983, "lon": 6.8794173 },
+    { "lat": 52.2009559, "lon": 6.8801603 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "shoulder": "right",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 45206507,
+  "bounds": {
+    "minlat": 52.2045539,
+    "minlon": 6.8324333,
+    "maxlat": 52.2051324,
+    "maxlon": 6.8356727
+  },
+  "geometry": [
+    { "lat": 52.2045539, "lon": 6.8356727 },
+    { "lat": 52.2047895, "lon": 6.8343165 },
+    { "lat": 52.2051324, "lon": 6.8324333 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "shoulder": "right",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 141976137,
+  "bounds": {
+    "minlat": 52.2009257,
+    "minlon": 6.8393607,
+    "maxlat": 52.2039805,
+    "maxlon": 6.8823993
+  },
+  "geometry": [
+    { "lat": 52.2009257, "lon": 6.8823993 },
+    { "lat": 52.2010170, "lon": 6.8809827 },
+    { "lat": 52.2011109, "lon": 6.8793938 },
+    { "lat": 52.2013340, "lon": 6.8749410 },
+    { "lat": 52.2014191, "lon": 6.8725939 },
+    { "lat": 52.2014816, "lon": 6.8706698 },
+    { "lat": 52.2015592, "lon": 6.8680694 },
+    { "lat": 52.2016950, "lon": 6.8645980 },
+    { "lat": 52.2018127, "lon": 6.8623082 },
+    { "lat": 52.2019385, "lon": 6.8601013 },
+    { "lat": 52.2020996, "lon": 6.8576127 },
+    { "lat": 52.2022808, "lon": 6.8551319 },
+    { "lat": 52.2023776, "lon": 6.8539632 },
+    { "lat": 52.2024711, "lon": 6.8528757 },
+    { "lat": 52.2025902, "lon": 6.8514869 },
+    { "lat": 52.2027061, "lon": 6.8502690 },
+    { "lat": 52.2029870, "lon": 6.8474972 },
+    { "lat": 52.2032369, "lon": 6.8451685 },
+    { "lat": 52.2035018, "lon": 6.8429233 },
+    { "lat": 52.2037668, "lon": 6.8408572 },
+    { "lat": 52.2039805, "lon": 6.8393607 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "shoulder": "right",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 141976140,
+  "bounds": {
+    "minlat": 52.2005276,
+    "minlon": 6.8826067,
+    "maxlat": 52.2007959,
+    "maxlon": 6.8862363
+  },
+  "geometry": [
+    { "lat": 52.2007959, "lon": 6.8826067 },
+    { "lat": 52.2006977, "lon": 6.8840490 },
+    { "lat": 52.2005943, "lon": 6.8854086 },
+    { "lat": 52.2005276, "lon": 6.8862363 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "destination": "Gronau;Enschede-Oost",
+    "destination:ref": "N35;B 54",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "merge_to_right|none",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 141976143,
+  "bounds": {
+    "minlat": 52.2006246,
+    "minlon": 6.8835839,
+    "maxlat": 52.2008288,
+    "maxlon": 6.8861529
+  },
+  "geometry": [
+    { "lat": 52.2006246, "lon": 6.8861529 },
+    { "lat": 52.2008288, "lon": 6.8835839 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "1",
+    "lit": "yes",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 141976147,
+  "bounds": {
+    "minlat": 52.1994098,
+    "minlon": 6.8836935,
+    "maxlat": 52.2006453,
+    "maxlon": 6.8882964
+  },
+  "geometry": [
+    { "lat": 52.2006453, "lon": 6.8836935 },
+    { "lat": 52.2005893, "lon": 6.8840687 },
+    { "lat": 52.2005308, "lon": 6.8843822 },
+    { "lat": 52.2004311, "lon": 6.8848024 },
+    { "lat": 52.2003126, "lon": 6.8851766 },
+    { "lat": 52.2001758, "lon": 6.8855404 },
+    { "lat": 52.1999782, "lon": 6.8859578 },
+    { "lat": 52.1997790, "lon": 6.8863835 },
+    { "lat": 52.1996607, "lon": 6.8866680 },
+    { "lat": 52.1995600, "lon": 6.8869900 },
+    { "lat": 52.1994986, "lon": 6.8872838 },
+    { "lat": 52.1994409, "lon": 6.8877306 },
+    { "lat": 52.1994098, "lon": 6.8882964 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "highway": "motorway_link",
+    "junction:ref": "25",
+    "lanes": "1",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "N35",
+    "surface": "asphalt",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 141976240,
+  "bounds": {
+    "minlat": 52.2081101,
+    "minlon": 6.8244342,
+    "maxlat": 52.2081982,
+    "maxlon": 6.8246985
+  },
+  "geometry": [
+    { "lat": 52.2081101, "lon": 6.8246985 },
+    { "lat": 52.2081982, "lon": 6.8244342 }
+  ],
+  "tags": {
+    "agricultural": "no",
+    "bicycle": "no",
+    "destination": "Hengelo;Almelo;Amsterdam",
+    "destination:ref": "A35",
+    "foot": "no",
+    "highway": "motorway_link",
+    "horse": "no",
+    "junction": "intersection",
+    "lanes": "2",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorroad": "yes",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement:end": "middle_of:2",
+    "placement:start": "right_of:2",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 141987000,
+  "bounds": {
+    "minlat": 52.2069164,
+    "minlon": 6.8155379,
+    "maxlat": 52.2093808,
+    "maxlon": 6.8242033
+  },
+  "geometry": [
+    { "lat": 52.2069164, "lon": 6.8242033 },
+    { "lat": 52.2071490, "lon": 6.8232513 },
+    { "lat": 52.2078322, "lon": 6.8206601 },
+    { "lat": 52.2082297, "lon": 6.8192302 },
+    { "lat": 52.2085798, "lon": 6.8180165 },
+    { "lat": 52.2090340, "lon": 6.8165588 },
+    { "lat": 52.2093808, "lon": 6.8155379 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "destination": "Amsterdam;Almelo;Hengelo",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "maxspeed:type": "sign",
+    "maxspeed:type:conditional": "NL:motorway @ (19:00-06:00)",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 141987011,
+  "bounds": {
+    "minlat": 52.2048096,
+    "minlon": 6.8309432,
+    "maxlat": 52.2053045,
+    "maxlon": 6.8335316
+  },
+  "geometry": [
+    { "lat": 52.2053045, "lon": 6.8309432 },
+    { "lat": 52.2048096, "lon": 6.8335316 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|merge_to_left"
+  }
+},
+{
+  "type": "way",
+  "id": 141987013,
+  "bounds": {
+    "minlat": 52.2057568,
+    "minlon": 6.8264106,
+    "maxlat": 52.2073873,
+    "maxlon": 6.8296841
+  },
+  "geometry": [
+    { "lat": 52.2057568, "lon": 6.8296841 },
+    { "lat": 52.2058320, "lon": 6.8294112 },
+    { "lat": 52.2059498, "lon": 6.8290128 },
+    { "lat": 52.2060945, "lon": 6.8285488 },
+    { "lat": 52.2062868, "lon": 6.8280807 },
+    { "lat": 52.2065457, "lon": 6.8275765 },
+    { "lat": 52.2067972, "lon": 6.8272117 },
+    { "lat": 52.2071336, "lon": 6.8267568 },
+    { "lat": 52.2072644, "lon": 6.8265868 },
+    { "lat": 52.2073873, "lon": 6.8264106 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "1",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 141987040,
+  "bounds": {
+    "minlat": 52.2081982,
+    "minlon": 6.8236745,
+    "maxlat": 52.2084925,
+    "maxlon": 6.8244342
+  },
+  "geometry": [
+    { "lat": 52.2081982, "lon": 6.8244342 },
+    { "lat": 52.2083153, "lon": 6.8241339 },
+    { "lat": 52.2084505, "lon": 6.8237894 },
+    { "lat": 52.2084925, "lon": 6.8236745 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "destination": "Hengelo;Almelo;Amsterdam",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "2",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorroad": "yes",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "middle_of:2",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 142275762,
+  "bounds": {
+    "minlat": 52.2504352,
+    "minlon": 6.7541766,
+    "maxlat": 52.2516396,
+    "maxlon": 6.7545648
+  },
+  "geometry": [
+    { "lat": 52.2504352, "lon": 6.7545648 },
+    { "lat": 52.2516396, "lon": 6.7541766 }
+  ],
+  "tags": {
+    "bridge": "yes",
+    "bridge:name": "Loofriet",
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "2",
+    "layer": "1",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 142275763,
+  "bounds": {
+    "minlat": 52.2504446,
+    "minlon": 6.7538876,
+    "maxlat": 52.2516508,
+    "maxlon": 6.7542687
+  },
+  "geometry": [
+    { "lat": 52.2516508, "lon": 6.7538876 },
+    { "lat": 52.2504446, "lon": 6.7542687 }
+  ],
+  "tags": {
+    "bridge": "yes",
+    "bridge:name": "Loofriet",
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "2",
+    "layer": "1",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 291893693,
+  "bounds": {
+    "minlat": 52.2051324,
+    "minlon": 6.8301954,
+    "maxlat": 52.2055691,
+    "maxlon": 6.8324333
+  },
+  "geometry": [
+    { "lat": 52.2051324, "lon": 6.8324333 },
+    { "lat": 52.2055691, "lon": 6.8301954 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "destination:lanes": "||Enschede-West;Haaksbergen;Universiteit",
+    "destination:ref:lanes": "A 35|A 35|N 18",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|slight_right"
+  }
+},
+{
+  "type": "way",
+  "id": 291893695,
+  "bounds": {
+    "minlat": 52.2053045,
+    "minlon": 6.8095628,
+    "maxlat": 52.2116399,
+    "maxlon": 6.8309432
+  },
+  "geometry": [
+    { "lat": 52.2116399, "lon": 6.8095628 },
+    { "lat": 52.2113900, "lon": 6.8100829 },
+    { "lat": 52.2110213, "lon": 6.8108790 },
+    { "lat": 52.2107393, "lon": 6.8115100 },
+    { "lat": 52.2103647, "lon": 6.8123881 },
+    { "lat": 52.2101237, "lon": 6.8129909 },
+    { "lat": 52.2097908, "lon": 6.8138388 },
+    { "lat": 52.2094585, "lon": 6.8147311 },
+    { "lat": 52.2091464, "lon": 6.8156140 },
+    { "lat": 52.2088828, "lon": 6.8164167 },
+    { "lat": 52.2086481, "lon": 6.8171684 },
+    { "lat": 52.2083117, "lon": 6.8182956 },
+    { "lat": 52.2080077, "lon": 6.8193822 },
+    { "lat": 52.2077244, "lon": 6.8204251 },
+    { "lat": 52.2074161, "lon": 6.8216137 },
+    { "lat": 52.2071979, "lon": 6.8224958 },
+    { "lat": 52.2070118, "lon": 6.8232429 },
+    { "lat": 52.2068048, "lon": 6.8240974 },
+    { "lat": 52.2065354, "lon": 6.8252440 },
+    { "lat": 52.2061028, "lon": 6.8271324 },
+    { "lat": 52.2058621, "lon": 6.8282203 },
+    { "lat": 52.2056673, "lon": 6.8291456 },
+    { "lat": 52.2053045, "lon": 6.8309432 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "destination": "Enschede;Gronau;Münster",
+    "destination:ref": "A35",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 291893696,
+  "bounds": {
+    "minlat": 52.2040936,
+    "minlon": 6.8335316,
+    "maxlat": 52.2048096,
+    "maxlon": 6.8378453
+  },
+  "geometry": [
+    { "lat": 52.2048096, "lon": 6.8335316 },
+    { "lat": 52.2046593, "lon": 6.8343721 },
+    { "lat": 52.2043685, "lon": 6.8360936 },
+    { "lat": 52.2040936, "lon": 6.8378453 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "shoulder": "right",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 291893700,
+  "bounds": {
+    "minlat": 52.2087165,
+    "minlon": 6.8207852,
+    "maxlat": 52.2088553,
+    "maxlon": 6.8229712
+  },
+  "geometry": [
+    { "lat": 52.2087165, "lon": 6.8229712 },
+    { "lat": 52.2087577, "lon": 6.8227755 },
+    { "lat": 52.2088149, "lon": 6.8224361 },
+    { "lat": 52.2088447, "lon": 6.8221359 },
+    { "lat": 52.2088553, "lon": 6.8218420 },
+    { "lat": 52.2088511, "lon": 6.8216036 },
+    { "lat": 52.2088364, "lon": 6.8213470 },
+    { "lat": 52.2088064, "lon": 6.8210410 },
+    { "lat": 52.2087758, "lon": 6.8207852 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "2",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "note:maxspeed": "Counterintuitively, the maxspeed on this on-ramp is 130 km/h instead of the lower speed posted on the main road due to it having only a G1 (start motorway) sign at the start",
+    "note:maxspeed:url": "https://wiki.openstreetmap.org/wiki/Reduced_speed_limit_on_Dutch_motorways",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "middle_of:2",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "merge_to_right|none",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 291893701,
+  "bounds": {
+    "minlat": 52.2079484,
+    "minlon": 6.8246985,
+    "maxlat": 52.2081101,
+    "maxlon": 6.8251361
+  },
+  "geometry": [
+    { "lat": 52.2079484, "lon": 6.8251361 },
+    { "lat": 52.2080199, "lon": 6.8249487 },
+    { "lat": 52.2080891, "lon": 6.8247617 },
+    { "lat": 52.2081101, "lon": 6.8246985 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "change:lanes": "yes|not_right|not_left|yes",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "4",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorroad": "yes",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:2",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "left|left|right|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 291893704,
+  "bounds": {
+    "minlat": 52.2086546,
+    "minlon": 6.8165232,
+    "maxlat": 52.2091434,
+    "maxlon": 6.8207852
+  },
+  "geometry": [
+    { "lat": 52.2087758, "lon": 6.8207852 },
+    { "lat": 52.2087330, "lon": 6.8204380 },
+    { "lat": 52.2086944, "lon": 6.8200527 },
+    { "lat": 52.2086641, "lon": 6.8196460 },
+    { "lat": 52.2086547, "lon": 6.8193782 },
+    { "lat": 52.2086546, "lon": 6.8191125 },
+    { "lat": 52.2086625, "lon": 6.8188466 },
+    { "lat": 52.2086803, "lon": 6.8186054 },
+    { "lat": 52.2086999, "lon": 6.8183865 },
+    { "lat": 52.2087612, "lon": 6.8179342 },
+    { "lat": 52.2088640, "lon": 6.8174697 },
+    { "lat": 52.2089759, "lon": 6.8170653 },
+    { "lat": 52.2091434, "lon": 6.8165232 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "1",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "note:maxspeed": "Counterintuitively, the maxspeed on this on-ramp is 130 km/h instead of the lower speed posted on the main road due to it having only a G1 (start motorway) sign at the start",
+    "note:maxspeed:url": "https://wiki.openstreetmap.org/wiki/Reduced_speed_limit_on_Dutch_motorways",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 326375390,
+  "bounds": {
+    "minlat": 52.2007959,
+    "minlon": 6.8801603,
+    "maxlat": 52.2009559,
+    "maxlon": 6.8826067
+  },
+  "geometry": [
+    { "lat": 52.2009559, "lon": 6.8801603 },
+    { "lat": 52.2008818, "lon": 6.8813938 },
+    { "lat": 52.2007959, "lon": 6.8826067 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "destination:lanes": "||Enschede",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "merge_to_right|through|slight_right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 326375391,
+  "bounds": {
+    "minlat": 52.2593614,
+    "minlon": 6.7517375,
+    "maxlat": 52.2609767,
+    "maxlon": 6.7520899
+  },
+  "geometry": [
+    { "lat": 52.2593614, "lon": 6.7520899 },
+    { "lat": 52.2609767, "lon": 6.7517375 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|slight_right"
+  }
+},
+{
+  "type": "way",
+  "id": 326375392,
+  "bounds": {
+    "minlat": 52.2335942,
+    "minlon": 6.7684654,
+    "maxlat": 52.2347497,
+    "maxlon": 6.7710050
+  },
+  "geometry": [
+    { "lat": 52.2335942, "lon": 6.7710050 },
+    { "lat": 52.2341990, "lon": 6.7696387 },
+    { "lat": 52.2347497, "lon": 6.7684654 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|slight_right"
+  }
+},
+{
+  "type": "way",
+  "id": 326375393,
+  "bounds": {
+    "minlat": 52.2421139,
+    "minlon": 6.7577426,
+    "maxlat": 52.2430260,
+    "maxlon": 6.7584427
+  },
+  "geometry": [
+    { "lat": 52.2430260, "lon": 6.7577426 },
+    { "lat": 52.2427942, "lon": 6.7579203 },
+    { "lat": 52.2421139, "lon": 6.7584427 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "change:lanes": "yes|yes|yes|no",
+    "highway": "motorway",
+    "lanes": "4",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|slight_right|slight_right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 326375394,
+  "bounds": {
+    "minlat": 52.2430260,
+    "minlon": 6.7561450,
+    "maxlat": 52.2456634,
+    "maxlon": 6.7577426
+  },
+  "geometry": [
+    { "lat": 52.2456634, "lon": 6.7561450 },
+    { "lat": 52.2443741, "lon": 6.7568450 },
+    { "lat": 52.2430260, "lon": 6.7577426 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|slight_right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 326375395,
+  "bounds": {
+    "minlat": 52.2516508,
+    "minlon": 6.7520176,
+    "maxlat": 52.2584401,
+    "maxlon": 6.7538876
+  },
+  "geometry": [
+    { "lat": 52.2584401, "lon": 6.7520176 },
+    { "lat": 52.2570909, "lon": 6.7523449 },
+    { "lat": 52.2554755, "lon": 6.7527704 },
+    { "lat": 52.2540605, "lon": 6.7531603 },
+    { "lat": 52.2528942, "lon": 6.7535056 },
+    { "lat": 52.2516508, "lon": 6.7538876 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 326375396,
+  "bounds": {
+    "minlat": 52.2469166,
+    "minlon": 6.7545648,
+    "maxlat": 52.2504352,
+    "maxlon": 6.7558575
+  },
+  "geometry": [
+    { "lat": 52.2469166, "lon": 6.7558575 },
+    { "lat": 52.2470577, "lon": 6.7557971 },
+    { "lat": 52.2478041, "lon": 6.7554948 },
+    { "lat": 52.2489619, "lon": 6.7550799 },
+    { "lat": 52.2497561, "lon": 6.7548047 },
+    { "lat": 52.2504352, "lon": 6.7545648 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 326375407,
+  "bounds": {
+    "minlat": 52.2360185,
+    "minlon": 6.7635921,
+    "maxlat": 52.2367167,
+    "maxlon": 6.7650425
+  },
+  "geometry": [
+    { "lat": 52.2367167, "lon": 6.7635921 },
+    { "lat": 52.2360185, "lon": 6.7650425 }
+  ],
+  "tags": {
+    "carriageway_ref": "b",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "2",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "merge_to_right|none",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 326375408,
+  "bounds": {
+    "minlat": 52.1992574,
+    "minlon": 6.8906379,
+    "maxlat": 52.1992715,
+    "maxlon": 6.8908801
+  },
+  "geometry": [
+    { "lat": 52.1992715, "lon": 6.8906379 },
+    { "lat": 52.1992691, "lon": 6.8906814 },
+    { "lat": 52.1992583, "lon": 6.8908597 },
+    { "lat": 52.1992574, "lon": 6.8908801 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "highway": "motorway_link",
+    "junction:ref": "25",
+    "lanes": "2",
+    "lit": "yes",
+    "maxspeed": "50",
+    "maxspeed:type": "sign",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Gemeente Enschede",
+    "placement": "middle_of:1",
+    "ref": "N35",
+    "surface": "asphalt",
+    "turn:lanes": "left|right",
+    "zone:traffic": "NL:urban"
+  }
+},
+{
+  "type": "way",
+  "id": 326375409,
+  "bounds": {
+    "minlat": 52.2410232,
+    "minlon": 6.7592996,
+    "maxlat": 52.2418110,
+    "maxlon": 6.7601327
+  },
+  "geometry": [
+    { "lat": 52.2410232, "lon": 6.7601327 },
+    { "lat": 52.2415997, "lon": 6.7595136 },
+    { "lat": 52.2418110, "lon": 6.7592996 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "2",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "merge_to_right|none",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 326375411,
+  "bounds": {
+    "minlat": 52.2372775,
+    "minlon": 6.7608494,
+    "maxlat": 52.2379017,
+    "maxlon": 6.7617688
+  },
+  "geometry": [
+    { "lat": 52.2379017, "lon": 6.7608494 },
+    { "lat": 52.2378102, "lon": 6.7609198 },
+    { "lat": 52.2377172, "lon": 6.7610160 },
+    { "lat": 52.2376150, "lon": 6.7611358 },
+    { "lat": 52.2375341, "lon": 6.7612462 },
+    { "lat": 52.2373626, "lon": 6.7615640 },
+    { "lat": 52.2372775, "lon": 6.7617688 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "3",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "left|left|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 326375412,
+  "bounds": {
+    "minlat": 52.2637444,
+    "minlon": 6.7518854,
+    "maxlat": 52.2651894,
+    "maxlon": 6.7520070
+  },
+  "geometry": [
+    { "lat": 52.2637444, "lon": 6.7519114 },
+    { "lat": 52.2641772, "lon": 6.7519971 },
+    { "lat": 52.2643745, "lon": 6.7520070 },
+    { "lat": 52.2645697, "lon": 6.7519924 },
+    { "lat": 52.2651894, "lon": 6.7518854 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "foot": "no",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "2",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "middle_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "left|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 326375413,
+  "bounds": {
+    "minlat": 52.2657794,
+    "minlon": 6.7494129,
+    "maxlat": 52.2663112,
+    "maxlon": 6.7494917
+  },
+  "geometry": [
+    { "lat": 52.2663112, "lon": 6.7494129 },
+    { "lat": 52.2659211, "lon": 6.7494707 },
+    { "lat": 52.2658868, "lon": 6.7494764 },
+    { "lat": 52.2658660, "lon": 6.7494789 },
+    { "lat": 52.2658175, "lon": 6.7494861 },
+    { "lat": 52.2657794, "lon": 6.7494917 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "2",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "middle_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "left|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 326375414,
+  "bounds": {
+    "minlat": 52.2348791,
+    "minlon": 6.7650425,
+    "maxlat": 52.2360185,
+    "maxlon": 6.7675648
+  },
+  "geometry": [
+    { "lat": 52.2360185, "lon": 6.7650425 },
+    { "lat": 52.2358195, "lon": 6.7654165 },
+    { "lat": 52.2354102, "lon": 6.7663759 },
+    { "lat": 52.2348791, "lon": 6.7675648 }
+  ],
+  "tags": {
+    "carriageway_ref": "b",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "1",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 326375415,
+  "bounds": {
+    "minlat": 52.2418110,
+    "minlon": 6.7587576,
+    "maxlat": 52.2423732,
+    "maxlon": 6.7592996
+  },
+  "geometry": [
+    { "lat": 52.2418110, "lon": 6.7592996 },
+    { "lat": 52.2423732, "lon": 6.7587576 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "1",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 326375416,
+  "bounds": {
+    "minlat": 52.2386145,
+    "minlon": 6.7634100,
+    "maxlat": 52.2392400,
+    "maxlon": 6.7645950
+  },
+  "geometry": [
+    { "lat": 52.2386145, "lon": 6.7645950 },
+    { "lat": 52.2387929, "lon": 6.7644112 },
+    { "lat": 52.2390200, "lon": 6.7640600 },
+    { "lat": 52.2391165, "lon": 6.7638281 },
+    { "lat": 52.2391657, "lon": 6.7636796 },
+    { "lat": 52.2391890, "lon": 6.7635975 },
+    { "lat": 52.2392400, "lon": 6.7634100 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "3",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "left|right|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 329349358,
+  "bounds": {
+    "minlat": 52.2620409,
+    "minlon": 6.7495234,
+    "maxlat": 52.2652984,
+    "maxlon": 6.7511199
+  },
+  "geometry": [
+    { "lat": 52.2652984, "lon": 6.7495234 },
+    { "lat": 52.2651640, "lon": 6.7495499 },
+    { "lat": 52.2645500, "lon": 6.7496528 },
+    { "lat": 52.2643930, "lon": 6.7496963 },
+    { "lat": 52.2642007, "lon": 6.7497722 },
+    { "lat": 52.2639470, "lon": 6.7499391 },
+    { "lat": 52.2632100, "lon": 6.7506000 },
+    { "lat": 52.2630300, "lon": 6.7507200 },
+    { "lat": 52.2625100, "lon": 6.7509600 },
+    { "lat": 52.2620409, "lon": 6.7511199 }
+  ],
+  "tags": {
+    "carriageway_ref": "b",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 377100597,
+  "bounds": {
+    "minlat": 52.2008891,
+    "minlon": 6.8836083,
+    "maxlat": 52.2013971,
+    "maxlon": 6.8895461
+  },
+  "geometry": [
+    { "lat": 52.2013280, "lon": 6.8895461 },
+    { "lat": 52.2013750, "lon": 6.8883690 },
+    { "lat": 52.2013971, "lon": 6.8874838 },
+    { "lat": 52.2013829, "lon": 6.8872603 },
+    { "lat": 52.2013681, "lon": 6.8870903 },
+    { "lat": 52.2013263, "lon": 6.8867996 },
+    { "lat": 52.2012693, "lon": 6.8865165 },
+    { "lat": 52.2011999, "lon": 6.8862160 },
+    { "lat": 52.2010558, "lon": 6.8855768 },
+    { "lat": 52.2009796, "lon": 6.8851428 },
+    { "lat": 52.2009411, "lon": 6.8848596 },
+    { "lat": 52.2009114, "lon": 6.8845602 },
+    { "lat": 52.2008911, "lon": 6.8841975 },
+    { "lat": 52.2008891, "lon": 6.8836083 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "destination": "Hengelo;Almelo;Amsterdam",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "25",
+    "lanes": "1",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "N35",
+    "surface": "asphalt",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 510312247,
+  "bounds": {
+    "minlat": 52.2413482,
+    "minlon": 6.7584427,
+    "maxlat": 52.2421139,
+    "maxlon": 6.7589155
+  },
+  "geometry": [
+    { "lat": 52.2421139, "lon": 6.7584427 },
+    { "lat": 52.2413482, "lon": 6.7589155 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "change:lanes": "yes|no",
+    "destination": "Hengelo-Zuid",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "2",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 542156163,
+  "bounds": {
+    "minlat": 52.2411844,
+    "minlon": 6.7589155,
+    "maxlat": 52.2413482,
+    "maxlon": 6.7590443
+  },
+  "geometry": [
+    { "lat": 52.2413482, "lon": 6.7589155 },
+    { "lat": 52.2411844, "lon": 6.7590443 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "change:lanes": "yes|no",
+    "destination": "Hengelo-Zuid",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "2",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 572188831,
+  "bounds": {
+    "minlat": 52.2090520,
+    "minlon": 6.8114653,
+    "maxlat": 52.2105978,
+    "maxlon": 6.8153535
+  },
+  "geometry": [
+    { "lat": 52.2105978, "lon": 6.8114653 },
+    { "lat": 52.2101903, "lon": 6.8123824 },
+    { "lat": 52.2097465, "lon": 6.8134786 },
+    { "lat": 52.2094897, "lon": 6.8141341 },
+    { "lat": 52.2092700, "lon": 6.8147274 },
+    { "lat": 52.2090520, "lon": 6.8153535 }
+  ],
+  "tags": {
+    "carriageway_ref": "e",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "2",
+    "maxspeed": "80",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 572188839,
+  "bounds": {
+    "minlat": 52.2048464,
+    "minlon": 6.8226475,
+    "maxlat": 52.2054366,
+    "maxlon": 6.8302438
+  },
+  "geometry": [
+    { "lat": 52.2052724, "lon": 6.8226475 },
+    { "lat": 52.2051141, "lon": 6.8232579 },
+    { "lat": 52.2050586, "lon": 6.8234853 },
+    { "lat": 52.2049991, "lon": 6.8237173 },
+    { "lat": 52.2049563, "lon": 6.8239182 },
+    { "lat": 52.2049193, "lon": 6.8241361 },
+    { "lat": 52.2048823, "lon": 6.8243936 },
+    { "lat": 52.2048580, "lon": 6.8246624 },
+    { "lat": 52.2048482, "lon": 6.8249095 },
+    { "lat": 52.2048464, "lon": 6.8251567 },
+    { "lat": 52.2048534, "lon": 6.8253962 },
+    { "lat": 52.2048730, "lon": 6.8256396 },
+    { "lat": 52.2048973, "lon": 6.8258745 },
+    { "lat": 52.2049384, "lon": 6.8261244 },
+    { "lat": 52.2050170, "lon": 6.8264866 },
+    { "lat": 52.2051754, "lon": 6.8271375 },
+    { "lat": 52.2052488, "lon": 6.8274478 },
+    { "lat": 52.2053037, "lon": 6.8277307 },
+    { "lat": 52.2053546, "lon": 6.8280213 },
+    { "lat": 52.2053927, "lon": 6.8283155 },
+    { "lat": 52.2054158, "lon": 6.8285683 },
+    { "lat": 52.2054343, "lon": 6.8288824 },
+    { "lat": 52.2054366, "lon": 6.8291597 },
+    { "lat": 52.2054290, "lon": 6.8294460 },
+    { "lat": 52.2054177, "lon": 6.8296505 },
+    { "lat": 52.2053910, "lon": 6.8300034 },
+    { "lat": 52.2053605, "lon": 6.8302438 }
+  ],
+  "tags": {
+    "carriageway_ref": "b",
+    "destination": "Enschede;Gronau;Münster",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "1",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 572188843,
+  "bounds": {
+    "minlat": 52.2059112,
+    "minlon": 6.8223538,
+    "maxlat": 52.2063365,
+    "maxlon": 6.8226717
+  },
+  "geometry": [
+    { "lat": 52.2063365, "lon": 6.8226717 },
+    { "lat": 52.2060636, "lon": 6.8224729 },
+    { "lat": 52.2059112, "lon": 6.8223538 }
+  ],
+  "tags": {
+    "carriageway_ref": "e",
+    "destination:lanes": "Haaksbergen;Doetinchem|De Groote Plooy",
+    "highway": "motorway_link",
+    "junction:ref": "26b",
+    "lanes": "2",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorroad": "no",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "middle_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "through|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 572188848,
+  "bounds": {
+    "minlat": 52.2054631,
+    "minlon": 6.8219996,
+    "maxlat": 52.2055188,
+    "maxlon": 6.8220456
+  },
+  "geometry": [
+    { "lat": 52.2055188, "lon": 6.8220456 },
+    { "lat": 52.2054631, "lon": 6.8219996 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "highway": "motorway_link",
+    "highway_authority_ref": "Rijksweg 18",
+    "highway_authority_ref:-2024-05": "Rijksweg 15",
+    "junction": "intersection",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorroad": "no",
+    "motorway": "no",
+    "name": "Twenteroute",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "N18",
+    "surface": "asphalt",
+    "turn": "through",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 580977622,
+  "bounds": {
+    "minlat": 52.2052642,
+    "minlon": 6.8225882,
+    "maxlat": 52.2055439,
+    "maxlon": 6.8232065
+  },
+  "geometry": [
+    { "lat": 52.2052642, "lon": 6.8232065 },
+    { "lat": 52.2053812, "lon": 6.8228132 },
+    { "lat": 52.2054233, "lon": 6.8227133 },
+    { "lat": 52.2054420, "lon": 6.8226818 },
+    { "lat": 52.2054712, "lon": 6.8226449 },
+    { "lat": 52.2055064, "lon": 6.8226161 },
+    { "lat": 52.2055439, "lon": 6.8225882 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "highway": "motorway_link",
+    "junction:ref": "26a",
+    "lanes": "3",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorroad": "no",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:2",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "right|right|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 581345696,
+  "bounds": {
+    "minlat": 52.2063365,
+    "minlon": 6.8212534,
+    "maxlat": 52.2070564,
+    "maxlon": 6.8227070
+  },
+  "geometry": [
+    { "lat": 52.2070564, "lon": 6.8212534 },
+    { "lat": 52.2068672, "lon": 6.8219182 },
+    { "lat": 52.2067813, "lon": 6.8222597 },
+    { "lat": 52.2067220, "lon": 6.8224598 },
+    { "lat": 52.2066572, "lon": 6.8225808 },
+    { "lat": 52.2066033, "lon": 6.8226458 },
+    { "lat": 52.2065276, "lon": 6.8226929 },
+    { "lat": 52.2064643, "lon": 6.8227070 },
+    { "lat": 52.2063991, "lon": 6.8227031 },
+    { "lat": 52.2063365, "lon": 6.8226717 }
+  ],
+  "tags": {
+    "carriageway_ref": "e",
+    "hazard": "curve",
+    "highway": "motorway_link",
+    "junction:ref": "26b",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:advisory": "30",
+    "maxspeed:type": "NL:rural",
+    "motorroad": "no",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 638232378,
+  "bounds": {
+    "minlat": 52.2049391,
+    "minlon": 6.8208112,
+    "maxlat": 52.2074800,
+    "maxlon": 6.8259072
+  },
+  "geometry": [
+    { "lat": 52.2074800, "lon": 6.8208112 },
+    { "lat": 52.2072912, "lon": 6.8216251 },
+    { "lat": 52.2067682, "lon": 6.8237938 },
+    { "lat": 52.2065129, "lon": 6.8248398 },
+    { "lat": 52.2063949, "lon": 6.8252348 },
+    { "lat": 52.2063511, "lon": 6.8253472 },
+    { "lat": 52.2063023, "lon": 6.8254516 },
+    { "lat": 52.2062065, "lon": 6.8256254 },
+    { "lat": 52.2061068, "lon": 6.8257296 },
+    { "lat": 52.2060104, "lon": 6.8258097 },
+    { "lat": 52.2059365, "lon": 6.8258517 },
+    { "lat": 52.2058626, "lon": 6.8258844 },
+    { "lat": 52.2057965, "lon": 6.8258998 },
+    { "lat": 52.2057272, "lon": 6.8259072 },
+    { "lat": 52.2056382, "lon": 6.8259008 },
+    { "lat": 52.2055434, "lon": 6.8258823 },
+    { "lat": 52.2054537, "lon": 6.8258355 },
+    { "lat": 52.2053673, "lon": 6.8257779 },
+    { "lat": 52.2053030, "lon": 6.8257176 },
+    { "lat": 52.2052421, "lon": 6.8256466 },
+    { "lat": 52.2051852, "lon": 6.8255673 },
+    { "lat": 52.2051267, "lon": 6.8254772 },
+    { "lat": 52.2050792, "lon": 6.8253758 },
+    { "lat": 52.2050366, "lon": 6.8252664 },
+    { "lat": 52.2049992, "lon": 6.8251340 },
+    { "lat": 52.2049684, "lon": 6.8249908 },
+    { "lat": 52.2049488, "lon": 6.8248336 },
+    { "lat": 52.2049391, "lon": 6.8246845 },
+    { "lat": 52.2049425, "lon": 6.8245471 },
+    { "lat": 52.2049509, "lon": 6.8244258 },
+    { "lat": 52.2049829, "lon": 6.8242548 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "hazard": "curve",
+    "highway": "motorway_link",
+    "junction:ref": "26a",
+    "lanes": "2",
+    "maxspeed": "80",
+    "maxspeed:advisory": "50",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 673382058,
+  "bounds": {
+    "minlat": 52.2116399,
+    "minlon": 6.8063240,
+    "maxlat": 52.2133862,
+    "maxlon": 6.8095628
+  },
+  "geometry": [
+    { "lat": 52.2133862, "lon": 6.8063240 },
+    { "lat": 52.2130197, "lon": 6.8069610 },
+    { "lat": 52.2125980, "lon": 6.8077078 },
+    { "lat": 52.2121940, "lon": 6.8084671 },
+    { "lat": 52.2118784, "lon": 6.8090793 },
+    { "lat": 52.2116399, "lon": 6.8095628 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "4",
+    "lit": "no",
+    "maxspeed": "100",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|slight_right|slight_right"
+  }
+},
+{
+  "type": "way",
+  "id": 674253804,
+  "bounds": {
+    "minlat": 52.2084489,
+    "minlon": 6.8153535,
+    "maxlat": 52.2090520,
+    "maxlon": 6.8172270
+  },
+  "geometry": [
+    { "lat": 52.2090520, "lon": 6.8153535 },
+    { "lat": 52.2087383, "lon": 6.8163016 },
+    { "lat": 52.2084489, "lon": 6.8172270 }
+  ],
+  "tags": {
+    "carriageway_ref": "e",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "3",
+    "maxspeed": "80",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|slight_right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 675736717,
+  "bounds": {
+    "minlat": 52.2133862,
+    "minlon": 6.8049932,
+    "maxlat": 52.2142162,
+    "maxlon": 6.8063240
+  },
+  "geometry": [
+    { "lat": 52.2142162, "lon": 6.8049932 },
+    { "lat": 52.2138078, "lon": 6.8056360 },
+    { "lat": 52.2133862, "lon": 6.8063240 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|slight_right"
+  }
+},
+{
+  "type": "way",
+  "id": 740037822,
+  "bounds": {
+    "minlat": 52.2185587,
+    "minlon": 6.7993687,
+    "maxlat": 52.2187034,
+    "maxlon": 6.7995489
+  },
+  "geometry": [
+    { "lat": 52.2185587, "lon": 6.7995489 },
+    { "lat": 52.2187034, "lon": 6.7993687 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "covered": "yes",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 740037823,
+  "bounds": {
+    "minlat": 52.2107633,
+    "minlon": 6.7995489,
+    "maxlat": 52.2185587,
+    "maxlon": 6.8119317
+  },
+  "geometry": [
+    { "lat": 52.2107633, "lon": 6.8119317 },
+    { "lat": 52.2111506, "lon": 6.8110597 },
+    { "lat": 52.2116090, "lon": 6.8100651 },
+    { "lat": 52.2121843, "lon": 6.8089039 },
+    { "lat": 52.2130318, "lon": 6.8073307 },
+    { "lat": 52.2136782, "lon": 6.8062374 },
+    { "lat": 52.2145122, "lon": 6.8049150 },
+    { "lat": 52.2152117, "lon": 6.8038938 },
+    { "lat": 52.2166724, "lon": 6.8019420 },
+    { "lat": 52.2185587, "lon": 6.7995489 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxheight": "default",
+    "maxheight:signed": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 740037825,
+  "bounds": {
+    "minlat": 52.2184510,
+    "minlon": 6.7991378,
+    "maxlat": 52.2185941,
+    "maxlon": 6.7993214
+  },
+  "geometry": [
+    { "lat": 52.2185941, "lon": 6.7991378 },
+    { "lat": 52.2184510, "lon": 6.7993214 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "covered": "yes",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 830777870,
+  "bounds": {
+    "minlat": 52.2142162,
+    "minlon": 6.7993214,
+    "maxlat": 52.2184510,
+    "maxlon": 6.8049932
+  },
+  "geometry": [
+    { "lat": 52.2184510, "lon": 6.7993214 },
+    { "lat": 52.2175263, "lon": 6.8004898 },
+    { "lat": 52.2163019, "lon": 6.8020574 },
+    { "lat": 52.2150993, "lon": 6.8036880 },
+    { "lat": 52.2145761, "lon": 6.8044505 },
+    { "lat": 52.2142162, "lon": 6.8049932 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxheight": "default",
+    "maxheight:signed": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 882010140,
+  "bounds": {
+    "minlat": 52.2585894,
+    "minlon": 6.7515402,
+    "maxlat": 52.2606386,
+    "maxlon": 6.7519814
+  },
+  "geometry": [
+    { "lat": 52.2606386, "lon": 6.7515402 },
+    { "lat": 52.2596372, "lon": 6.7517544 },
+    { "lat": 52.2585894, "lon": 6.7519814 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "change:lanes": "no|yes|yes",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|merge_to_left"
+  }
+},
+{
+  "type": "way",
+  "id": 952780943,
+  "bounds": {
+    "minlat": 52.2346148,
+    "minlon": 6.7680390,
+    "maxlat": 52.2347469,
+    "maxlon": 6.7683012
+  },
+  "geometry": [
+    { "lat": 52.2347469, "lon": 6.7680390 },
+    { "lat": 52.2346148, "lon": 6.7683012 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 952780944,
+  "bounds": {
+    "minlat": 52.2347497,
+    "minlon": 6.7682397,
+    "maxlat": 52.2348641,
+    "maxlon": 6.7684654
+  },
+  "geometry": [
+    { "lat": 52.2347497, "lon": 6.7684654 },
+    { "lat": 52.2348641, "lon": 6.7682397 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "destination": "Amsterdam;Almelo;Oldenzaal",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 995659057,
+  "bounds": {
+    "minlat": 52.2013032,
+    "minlon": 6.8901422,
+    "maxlat": 52.2014705,
+    "maxlon": 6.8903642
+  },
+  "geometry": [
+    { "lat": 52.2014705, "lon": 6.8903642 },
+    { "lat": 52.2014039, "lon": 6.8903198 },
+    { "lat": 52.2013631, "lon": 6.8902811 },
+    { "lat": 52.2013374, "lon": 6.8902326 },
+    { "lat": 52.2013032, "lon": 6.8901422 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "destination": "Hengelo;Almelo;Amsterdam",
+    "destination:ref": "A 35",
+    "highway": "motorway_link",
+    "junction:ref": "25",
+    "lanes": "1",
+    "maxspeed": "50",
+    "maxspeed:type": "NL:urban",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Gemeente Enschede",
+    "ref": "N35",
+    "surface": "asphalt",
+    "zone:traffic": "NL:urban"
+  }
+},
+{
+  "type": "way",
+  "id": 1165948499,
+  "bounds": {
+    "minlat": 52.2584401,
+    "minlon": 6.7519814,
+    "maxlat": 52.2585894,
+    "maxlon": 6.7520176
+  },
+  "geometry": [
+    { "lat": 52.2585894, "lon": 6.7519814 },
+    { "lat": 52.2584401, "lon": 6.7520176 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "change:lanes": "no|yes",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1165948500,
+  "bounds": {
+    "minlat": 52.2616563,
+    "minlon": 6.7510843,
+    "maxlat": 52.2629653,
+    "maxlon": 6.7513263
+  },
+  "geometry": [
+    { "lat": 52.2629653, "lon": 6.7510843 },
+    { "lat": 52.2616563, "lon": 6.7513263 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "change:lanes": "no|yes",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "120 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1165948501,
+  "bounds": {
+    "minlat": 52.2616563,
+    "minlon": 6.7511199,
+    "maxlat": 52.2620409,
+    "maxlon": 6.7513263
+  },
+  "geometry": [
+    { "lat": 52.2620409, "lon": 6.7511199 },
+    { "lat": 52.2616563, "lon": 6.7513263 }
+  ],
+  "tags": {
+    "carriageway_ref": "b",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1165948502,
+  "bounds": {
+    "minlat": 52.2613522,
+    "minlon": 6.7513263,
+    "maxlat": 52.2616563,
+    "maxlon": 6.7513888
+  },
+  "geometry": [
+    { "lat": 52.2616563, "lon": 6.7513263 },
+    { "lat": 52.2613522, "lon": 6.7513888 }
+  ],
+  "tags": {
+    "carriageway_ref": "Re",
+    "change:lanes": "no|not_right|no",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "120 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 1165948505,
+  "bounds": {
+    "minlat": 52.2655590,
+    "minlon": 6.7518247,
+    "maxlat": 52.2656285,
+    "maxlon": 6.7519040
+  },
+  "geometry": [
+    { "lat": 52.2655590, "lon": 6.7518247 },
+    { "lat": 52.2656011, "lon": 6.7518728 },
+    { "lat": 52.2656285, "lon": 6.7519040 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "foot": "no",
+    "highway": "motorway_link",
+    "junction": "intersection",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1165948506,
+  "bounds": {
+    "minlat": 52.2651894,
+    "minlon": 6.7518247,
+    "maxlat": 52.2655590,
+    "maxlon": 6.7518854
+  },
+  "geometry": [
+    { "lat": 52.2651894, "lon": 6.7518854 },
+    { "lat": 52.2655590, "lon": 6.7518247 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "foot": "no",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "2",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "middle_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "left|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1165948507,
+  "bounds": {
+    "minlat": 52.2656285,
+    "minlon": 6.7519040,
+    "maxlat": 52.2657320,
+    "maxlon": 6.7520946
+  },
+  "geometry": [
+    { "lat": 52.2656285, "lon": 6.7519040 },
+    { "lat": 52.2656531, "lon": 6.7519320 },
+    { "lat": 52.2656748, "lon": 6.7519614 },
+    { "lat": 52.2656985, "lon": 6.7520114 },
+    { "lat": 52.2657320, "lon": 6.7520946 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "foot": "no",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1165948508,
+  "bounds": {
+    "minlat": 52.2693354,
+    "minlon": 6.7500755,
+    "maxlat": 52.2700683,
+    "maxlon": 6.7503473
+  },
+  "geometry": [
+    { "lat": 52.2693354, "lon": 6.7503473 },
+    { "lat": 52.2700683, "lon": 6.7500755 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1165948509,
+  "bounds": {
+    "minlat": 52.2659428,
+    "minlon": 6.7517666,
+    "maxlat": 52.2661457,
+    "maxlon": 6.7517968
+  },
+  "geometry": [
+    { "lat": 52.2659428, "lon": 6.7517968 },
+    { "lat": 52.2660409, "lon": 6.7517849 },
+    { "lat": 52.2660583, "lon": 6.7517835 },
+    { "lat": 52.2661457, "lon": 6.7517666 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "destination": "Amsterdam;Almelo",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1165948510,
+  "bounds": {
+    "minlat": 52.2616475,
+    "minlon": 6.7516066,
+    "maxlat": 52.2621024,
+    "maxlon": 6.7516561
+  },
+  "geometry": [
+    { "lat": 52.2616475, "lon": 6.7516066 },
+    { "lat": 52.2621024, "lon": 6.7516561 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "destination": "Hengelo-West;DeldenGoor",
+    "destination:ref": "N346",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1165948511,
+  "bounds": {
+    "minlat": 52.2655590,
+    "minlon": 6.7518130,
+    "maxlat": 52.2656236,
+    "maxlon": 6.7518247
+  },
+  "geometry": [
+    { "lat": 52.2655590, "lon": 6.7518247 },
+    { "lat": 52.2655964, "lon": 6.7518170 },
+    { "lat": 52.2656236, "lon": 6.7518130 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "foot": "no",
+    "highway": "motorway_link",
+    "junction": "intersection",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "left",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1165948512,
+  "bounds": {
+    "minlat": 52.2652984,
+    "minlon": 6.7495033,
+    "maxlat": 52.2654123,
+    "maxlon": 6.7495234
+  },
+  "geometry": [
+    { "lat": 52.2654123, "lon": 6.7495033 },
+    { "lat": 52.2652984, "lon": 6.7495234 }
+  ],
+  "tags": {
+    "carriageway_ref": "b",
+    "destination": "Enschede;Münster",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1165948513,
+  "bounds": {
+    "minlat": 52.2695827,
+    "minlon": 6.7497492,
+    "maxlat": 52.2701288,
+    "maxlon": 6.7497857
+  },
+  "geometry": [
+    { "lat": 52.2701288, "lon": 6.7497857 },
+    { "lat": 52.2695827, "lon": 6.7497492 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "destination": "Hengelo-West;Delden",
+    "destination:ref": "N346",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "1",
+    "maxspeed": "100",
+    "maxspeed:conditional": "120 @ (19:00-06:00)",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1165948514,
+  "bounds": {
+    "minlat": 52.2663112,
+    "minlon": 6.7493314,
+    "maxlat": 52.2675390,
+    "maxlon": 6.7494337
+  },
+  "geometry": [
+    { "lat": 52.2675390, "lon": 6.7494337 },
+    { "lat": 52.2671498, "lon": 6.7493459 },
+    { "lat": 52.2669836, "lon": 6.7493314 },
+    { "lat": 52.2668229, "lon": 6.7493445 },
+    { "lat": 52.2663112, "lon": 6.7494129 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "highway": "motorway_link",
+    "junction:ref": "28",
+    "lanes": "2",
+    "maxspeed": "100",
+    "maxspeed:conditional": "120 @ (19:00-06:00)",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "middle_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "left|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1247262857,
+  "bounds": {
+    "minlat": 52.1993033,
+    "minlon": 6.8882964,
+    "maxlat": 52.1994098,
+    "maxlon": 6.8900970
+  },
+  "geometry": [
+    { "lat": 52.1994098, "lon": 6.8882964 },
+    { "lat": 52.1993421, "lon": 6.8894722 },
+    { "lat": 52.1993033, "lon": 6.8900970 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "highway": "motorway_link",
+    "junction:ref": "25",
+    "lanes": "2",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "middle_of:1",
+    "ref": "N35",
+    "surface": "asphalt",
+    "turn:lanes": "left|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1247262860,
+  "bounds": {
+    "minlat": 52.2012863,
+    "minlon": 6.8901422,
+    "maxlat": 52.2013032,
+    "maxlon": 6.8904262
+  },
+  "geometry": [
+    { "lat": 52.2012863, "lon": 6.8904262 },
+    { "lat": 52.2012961, "lon": 6.8902560 },
+    { "lat": 52.2013032, "lon": 6.8901422 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "destination": "Hengelo;Almelo;Amsterdam",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "25",
+    "lanes": "1",
+    "maxspeed": "50",
+    "maxspeed:type": "NL:urban",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Gemeente Enschede",
+    "ref": "N35",
+    "surface": "asphalt",
+    "zone:traffic": "NL:urban"
+  }
+},
+{
+  "type": "way",
+  "id": 1261905257,
+  "bounds": {
+    "minlat": 52.2074800,
+    "minlon": 6.8172270,
+    "maxlat": 52.2084489,
+    "maxlon": 6.8208112
+  },
+  "geometry": [
+    { "lat": 52.2084489, "lon": 6.8172270 },
+    { "lat": 52.2083110, "lon": 6.8176979 },
+    { "lat": 52.2079846, "lon": 6.8188218 },
+    { "lat": 52.2076424, "lon": 6.8201377 },
+    { "lat": 52.2074800, "lon": 6.8208112 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "destination": "Enschede-West",
+    "highway": "motorway_link",
+    "junction:ref": "26a",
+    "lanes": "2",
+    "maxspeed": "80",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1261905258,
+  "bounds": {
+    "minlat": 52.2077970,
+    "minlon": 6.8176017,
+    "maxlat": 52.2082506,
+    "maxlon": 6.8188696
+  },
+  "geometry": [
+    { "lat": 52.2082506, "lon": 6.8176017 },
+    { "lat": 52.2082337, "lon": 6.8176444 },
+    { "lat": 52.2080917, "lon": 6.8180235 },
+    { "lat": 52.2078808, "lon": 6.8186230 },
+    { "lat": 52.2077970, "lon": 6.8188696 }
+  ],
+  "tags": {
+    "carriageway_ref": "e",
+    "destination": "Doetinchem;Haaksbergen",
+    "destination:ref": "N18",
+    "highway": "motorway_link",
+    "junction:ref": "26b",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1261905259,
+  "bounds": {
+    "minlat": 52.2105978,
+    "minlon": 6.8103330,
+    "maxlat": 52.2111503,
+    "maxlon": 6.8114653
+  },
+  "geometry": [
+    { "lat": 52.2111503, "lon": 6.8103330 },
+    { "lat": 52.2110057, "lon": 6.8106236 },
+    { "lat": 52.2105978, "lon": 6.8114653 }
+  ],
+  "tags": {
+    "carriageway_ref": "e",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "2",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1270913414,
+  "bounds": {
+    "minlat": 52.2008891,
+    "minlon": 6.8823993,
+    "maxlat": 52.2009257,
+    "maxlon": 6.8836083
+  },
+  "geometry": [
+    { "lat": 52.2008891, "lon": 6.8836083 },
+    { "lat": 52.2009257, "lon": 6.8823993 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "destination": "Hengelo;Almelo;Amsterdam",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "25",
+    "lanes": "1",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "N35",
+    "surface": "asphalt",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1270913415,
+  "bounds": {
+    "minlat": 52.2008288,
+    "minlon": 6.8823993,
+    "maxlat": 52.2009257,
+    "maxlon": 6.8835839
+  },
+  "geometry": [
+    { "lat": 52.2008288, "lon": 6.8835839 },
+    { "lat": 52.2009257, "lon": 6.8823993 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "1",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1270913416,
+  "bounds": {
+    "minlat": 52.2013130,
+    "minlon": 6.8895461,
+    "maxlat": 52.2013280,
+    "maxlon": 6.8899413
+  },
+  "geometry": [
+    { "lat": 52.2013130, "lon": 6.8899413 },
+    { "lat": 52.2013280, "lon": 6.8895461 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "destination": "Hengelo;Almelo;Amsterdam",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "25",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "N35",
+    "surface": "asphalt",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1270913417,
+  "bounds": {
+    "minlat": 52.2013032,
+    "minlon": 6.8899413,
+    "maxlat": 52.2013130,
+    "maxlon": 6.8901422
+  },
+  "geometry": [
+    { "lat": 52.2013032, "lon": 6.8901422 },
+    { "lat": 52.2013130, "lon": 6.8899413 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "destination": "Hengelo;Almelo;Amsterdam",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "25",
+    "lanes": "1",
+    "maxspeed": "50",
+    "maxspeed:type": "NL:urban",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "N35",
+    "surface": "asphalt",
+    "zone:traffic": "NL:urban"
+  }
+},
+{
+  "type": "way",
+  "id": 1270913422,
+  "bounds": {
+    "minlat": 52.2006453,
+    "minlon": 6.8826067,
+    "maxlat": 52.2007959,
+    "maxlon": 6.8836935
+  },
+  "geometry": [
+    { "lat": 52.2007959, "lon": 6.8826067 },
+    { "lat": 52.2006453, "lon": 6.8836935 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "destination": "Enschede",
+    "highway": "motorway_link",
+    "junction:ref": "25",
+    "lanes": "1",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "N35",
+    "surface": "asphalt",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1270913423,
+  "bounds": {
+    "minlat": 52.1992830,
+    "minlon": 6.8900970,
+    "maxlat": 52.1993033,
+    "maxlon": 6.8904472
+  },
+  "geometry": [
+    { "lat": 52.1993033, "lon": 6.8900970 },
+    { "lat": 52.1992830, "lon": 6.8904472 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "highway": "motorway_link",
+    "junction:ref": "25",
+    "lanes": "2",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "middle_of:1",
+    "ref": "N35",
+    "surface": "asphalt",
+    "turn:lanes": "left|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1270913425,
+  "bounds": {
+    "minlat": 52.1992715,
+    "minlon": 6.8904472,
+    "maxlat": 52.1992830,
+    "maxlon": 6.8906379
+  },
+  "geometry": [
+    { "lat": 52.1992830, "lon": 6.8904472 },
+    { "lat": 52.1992715, "lon": 6.8906379 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "highway": "motorway_link",
+    "junction:ref": "25",
+    "lanes": "2",
+    "maxspeed": "50",
+    "maxspeed:type": "sign",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "middle_of:1",
+    "ref": "N35",
+    "surface": "asphalt",
+    "turn:lanes": "left|right",
+    "zone:traffic": "NL:urban"
+  }
+},
+{
+  "type": "way",
+  "id": 1313108212,
+  "bounds": {
+    "minlat": 52.2383694,
+    "minlon": 6.7645950,
+    "maxlat": 52.2386145,
+    "maxlon": 6.7647136
+  },
+  "geometry": [
+    { "lat": 52.2383694, "lon": 6.7647136 },
+    { "lat": 52.2386145, "lon": 6.7645950 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "3",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "left|right|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1313108213,
+  "bounds": {
+    "minlat": 52.2393201,
+    "minlon": 6.7628724,
+    "maxlat": 52.2393996,
+    "maxlon": 6.7631387
+  },
+  "geometry": [
+    { "lat": 52.2393201, "lon": 6.7631387 },
+    { "lat": 52.2393996, "lon": 6.7628724 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "destination": "Amsterdam;Almelo;Oldenzaal",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "2",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1313108214,
+  "bounds": {
+    "minlat": 52.2370823,
+    "minlon": 6.7620880,
+    "maxlat": 52.2371825,
+    "maxlon": 6.7624638
+  },
+  "geometry": [
+    { "lat": 52.2371825, "lon": 6.7620880 },
+    { "lat": 52.2371227, "lon": 6.7623195 },
+    { "lat": 52.2370823, "lon": 6.7624638 }
+  ],
+  "tags": {
+    "carriageway_ref": "b",
+    "destination": "Enschede;Münster",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "2",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1313108215,
+  "bounds": {
+    "minlat": 52.2379017,
+    "minlon": 6.7606239,
+    "maxlat": 52.2384044,
+    "maxlon": 6.7608494
+  },
+  "geometry": [
+    { "lat": 52.2384044, "lon": 6.7606239 },
+    { "lat": 52.2382325, "lon": 6.7606736 },
+    { "lat": 52.2381141, "lon": 6.7607236 },
+    { "lat": 52.2380286, "lon": 6.7607679 },
+    { "lat": 52.2379017, "lon": 6.7608494 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "3",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "left|left|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1343505306,
+  "bounds": {
+    "minlat": 52.2039805,
+    "minlon": 6.8356727,
+    "maxlat": 52.2045539,
+    "maxlon": 6.8393607
+  },
+  "geometry": [
+    { "lat": 52.2039805, "lon": 6.8393607 },
+    { "lat": 52.2041094, "lon": 6.8384761 },
+    { "lat": 52.2043248, "lon": 6.8370953 },
+    { "lat": 52.2045539, "lon": 6.8356727 }
+  ],
+  "tags": {
+    "access:lanes": "yes|yes|no",
+    "bus:lanes": "yes|yes|designated",
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "shoulder": "no",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|slight_right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1343512321,
+  "bounds": {
+    "minlat": 52.2040017,
+    "minlon": 6.8378453,
+    "maxlat": 52.2040936,
+    "maxlon": 6.8384425
+  },
+  "geometry": [
+    { "lat": 52.2040936, "lon": 6.8378453 },
+    { "lat": 52.2040017, "lon": 6.8384425 }
+  ],
+  "tags": {
+    "access:lanes": "yes|yes|no",
+    "bus:lanes": "yes|yes|designated",
+    "carriageway_ref": "Re",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "shoulder": "no",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|merge_to_left",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353711294,
+  "bounds": {
+    "minlat": 52.2091434,
+    "minlon": 6.8155379,
+    "maxlat": 52.2093808,
+    "maxlon": 6.8165232
+  },
+  "geometry": [
+    { "lat": 52.2091434, "lon": 6.8165232 },
+    { "lat": 52.2093808, "lon": 6.8155379 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "1",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "note:maxspeed": "Counterintuitively, the maxspeed on this on-ramp is 130 km/h instead of the lower speed posted on the main road due to it having only a G1 (start motorway) sign at the start",
+    "note:maxspeed:url": "https://wiki.openstreetmap.org/wiki/Reduced_speed_limit_on_Dutch_motorways",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353711295,
+  "bounds": {
+    "minlat": 52.2084925,
+    "minlon": 6.8229712,
+    "maxlat": 52.2087165,
+    "maxlon": 6.8236745
+  },
+  "geometry": [
+    { "lat": 52.2084925, "lon": 6.8236745 },
+    { "lat": 52.2085398, "lon": 6.8235426 },
+    { "lat": 52.2086268, "lon": 6.8233046 },
+    { "lat": 52.2086750, "lon": 6.8231371 },
+    { "lat": 52.2087165, "lon": 6.8229712 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "destination": "Hengelo;Almelo;Amsterdam",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "2",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "note:maxspeed": "Counterintuitively, the maxspeed on this on-ramp is 130 km/h instead of the lower speed posted on the main road due to it having only a G1 (start motorway) sign at the start",
+    "note:maxspeed:url": "https://wiki.openstreetmap.org/wiki/Reduced_speed_limit_on_Dutch_motorways",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "middle_of:2",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353711296,
+  "bounds": {
+    "minlat": 52.2055691,
+    "minlon": 6.8242033,
+    "maxlat": 52.2069164,
+    "maxlon": 6.8301954
+  },
+  "geometry": [
+    { "lat": 52.2055691, "lon": 6.8301954 },
+    { "lat": 52.2058147, "lon": 6.8290110 },
+    { "lat": 52.2061289, "lon": 6.8275533 },
+    { "lat": 52.2066324, "lon": 6.8253699 },
+    { "lat": 52.2069164, "lon": 6.8242033 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "noname": "yes",
+    "official_name": "Rijksweg 35",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "source:name": "NWB",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353711297,
+  "bounds": {
+    "minlat": 52.2055691,
+    "minlon": 6.8296841,
+    "maxlat": 52.2057568,
+    "maxlon": 6.8301954
+  },
+  "geometry": [
+    { "lat": 52.2055691, "lon": 6.8301954 },
+    { "lat": 52.2057568, "lon": 6.8296841 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "destination": "Enschede-West;Doetinchem;Haaksbergen",
+    "destination:ref": "N18",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "1",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353711298,
+  "bounds": {
+    "minlat": 52.2076321,
+    "minlon": 6.8253929,
+    "maxlat": 52.2078513,
+    "maxlon": 6.8259330
+  },
+  "geometry": [
+    { "lat": 52.2076321, "lon": 6.8259330 },
+    { "lat": 52.2077970, "lon": 6.8255323 },
+    { "lat": 52.2078513, "lon": 6.8253929 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "4",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:2",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "left|left|right|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353711299,
+  "bounds": {
+    "minlat": 52.2074371,
+    "minlon": 6.8259330,
+    "maxlat": 52.2076321,
+    "maxlon": 6.8263303
+  },
+  "geometry": [
+    { "lat": 52.2074371, "lon": 6.8263303 },
+    { "lat": 52.2075469, "lon": 6.8261297 },
+    { "lat": 52.2076321, "lon": 6.8259330 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "3",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement:end": "right_of:1",
+    "placement:start": "middle_of:2",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "left|right|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353711300,
+  "bounds": {
+    "minlat": 52.2073873,
+    "minlon": 6.8263303,
+    "maxlat": 52.2074371,
+    "maxlon": 6.8264106
+  },
+  "geometry": [
+    { "lat": 52.2073873, "lon": 6.8264106 },
+    { "lat": 52.2074371, "lon": 6.8263303 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "destination": "Enschede-West;Doetinchem;Haaksbergen",
+    "destination:ref": "N18",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "2",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "middle_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353711301,
+  "bounds": {
+    "minlat": 52.2049829,
+    "minlon": 6.8232065,
+    "maxlat": 52.2052642,
+    "maxlon": 6.8242548
+  },
+  "geometry": [
+    { "lat": 52.2049829, "lon": 6.8242548 },
+    { "lat": 52.2050284, "lon": 6.8240384 },
+    { "lat": 52.2050768, "lon": 6.8238638 },
+    { "lat": 52.2051816, "lon": 6.8234980 },
+    { "lat": 52.2052642, "lon": 6.8232065 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "highway": "motorway_link",
+    "junction:ref": "26a",
+    "lanes": "3",
+    "maxspeed": "80",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:2",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "right|right|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353711302,
+  "bounds": {
+    "minlat": 52.2055439,
+    "minlon": 6.8225686,
+    "maxlat": 52.2056455,
+    "maxlon": 6.8225882
+  },
+  "geometry": [
+    { "lat": 52.2055439, "lon": 6.8225882 },
+    { "lat": 52.2056455, "lon": 6.8225686 }
+  ],
+  "tags": {
+    "carriageway_ref": "a",
+    "highway": "motorway_link",
+    "junction:ref": "26a",
+    "lanes": "3",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorroad": "no",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement:end": "middle_of:2",
+    "placement:start": "right_of:2",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "right|right|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353711307,
+  "bounds": {
+    "minlat": 52.2053045,
+    "minlon": 6.8302438,
+    "maxlat": 52.2053605,
+    "maxlon": 6.8309432
+  },
+  "geometry": [
+    { "lat": 52.2053605, "lon": 6.8302438 },
+    { "lat": 52.2053045, "lon": 6.8309432 }
+  ],
+  "tags": {
+    "carriageway_ref": "b",
+    "destination": "Enschede;Gronau;Münster",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "1",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353711308,
+  "bounds": {
+    "minlat": 52.2052724,
+    "minlon": 6.8223615,
+    "maxlat": 52.2053476,
+    "maxlon": 6.8226475
+  },
+  "geometry": [
+    { "lat": 52.2053476, "lon": 6.8223615 },
+    { "lat": 52.2052724, "lon": 6.8226475 }
+  ],
+  "tags": {
+    "carriageway_ref": "b",
+    "destination": "Enschede;Gronau;Münster",
+    "destination:ref": "A35",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorroad": "no",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353711312,
+  "bounds": {
+    "minlat": 52.2082506,
+    "minlon": 6.8172270,
+    "maxlat": 52.2084489,
+    "maxlon": 6.8176017
+  },
+  "geometry": [
+    { "lat": 52.2084489, "lon": 6.8172270 },
+    { "lat": 52.2082506, "lon": 6.8176017 }
+  ],
+  "tags": {
+    "carriageway_ref": "e",
+    "destination": "Doetinchem;Haaksbergen",
+    "destination:ref": "N18",
+    "highway": "motorway_link",
+    "junction:ref": "26b",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353711313,
+  "bounds": {
+    "minlat": 52.2070564,
+    "minlon": 6.8188696,
+    "maxlat": 52.2077970,
+    "maxlon": 6.8212534
+  },
+  "geometry": [
+    { "lat": 52.2077970, "lon": 6.8188696 },
+    { "lat": 52.2075692, "lon": 6.8195570 },
+    { "lat": 52.2073537, "lon": 6.8202477 },
+    { "lat": 52.2071827, "lon": 6.8208148 },
+    { "lat": 52.2070564, "lon": 6.8212534 }
+  ],
+  "tags": {
+    "carriageway_ref": "e",
+    "hazard": "curve",
+    "highway": "motorway_link",
+    "junction:ref": "26b",
+    "lanes": "1",
+    "maxspeed": "80",
+    "maxspeed:advisory": "30",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353711314,
+  "bounds": {
+    "minlat": 52.2111503,
+    "minlon": 6.8095628,
+    "maxlat": 52.2116399,
+    "maxlon": 6.8103330
+  },
+  "geometry": [
+    { "lat": 52.2116399, "lon": 6.8095628 },
+    { "lat": 52.2111503, "lon": 6.8103330 }
+  ],
+  "tags": {
+    "carriageway_ref": "e",
+    "destination": "Enschede-West;Doetinchem;Haaksbergen",
+    "destination:ref": "N18",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "2",
+    "maxspeed": "100",
+    "maxspeed:type": "sign",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353957821,
+  "bounds": {
+    "minlat": 52.2465029,
+    "minlon": 6.7558575,
+    "maxlat": 52.2469166,
+    "maxlon": 6.7560382
+  },
+  "geometry": [
+    { "lat": 52.2465029, "lon": 6.7560382 },
+    { "lat": 52.2469166, "lon": 6.7558575 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "none|none|merge_to_left",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353957822,
+  "bounds": {
+    "minlat": 52.2413881,
+    "minlon": 6.7579752,
+    "maxlat": 52.2431433,
+    "maxlon": 6.7593856
+  },
+  "geometry": [
+    { "lat": 52.2413881, "lon": 6.7593856 },
+    { "lat": 52.2416471, "lon": 6.7591528 },
+    { "lat": 52.2419987, "lon": 6.7588565 },
+    { "lat": 52.2423590, "lon": 6.7585623 },
+    { "lat": 52.2431433, "lon": 6.7579752 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "change:lanes": "no|yes",
+    "highway": "motorway",
+    "lanes": "2",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353957823,
+  "bounds": {
+    "minlat": 52.2431433,
+    "minlon": 6.7575980,
+    "maxlat": 52.2436745,
+    "maxlon": 6.7579752
+  },
+  "geometry": [
+    { "lat": 52.2431433, "lon": 6.7579752 },
+    { "lat": 52.2434080, "lon": 6.7577845 },
+    { "lat": 52.2436745, "lon": 6.7575980 }
+  ],
+  "tags": {
+    "carriageway_ref": "Li",
+    "change:lanes": "no|not_right|no",
+    "highway": "motorway",
+    "lanes": "3",
+    "lit": "no",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353957824,
+  "bounds": {
+    "minlat": 52.2423732,
+    "minlon": 6.7579752,
+    "maxlat": 52.2431433,
+    "maxlon": 6.7587576
+  },
+  "geometry": [
+    { "lat": 52.2423732, "lon": 6.7587576 },
+    { "lat": 52.2431433, "lon": 6.7579752 }
+  ],
+  "tags": {
+    "carriageway_ref": "d",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "1",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353957825,
+  "bounds": {
+    "minlat": 52.2346148,
+    "minlon": 6.7675648,
+    "maxlat": 52.2348791,
+    "maxlon": 6.7683012
+  },
+  "geometry": [
+    { "lat": 52.2348791, "lon": 6.7675648 },
+    { "lat": 52.2346148, "lon": 6.7683012 }
+  ],
+  "tags": {
+    "carriageway_ref": "b",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "1",
+    "maxspeed": "130",
+    "maxspeed:type": "NL:motorway",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1353957826,
+  "bounds": {
+    "minlat": 52.2347497,
+    "minlon": 6.7678038,
+    "maxlat": 52.2351907,
+    "maxlon": 6.7684654
+  },
+  "geometry": [
+    { "lat": 52.2347497, "lon": 6.7684654 },
+    { "lat": 52.2351907, "lon": 6.7678038 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "destination": "Hengelo-Zuid",
+    "highway": "motorway_link",
+    "junction:ref": "27",
+    "lanes": "1",
+    "maxspeed": "100",
+    "maxspeed:conditional": "130 @ (19:00-06:00)",
+    "motorway": "yes",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "transition",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1354063304,
+  "bounds": {
+    "minlat": 52.2078513,
+    "minlon": 6.8251361,
+    "maxlat": 52.2079484,
+    "maxlon": 6.8253929
+  },
+  "geometry": [
+    { "lat": 52.2078513, "lon": 6.8253929 },
+    { "lat": 52.2079484, "lon": 6.8251361 }
+  ],
+  "tags": {
+    "carriageway_ref": "c",
+    "highway": "motorway_link",
+    "junction:ref": "26",
+    "lanes": "4",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorroad": "no",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "right_of:2",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "left|left|right|right",
+    "zone:traffic": "NL:rural"
+  }
+},
+{
+  "type": "way",
+  "id": 1354063308,
+  "bounds": {
+    "minlat": 52.2055188,
+    "minlon": 6.8220456,
+    "maxlat": 52.2059112,
+    "maxlon": 6.8223538
+  },
+  "geometry": [
+    { "lat": 52.2059112, "lon": 6.8223538 },
+    { "lat": 52.2057853, "lon": 6.8222563 },
+    { "lat": 52.2055188, "lon": 6.8220456 }
+  ],
+  "tags": {
+    "carriageway_ref": "e",
+    "change:lanes": "no|no",
+    "destination:lanes": "Haaksbergen;Doetinchem|De Groote Plooy",
+    "highway": "motorway_link",
+    "junction:ref": "26b",
+    "lanes": "2",
+    "maxspeed": "80",
+    "maxspeed:type": "NL:rural",
+    "motorroad": "no",
+    "motorway": "no",
+    "oneway": "yes",
+    "operator": "Rijkswaterstaat",
+    "placement": "middle_of:1",
+    "ref": "A35",
+    "surface": "asphalt",
+    "toll:hgv": "yes",
+    "turn:lanes": "through|right",
+    "zone:traffic": "NL:rural"
+  }
+}
+
+  ]
+}

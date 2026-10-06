@@ -56,8 +56,8 @@ export const tuning = {
   rubberBandAhead: 0.96, // power factor when far ahead of the player
 
   // Traffic & police
-  trafficCount: 26,
-  oncomingCount: 14,
+  trafficCount: 44,
+  oncomingCount: 18,
   heatDecayDelay: 6, // seconds without trouble before the wanted level starts dropping
   heatDecay: 0.09, // stars per second
   speedCameraKmh: 140,

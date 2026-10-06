@@ -4,12 +4,6 @@ import { ROAD } from '../config';
 // Heading convention: forward = (sin θ, cos θ) in the XZ plane, so θ = 0 faces +Z.
 // Increasing θ turns left; the right vector is (-cos θ, sin θ).
 
-export interface TrackSegment {
-  length: number;
-  /** Total heading change in degrees. Positive = right turn. */
-  turn?: number;
-}
-
 export interface TrackFrame {
   x: number;
   y: number;
@@ -29,82 +23,111 @@ export interface Projection {
   d: number;
 }
 
+export interface Bridge {
+  s0: number;
+  s1: number;
+  /** Over the Twentekanaal (water underneath) rather than over a road. */
+  canal: boolean;
+  height: number;
+  ramp: number;
+}
+
+export interface Gantry {
+  s: number;
+  text: string[];
+  route: string;
+}
+
+export interface Landmark {
+  id: string;
+  s: number;
+  d: number;
+  /** Real distance to the motorway in metres (they're pulled in so you can see them). */
+  realDistance: number;
+}
+
 export interface TrackFeatures {
   startS: number;
   finishS: number;
+  bridges: Bridge[];
+  /** Roads crossing over the motorway. */
   viaducts: number[];
-  bridge: { center: number; rampLength: number; topLength: number; height: number };
-  gantries: { s: number; text: string[]; route: string }[];
+  gantries: Gantry[];
+  exits: { s: number; name: string; ref: string }[];
+  landmarks: Landmark[];
 }
 
-// Testbed: an A35-like stretch (Hengelo-Zuid → Enschede-West, grey box).
-const SEGMENTS: TrackSegment[] = [
-  { length: 320 },
-  { length: 360, turn: 24 },
-  { length: 240 },
-  { length: 320, turn: -42 },
-  { length: 220 },
-  { length: 200, turn: 28 },
-  { length: 200, turn: -28 },
-  { length: 360 },
-  { length: 360, turn: 46 },
-  { length: 160 },
-  { length: 260, turn: -18 },
-  { length: 380 },
-];
-
-export const FEATURES: TrackFeatures = {
-  startS: 70,
-  finishS: 0, // filled in after build
-  viaducts: [1190, 2780],
-  bridge: { center: 2050, rampLength: 190, topLength: 80, height: 7.5 },
-  gantries: [
-    { s: 420, text: ['Enschede', 'Hengelo-Zuid'], route: 'A35' },
-    { s: 1650, text: ['Enschede-West', 'Boekelo'], route: 'A35' },
-    { s: 2600, text: ['Enschede', 'Gronau (D)'], route: 'A35' },
-  ],
-};
+/** Route file produced by tools/osm/build_route.py from OpenStreetMap data. */
+export interface RouteData {
+  name: string;
+  source: string;
+  realLength: number;
+  length: number;
+  startS: number;
+  finishS: number;
+  curvature: number[];
+  bridges: { s0: number; s1: number; canal: boolean }[];
+  canal: number[];
+  overpasses: number[];
+  exits: { s: number; name: string; ref: string }[];
+  landmarks: Landmark[];
+}
 
 const smoothstep = (e0: number, e1: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
   return t * t * (3 - 2 * t);
 };
 
+/** Overhead signs ~350 m before each exit: the through destination and the exit itself. */
+function gantriesFor(route: RouteData): Gantry[] {
+  const out: Gantry[] = [];
+  route.exits.forEach((e, i) => {
+    const s = e.s - 350;
+    if (s < route.startS + 80 || out.some((g) => Math.abs(g.s - s) < 300)) return;
+    const through = i >= route.exits.length - 1 ? 'Gronau (D)' : 'Enschede';
+    const exitName = e.name.split(';')[0].trim();
+    out.push({ s, text: [through, `${exitName}  ${e.ref.split(';')[0]}`], route: 'A35' });
+  });
+  return out;
+}
+
 export class Track {
   readonly spacing = ROAD.sampleSpacing;
   readonly count: number;
   readonly length: number;
   readonly features: TrackFeatures;
+  readonly name: string;
   private xs: Float32Array;
   private zs: Float32Array;
   private ys: Float32Array;
   private hs: Float32Array;
   private ks: Float32Array;
 
-  constructor(segments: TrackSegment[] = SEGMENTS) {
-    // Build per-meter curvature with clothoid-like ramps in and out of each curve.
-    const curv: number[] = [];
-    for (const seg of segments) {
-      const n = Math.round(seg.length / ROAD.sampleSpacing);
-      const turnRad = (-(seg.turn ?? 0) * Math.PI) / 180; // right turn = decreasing heading
-      const ramp = Math.min(70, seg.length / 3);
-      const peak = turnRad / (seg.length - ramp);
-      for (let i = 0; i < n; i++) {
-        const s = i * ROAD.sampleSpacing;
-        let k = peak;
-        if (s < ramp) k = peak * (s / ramp);
-        else if (s > seg.length - ramp) k = peak * ((seg.length - s) / ramp);
-        curv.push(seg.turn ? k : 0);
-      }
-    }
-    this.count = curv.length;
+  constructor(route: RouteData) {
+    this.name = route.name;
+    const bridges: Bridge[] = route.bridges.map((b) => ({
+      ...b,
+      height: b.canal ? 7.5 : 6.5,
+      ramp: b.canal ? 200 : 170,
+    }));
+    this.features = {
+      startS: route.startS,
+      finishS: route.finishS,
+      bridges,
+      viaducts: route.overpasses.filter((s) => s > 40 && s < route.length - 40),
+      gantries: gantriesFor(route),
+      exits: route.exits,
+      landmarks: route.landmarks,
+    };
+
+    // Integrate the curvature profile into a centreline (x/z), with heading and height.
+    this.ks = new Float32Array(route.curvature);
+    this.count = this.ks.length;
     this.length = (this.count - 1) * this.spacing;
     this.xs = new Float32Array(this.count);
     this.zs = new Float32Array(this.count);
     this.ys = new Float32Array(this.count);
     this.hs = new Float32Array(this.count);
-    this.ks = new Float32Array(curv);
-
     let x = 0;
     let z = 0;
     let h = 0;
@@ -117,17 +140,23 @@ export class Track {
       x += Math.sin(h) * this.spacing;
       z += Math.cos(h) * this.spacing;
     }
-    this.features = { ...FEATURES, finishS: this.length - 120 };
+  }
+
+  /** How much a bridge lifts the road at s (0..height). */
+  bridgeLift(s: number): number {
+    let lift = 0;
+    for (const b of this.features.bridges) {
+      const up = smoothstep(b.s0 - b.ramp, b.s0, s);
+      const down = 1 - smoothstep(b.s1, b.s1 + b.ramp, s);
+      lift = Math.max(lift, b.height * Math.min(up, down));
+    }
+    return lift;
   }
 
   private elevation(s: number): number {
-    const b = FEATURES.bridge;
-    const half = b.topLength / 2;
-    const up = smoothstep(b.center - half - b.rampLength, b.center - half, s);
-    const down = 1 - smoothstep(b.center + half, b.center + half + b.rampLength, s);
-    const bridge = b.height * Math.min(up, down);
+    const bridge = this.bridgeLift(s);
     const roll = 0.9 * Math.sin(s / 240) + 0.5 * Math.sin(s / 97 + 1.3);
-    // Flatten the undulation near the bridge so the deck stays level.
+    // Flatten the gentle undulation where the road climbs onto a bridge.
     const flat = 1 - Math.min(1, bridge / 2);
     return 1.4 + roll * flat + bridge;
   }

@@ -65,3 +65,11 @@ De carrosserie heeft een hoekige doorsnede met scherpe vouwlijnen: de sideskirt-
 ## Met de hand bijwerken
 
 Je kunt het `.blend`-bestand openen en onderdelen aanpassen. Houd daarbij de objectnamen, custom properties en materiaalnamen aan. Exporteer daarna via *File → Export → glTF 2.0*, met *Include → Custom Properties* aan. Let op: als je `build_cars.py` daarna opnieuw draait, overschrijft het je handmatige wijzigingen.
+
+## Landmarks
+
+```bash
+/Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python blender/build_landmarks.py
+```
+
+Bouwt `metropool`, `utwente`, `veste`, `brouwerij`, `thuisbesteld` en `barge` uit `landmarks.py` naar `public/models/lm_<naam>.glb`. Een landmark staat met de kant die naar de snelweg moet kijken richting -Y. De game draait hem naar de weg en zet hem op de plek uit het routebestand.

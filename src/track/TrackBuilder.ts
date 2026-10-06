@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { Track } from './Track';
 import {
+  facadeTextures,
   roadTexture, grassTexture, fieldTexture, concreteTexture, checkerTexture, signTexture,
   placeSignTexture, bannerTexture,
 } from './textures';
@@ -32,6 +33,9 @@ const OPP_OUT = -20.5;
 export class TrackBuilder {
   readonly group = new THREE.Group();
   private track: Track;
+  private spans: { c: number; half: number; canal: boolean }[] = [];
+  /** Canal water planes (s, transform, width), used to sail the barge. */
+  readonly canals: { s: number; holder: THREE.Group; width: number }[] = [];
   private tmp = new THREE.Vector3();
 
   constructor(track: Track) {
@@ -78,8 +82,13 @@ export class TrackBuilder {
     const t = this.track;
     const h = (s: number) => t.heightAt(s);
     const f = t.features;
-    const br = f.bridge;
-    const bridgeGap = (s: number) => Math.abs(s - br.center) < 24;
+    // Open spans under each bridge (no embankment there: water or a road passes underneath).
+    const spans = f.bridges.map((b) => {
+      const c = (b.s0 + b.s1) / 2;
+      const half = Math.max(24, (b.s1 - b.s0) / 2 + 4);
+      return { c, half, canal: b.canal };
+    });
+    this.spans = spans;
 
     // --- Materials ---
     const roadTex = roadTexture();
@@ -104,10 +113,13 @@ export class TrackBuilder {
     this.ribbon({ dL: -24, dR: OPP_OUT, yL: verge, yR: verge, vScale: 8, uR: 0.4, step: 4 }, grass);
 
     // --- Embankments down to the fields (with a gap for the canal) ---
-    const segmentsOutsideBridge: [number, number][] = [
-      [0, br.center - 24],
-      [br.center + 24, t.length],
-    ];
+    const segmentsOutsideBridge: [number, number][] = [];
+    let from = 0;
+    for (const sp of [...spans].sort((a, b) => a.c - b.c)) {
+      segmentsOutsideBridge.push([from, sp.c - sp.half]);
+      from = sp.c + sp.half;
+    }
+    segmentsOutsideBridge.push([from, t.length]);
     for (const [s0, s1] of segmentsOutsideBridge) {
       this.ribbon({ s0, s1, dL: 9.5, dR: (s) => 12 + h(s) * 1.8, yL: verge, yR: () => 0, vScale: 8, uR: 1, step: 4 }, grass);
       this.ribbon({ s0, s1, dL: (s) => -26.5 - h(s) * 1.8, dR: -24, yL: () => 0, yR: verge, vScale: 8, uR: 1, step: 4 }, grass);
@@ -121,18 +133,22 @@ export class TrackBuilder {
     }
     this.posts([5.6, -5.6, -9.0, -20.0], 4, new THREE.BoxGeometry(0.12, 0.8, 0.12), metal, 0.4);
 
-    this.bridge(concrete);
+    for (const sp of spans) this.bridge(sp.c, sp.half, concrete);
     for (const s of f.viaducts) this.overpass(s, concrete, grass, metal);
     for (const g of f.gantries) this.gantry(g.s, g.text, g.route, metal);
     this.lamps(metal);
     this.hectometerPosts();
-    this.noiseBarrier(260, 760, 11);
-    this.noiseBarrier(2350, 2700, 11);
+    // Noise barriers where the motorway passes Hengelo and enters Enschede.
+    this.noiseBarrier(f.startS + 200, f.startS + 900, 11);
+    this.noiseBarrier(f.startS + 300, f.startS + 800, -27);
+    this.noiseBarrier(f.finishS - 900, f.finishS - 150, 11);
+    this.noiseBarrier(f.finishS - 700, f.finishS - 100, -27);
     this.startFinish();
     this.ground();
-    this.water();
-    this.trees(bridgeGap);
+    for (const sp of spans) this.underpass(sp.c, sp.half, sp.canal);
+    this.trees();
     this.farms();
+    this.cityBlocks();
     return this.group;
   }
 
@@ -163,20 +179,27 @@ export class TrackBuilder {
     this.group.add(inst);
   }
 
-  private bridge(concrete: THREE.Material): void {
+  /** Is s in an open span, or near a viaduct or a landmark on that side? (keeps trees/farms clear) */
+  private blocked(s: number, d: number, margin = 45): boolean {
+    const f = this.track.features;
+    if (this.spans.some((sp) => Math.abs(s - sp.c) < sp.half + margin)) return true;
+    if (f.viaducts.some((v) => Math.abs(s - v) < 24)) return true;
+    return f.landmarks.some((lm) => Math.abs(s - lm.s) < 190 && Math.sign(lm.d) === Math.sign(d));
+  }
+
+  private bridge(c: number, half: number, concrete: THREE.Material): void {
     const t = this.track;
-    const c = t.features.bridge.center;
     const h = (s: number) => t.heightAt(s);
     const under = (s: number) => h(s) - 1.6;
-    const s0 = c - 26;
-    const s1 = c + 26;
+    const s0 = c - half - 2;
+    const s1 = c + half + 2;
     const mat = (concrete as THREE.MeshStandardMaterial).clone();
     mat.side = THREE.DoubleSide;
     this.ribbon({ s0, s1, dL: -24, dR: 9.5, yL: under, yR: under, step: 2 }, mat);
     this.ribbon({ s0, s1, dL: 9.5, dR: 9.5, yL: under, yR: (s) => h(s) - 0.06, step: 2 }, mat);
     this.ribbon({ s0, s1, dL: -24, dR: -24, yL: under, yR: (s) => h(s) - 0.06, step: 2 }, mat);
-    // Abutments at both banks.
-    for (const s of [c - 24, c + 24]) {
+    // Abutments at both ends.
+    for (const s of [c - half, c + half]) {
       const hh = h(s);
       const box = new THREE.Mesh(new THREE.BoxGeometry(38, hh, 3), concrete);
       this.placeOnTrack(box, s, -7.25, -hh / 2);
@@ -419,38 +442,52 @@ export class TrackBuilder {
     this.group.add(ground);
   }
 
-  private water(): void {
+  /** What passes under a bridge: the Twentekanaal, or a local road. */
+  private underpass(c: number, half: number, canal: boolean): void {
     const t = this.track;
-    const fr = t.frame(t.features.bridge.center);
-    const canal = new THREE.Mesh(
-      new THREE.PlaneGeometry(3000, 30),
-      new THREE.MeshStandardMaterial({ color: 0x1d3f55, roughness: 0.08, metalness: 0.6 }),
-    );
-    canal.rotation.x = -Math.PI / 2;
+    const fr = t.frame(c);
     const holder = new THREE.Group();
-    holder.add(canal);
-    holder.position.set(fr.x, 0.08, fr.z);
-    // Plane's long axis is local X; align it across the road with a slight skew.
+    holder.position.set(fr.x, 0, fr.z);
+    // Long axis is local X; laid across the motorway with a slight skew.
     holder.rotation.y = fr.heading + 0.25;
-    this.group.add(holder);
-    // Canal banks (concrete strips).
-    for (const side of [-1, 1]) {
-      const bank = new THREE.Mesh(new THREE.BoxGeometry(3000, 0.5, 1.2), new THREE.MeshStandardMaterial({ color: 0x7a776f }));
-      bank.position.set(0, 0.1, side * 15.5);
-      holder.add(bank);
+    if (canal) {
+      const width = Math.min(34, half * 2 - 10);
+      const water = new THREE.Mesh(
+        new THREE.PlaneGeometry(3000, width),
+        new THREE.MeshStandardMaterial({ color: 0x1d3f55, roughness: 0.08, metalness: 0.6 }),
+      );
+      water.rotation.x = -Math.PI / 2;
+      water.position.y = 0.08;
+      holder.add(water);
+      for (const side of [-1, 1]) {
+        const bank = new THREE.Mesh(new THREE.BoxGeometry(3000, 0.5, 1.2), new THREE.MeshStandardMaterial({ color: 0x7a776f }));
+        bank.position.set(0, 0.1, side * (width / 2 + 0.5));
+        holder.add(bank);
+      }
+      this.canals.push({ s: c, holder, width });
+    } else {
+      const road = new THREE.Mesh(
+        new THREE.PlaneGeometry(1600, 7.5),
+        new THREE.MeshStandardMaterial({ color: 0x38393c, roughness: 0.85 }),
+      );
+      road.rotation.x = -Math.PI / 2;
+      road.position.y = 0.06;
+      const line = new THREE.Mesh(new THREE.PlaneGeometry(1600, 0.15), new THREE.MeshStandardMaterial({ color: 0xdddddd }));
+      line.rotation.x = -Math.PI / 2;
+      line.position.y = 0.07;
+      holder.add(road, line);
     }
+    this.group.add(holder);
   }
 
-  private trees(skip: (s: number) => boolean): void {
+  private trees(): void {
     const t = this.track;
-    const f = t.features;
     const spots: { x: number; z: number; y: number; scale: number }[] = [];
     const tmp = new THREE.Vector3();
     // Clumps of trees ("houtwallen") with gaps for fields.
     for (let s = 0; s < t.length; s += 4) {
-      if (skip(s) || Math.abs(s - f.bridge.center) < 45) continue;
-      if (f.viaducts.some((v) => Math.abs(s - v) < 22)) continue;
       for (const side of [1, -1]) {
+        if (this.blocked(s, side)) continue;
         const density = 0.5 + 0.5 * Math.sin(s / 70 + side * 2.1) * Math.sin(s / 23 + side);
         if (Math.random() > density * 0.55) continue;
         const near = side > 0 ? 16 + t.heightAt(s) * 1.8 : -30 - t.heightAt(s) * 1.8;
@@ -490,9 +527,55 @@ export class TrackBuilder {
     this.group.add(trunk, crown);
   }
 
+  /** Apartment and office blocks where the motorway passes Hengelo and enters Enschede. */
+  private cityBlocks(): void {
+    const t = this.track;
+    const f = t.features;
+    const zones: [number, number][] = [
+      [Math.max(0, f.startS - 300), f.startS + 1100],
+      [f.finishS - 1700, t.length],
+    ];
+    const kinds = [
+      { wall: '#8c7c6c', n: 40 },
+      { wall: '#b9b2a6', n: 40 },
+      { wall: '#5e4a40', n: 40 },
+    ];
+    const box = new THREE.BoxGeometry(1, 1, 1);
+    box.translate(0, 0.5, 0);
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const p = new THREE.Vector3();
+    const up = new THREE.Vector3(0, 1, 0);
+    kinds.forEach((k, ki) => {
+      const tex = facadeTextures(ki + 1, k.wall);
+      const mat = new THREE.MeshStandardMaterial({
+        map: tex.map, emissiveMap: tex.glow, emissive: 0xffffff, emissiveIntensity: 1.4, roughness: 0.85,
+      });
+      const inst = new THREE.InstancedMesh(box, mat, k.n);
+      let placed = 0;
+      for (let tries = 0; tries < k.n * 8 && placed < k.n; tries++) {
+        const [a, b] = zones[Math.floor(Math.random() * zones.length)];
+        const s = a + Math.random() * (b - a);
+        const side = Math.random() < 0.5 ? 1 : -1;
+        if (this.blocked(s, side, 60)) continue;
+        const d = side > 0 ? 75 + Math.random() * 260 : -85 - Math.random() * 260;
+        t.pointAt(s, d, 0, p);
+        p.y = 0;
+        const fr = t.frame(s);
+        q.setFromAxisAngle(up, fr.heading + (Math.random() < 0.5 ? 0 : Math.PI / 2));
+        const h = 9 + Math.random() ** 2 * 38;
+        m.compose(p, q, new THREE.Vector3(14 + Math.random() * 22, h, 12 + Math.random() * 14));
+        inst.setMatrixAt(placed++, m);
+      }
+      inst.count = placed;
+      inst.castShadow = inst.receiveShadow = true;
+      this.group.add(inst);
+    });
+  }
+
   private farms(): void {
     const t = this.track;
-    const n = 26;
+    const n = 60;
     const walls = new THREE.InstancedMesh(
       new THREE.BoxGeometry(10, 4, 18),
       new THREE.MeshStandardMaterial({ color: 0x8e4a32, roughness: 0.9 }),
@@ -511,11 +594,12 @@ export class TrackBuilder {
     const q = new THREE.Quaternion();
     const one = new THREE.Vector3(1, 1, 1);
     const p = new THREE.Vector3();
-    for (let i = 0; i < n; i++) {
+    let placed = 0;
+    for (let tries = 0; tries < n * 4 && placed < n; tries++) {
       const s = 100 + Math.random() * (t.length - 200);
-      if (Math.abs(s - t.features.bridge.center) < 80) continue;
-      if (t.features.viaducts.some((v) => Math.abs(s - v) < 30)) continue;
       const side = Math.random() < 0.5 ? 1 : -1;
+      if (this.blocked(s, side, 80)) continue;
+      const i = placed++;
       const d = side > 0 ? 90 + Math.random() * 180 : -110 - Math.random() * 180;
       t.pointAt(s, d, 0, p);
       q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.random() * Math.PI);
@@ -524,6 +608,7 @@ export class TrackBuilder {
       m.compose(p.clone().setY(4 + 2.1), q, one);
       roof.setMatrixAt(i, m);
     }
+    walls.count = roof.count = placed;
     walls.castShadow = roof.castShadow = true;
     this.group.add(walls, roof);
   }

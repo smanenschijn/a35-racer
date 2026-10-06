@@ -198,12 +198,14 @@ Een grey-box stuk A35 (2x2 met vangrail, ongeveer 3 km, een paar bochten en een 
 
 **Nog nodig van buiten:** de drie muzieknummers (zie [muziek.md](muziek.md)).
 
-### M3: De echte etappe Hengelo → Enschede
+### M3: De echte etappe Hengelo → Enschede *(afgerond, oktober 2026)*
 
-- OSM-route omgezet naar een wegspline, met afritten en viaducten
-- Omgeving: bomen, geluidsschermen, borden en bebouwing
-- De zes landmarks
-- Sfeer: zonsondergang, post-processing en verlichting
+- [x] Route uit OpenStreetMap: de oostelijke rijbaan van de A35 van Hengelo-West tot Enschede (13,4 km), met echte bochten en ingekorte rechte stukken (8,3 km, ongeveer 2,5 minuut)
+- [x] Echte bruggen (waaronder de brug over het Twentekanaal), viaducten en bewegwijzering naar de echte afritten (Hengelo-Zuid 27, Enschede-West 26/26a, Enschede 25)
+- [x] Landmarks als Blender-modellen: Metropool met de Stork-hal (Hart van Zuid), Universiteit Twente, Grolsj Veste, Grolsj-brouwerij met reuzenbeugelfles, Thuisbesteld-hoofdkantoor en een binnenvaartschip op het Twentekanaal
+- [x] Stadsbebouwing met verlichte ramen rond Hengelo en Enschede, geluidsschermen, zon op zijn echte plek (west-zuidwest)
+
+De Veste, de UT, de Metropool en het Thuisbesteld-kantoor liggen in werkelijkheid 2 à 4 km van de A35. In de game staan ze op hun juiste plek langs de route en aan de juiste kant, maar veel dichterbij. Kaartdata © OpenStreetMap-bijdragers (ODbL).
 
 ### M4: Verticale slice
 

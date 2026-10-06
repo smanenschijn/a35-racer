@@ -189,3 +189,36 @@ export function bannerTexture(text: string): THREE.CanvasTexture {
   g.fillText(text, 512, 114);
   return finish(c, false);
 }
+
+/** Apartment/office facade: a window grid, some windows lit (returns colour + emissive maps). */
+export function facadeTextures(seed: number, wall: string): { map: THREE.CanvasTexture; glow: THREE.CanvasTexture } {
+  let r = seed * 9301 + 49297;
+  const rand = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+  const W = 128;
+  const H = 256;
+  const [c, g] = canvas(W, H);
+  const [c2, g2] = canvas(W, H);
+  g.fillStyle = wall;
+  g.fillRect(0, 0, W, H);
+  noise(g, W, H, 1500, 0.06);
+  g2.fillStyle = '#000';
+  g2.fillRect(0, 0, W, H);
+  const cols = 6;
+  const rows = 12;
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const px = 6 + x * (W - 12) / cols;
+      const py = 6 + y * (H - 12) / rows;
+      const w = (W - 12) / cols - 6;
+      const h = (H - 12) / rows - 8;
+      const lit = rand() < 0.35;
+      g.fillStyle = lit ? '#ffd9a0' : '#1c2733';
+      g.fillRect(px, py, w, h);
+      if (lit) {
+        g2.fillStyle = '#ffb860';
+        g2.fillRect(px, py, w, h);
+      }
+    }
+  }
+  return { map: finish(c), glow: finish(c2) };
+}

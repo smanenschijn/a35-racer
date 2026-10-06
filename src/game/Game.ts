@@ -10,6 +10,8 @@ import { Input } from '../core/Input';
 import { MusicPlayer } from '../core/Music';
 import { Effects } from '../fx/Particles';
 import { Track } from '../track/Track';
+import route from '../track/routes/hengelo-enschede.json';
+import { Landmarks } from '../track/Landmarks';
 import { TrackBuilder } from '../track/TrackBuilder';
 import { DebugPanel } from '../ui/DebugPanel';
 import { Hud } from '../ui/Hud';
@@ -30,7 +32,7 @@ export class Game {
   private audio = new GameAudio();
   private music = new MusicPlayer(this.audio);
   private events = new EventBus();
-  private track = new Track();
+  private track = new Track(route);
   private hud: Hud;
   private race: Race;
   private debug: DebugPanel;
@@ -38,6 +40,7 @@ export class Game {
   private last = performance.now();
   private time = 0;
   private titleGamepad = false;
+  private landmarks!: Landmarks;
 
   constructor(container: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ powerPreference: 'high-performance', antialias: false, stencil: false, depth: true });
@@ -91,7 +94,9 @@ export class Game {
     const scene = this.scene;
     // Golden-hour sun low in the west, ahead-left of the road.
     const elevation = THREE.MathUtils.degToRad(3.5);
-    const azimuth = THREE.MathUtils.degToRad(55);
+    // Real orientation: the route starts heading south (+Z) and runs east (+X) to Enschede.
+    // An October sunset sits in the west-southwest: behind you on the long run east.
+    const azimuth = THREE.MathUtils.degToRad(-75);
     this.sunDir.setFromSphericalCoords(1, Math.PI / 2 - elevation, azimuth);
 
     const sky = new Sky();
@@ -134,7 +139,10 @@ export class Game {
     this.sun.shadow.normalBias = 0.04;
     scene.add(this.sun, this.sun.target);
 
-    scene.add(new TrackBuilder(this.track).build());
+    const builder = new TrackBuilder(this.track);
+    scene.add(builder.build());
+    this.landmarks = new Landmarks(this.track, builder);
+    scene.add(this.landmarks.group);
   }
 
   private resize(): void {
@@ -185,6 +193,7 @@ export class Game {
     }
 
     this.race.render(realDt, this.time);
+    this.landmarks.update(this.race.paused ? 0 : realDt);
 
     // Shadow camera follows the player.
     const p = this.race.player;
