@@ -4,6 +4,7 @@ import {
   BloomEffect, EffectComposer, EffectPass, RenderPass, SMAAEffect, ToneMappingEffect, ToneMappingMode,
   VignetteEffect,
 } from 'postprocessing';
+import { Announcer } from '../core/Announcer';
 import { GameAudio } from '../core/Audio';
 import { EventBus } from '../core/Events';
 import { Input } from '../core/Input';
@@ -15,6 +16,8 @@ import { Landmarks } from '../track/Landmarks';
 import { TrackBuilder } from '../track/TrackBuilder';
 import { DebugPanel } from '../ui/DebugPanel';
 import { Hud } from '../ui/Hud';
+import { Menu } from '../ui/Menu';
+import { TouchControls } from '../ui/Touch';
 import { ChaseCamera } from './ChaseCamera';
 import { Race } from './Race';
 
@@ -39,8 +42,12 @@ export class Game {
   private accumulator = 0;
   private last = performance.now();
   private time = 0;
-  private titleGamepad = false;
   private landmarks!: Landmarks;
+  private announcer = new Announcer();
+  private menu: Menu;
+  private touch: TouchControls;
+  private previewId = 'rx';
+  private viewOffset = false;
 
   constructor(container: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ powerPreference: 'high-performance', antialias: false, stencil: false, depth: true });
@@ -76,14 +83,47 @@ export class Game {
       hud: this.hud,
       audio: this.audio,
       music: this.music,
+      announcer: this.announcer,
       cam: this.cam,
       rumble: (s, w, ms) => this.input.rumble(s, w, ms),
     });
     this.debug = new DebugPanel(() => this.race.reset());
-    this.hud.showTitle(false);
     this.music.onTrack = (t) => this.hud.showNowPlaying(t.title);
     this.audio.onReady = () => this.music.resume();
     this.music.playTitle();
+
+    this.touch = new TouchControls(this.input);
+    this.menu = new Menu({
+      startRace: () => {
+        this.menu.close();
+        this.race.start();
+      },
+      restartRace: () => {
+        this.menu.close();
+        this.race.paused = false;
+        this.race.start();
+      },
+      resume: () => {
+        this.menu.close();
+        this.race.paused = false;
+      },
+      toMenu: () => {
+        this.race.paused = false;
+        this.race.toMenu();
+        this.announcer.stop();
+        this.music.playTitle();
+        this.menu.open('main');
+      },
+      chooseCar: (id) => this.race.setPlayerCar(id),
+      previewCar: (id) => {
+        this.previewId = id;
+      },
+      sound: () => this.toggleSound(),
+    });
+    this.race.onFinished = (r) => this.menu.showResult(r);
+    this.menu.open('title');
+    // Touch/click also counts as the user gesture that unlocks audio.
+    window.addEventListener('pointerdown', () => this.audio.start());
 
     window.addEventListener('resize', () => this.resize());
     // Expose for debugging in the console.
@@ -145,6 +185,31 @@ export class Game {
     scene.add(this.landmarks.group);
   }
 
+  private toggleSound(): void {
+    this.audio.setMuted(!this.audio.muted);
+    this.announcer.muted = this.audio.muted;
+    this.hud.message(this.audio.muted ? 'GELUID UIT' : 'GELUID AAN', '#fff', false, 0.8);
+  }
+
+  /** In the menus the camera slowly circles the car you're looking at on the grid. */
+  private showroomCamera(): void {
+    const v = this.race.racers.find((r) => r.spec.id === this.previewId) ?? this.race.player;
+    this.race.showroom = v;
+    const cam = this.cam.camera;
+    const a = this.time * 0.25;
+    const r = 4.2 + v.halfL * 1.25;
+    cam.position.set(v.x + Math.sin(a) * r, v.y + 1.7, v.z + Math.cos(a) * r);
+    cam.lookAt(v.x, v.y + 0.7, v.z);
+    cam.fov = 50;
+    // Shift the picture so the car sits right of the menu panel (wide screens only).
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    if (w > 720) cam.setViewOffset(w, h, -w * 0.17, 0, w, h);
+    else cam.clearViewOffset();
+    cam.updateProjectionMatrix();
+    this.viewOffset = true;
+  }
+
   private resize(): void {
     const w = window.innerWidth;
     const h = window.innerHeight;
@@ -169,16 +234,22 @@ export class Game {
     this.time += realDt;
 
     const controls = this.input.poll(realDt);
+    if (controls.any) this.audio.start();
     if (controls.debug) this.debug.toggle();
-    if (controls.mute) {
-      this.audio.setMuted(!this.audio.muted);
-      this.hud.message(this.audio.muted ? 'GELUID UIT' : 'GELUID AAN', '#fff', false, 0.8);
+    if (controls.mute) this.toggleSound();
+    if (this.menu.isOpen) {
+      this.menu.setGamepad(this.input.usingGamepad);
+      this.menu.handle(controls);
+      this.music.setMuffled(this.menu.screen === 'pause');
+    } else if (controls.pause && (this.race.state === 'racing' || this.race.state === 'countdown')) {
+      this.race.paused = true;
+      this.menu.open('pause');
+    } else {
+      this.race.handleInput(controls, realDt);
     }
-    this.race.handleInput(controls, realDt);
-    if (this.race.state === 'title' && this.input.usingGamepad !== this.titleGamepad) {
-      this.titleGamepad = this.input.usingGamepad;
-      this.hud.showTitle(this.titleGamepad);
-    }
+    const inMenu = this.race.state === 'menu';
+    this.hud.setVisible(!inMenu);
+    this.touch.setVisible(!this.menu.isOpen && !inMenu);
 
     // Fixed-step physics, scaled by slow-mo.
     if (!this.race.paused) {
@@ -193,6 +264,11 @@ export class Game {
     }
 
     this.race.render(realDt, this.time);
+    if (this.race.state === 'menu') this.showroomCamera();
+    else if (this.viewOffset) {
+      this.cam.camera.clearViewOffset();
+      this.viewOffset = false;
+    }
     this.landmarks.update(this.race.paused ? 0 : realDt);
 
     // Shadow camera follows the player.

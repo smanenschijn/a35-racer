@@ -97,6 +97,50 @@ export class GameAudio {
     this.sirenGain.gain.setTargetAtTime(level * 0.07, this.ctx.currentTime, 0.1);
   }
 
+  /** Checkpoint: rising arpeggio. */
+  chime(): void {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    [660, 880, 1320].forEach((f, i) => {
+      const o = ctx.createOscillator();
+      o.type = 'triangle';
+      o.frequency.value = f;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t + i * 0.08);
+      g.gain.exponentialRampToValueAtTime(0.25, t + i * 0.08 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.08 + 0.35);
+      o.connect(g).connect(this.master);
+      o.start(t + i * 0.08);
+      o.stop(t + i * 0.08 + 0.4);
+    });
+  }
+
+  /** Car horn (two detuned squares); trucks honk lower and longer. */
+  horn(truck: boolean, level: number): void {
+    if (!this.ctx || level <= 0.05) return;
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const len = truck ? 0.9 : 0.45;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.12 * level, t + 0.03);
+    g.gain.setValueAtTime(0.12 * level, t + len - 0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    const f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = truck ? 900 : 1800;
+    f.connect(g).connect(this.master);
+    for (const freq of truck ? [155, 196] : [392, 494]) {
+      const o = ctx.createOscillator();
+      o.type = 'square';
+      o.frequency.value = freq;
+      o.connect(f);
+      o.start(t);
+      o.stop(t + len);
+    }
+  }
+
   /** Speed camera: shutter click and a bright ping. */
   flash(): void {
     if (!this.ctx) return;
@@ -137,6 +181,31 @@ export class GameAudio {
     for (const o of this.engineOsc) o.frequency.setTargetAtTime(freq, t, 0.04);
     this.engineFilter.frequency.setTargetAtTime(500 + throttle * 1400 + (nitro ? 1200 : 0), t, 0.05);
     this.engineGain.gain.setTargetAtTime(active ? 0.13 + throttle * 0.1 : 0.05, t, 0.08);
+  }
+
+  private squealGain: GainNode | null = null;
+  private squealFilter: BiquadFilterNode | null = null;
+
+  /** Tyre squeal while drifting or braking hard (0..1). */
+  squeal(level: number): void {
+    if (!this.ctx) return;
+    const ctx = this.ctx;
+    if (!this.squealGain) {
+      const src = ctx.createBufferSource();
+      src.buffer = this.noiseBuf;
+      src.loop = true;
+      this.squealFilter = ctx.createBiquadFilter();
+      this.squealFilter.type = 'bandpass';
+      this.squealFilter.frequency.value = 1100;
+      this.squealFilter.Q.value = 9;
+      this.squealGain = ctx.createGain();
+      this.squealGain.gain.value = 0;
+      src.connect(this.squealFilter).connect(this.squealGain).connect(this.master);
+      src.start();
+    }
+    const t = ctx.currentTime;
+    this.squealGain.gain.setTargetAtTime(level * 0.3, t, 0.05);
+    this.squealFilter!.frequency.setTargetAtTime(900 + level * 500 + Math.random() * 80, t, 0.05);
   }
 
   scrape(intensity: number): void {

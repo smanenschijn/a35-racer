@@ -102,7 +102,7 @@ html, body {
 .hud-help { position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); font-size: 11px; opacity: 1; transition: opacity 1s; background: var(--panel); padding: 4px 12px; white-space: nowrap; font-family: system-ui, sans-serif; }
 
 /* ---------- Police ---------- */
-.hud-top { position: absolute; top: 96px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.hud-top { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .hud-wanted { font-size: 30px; letter-spacing: 4px; opacity: 0.25; text-shadow: 2px 2px 0 var(--ink); transition: opacity 0.3s; }
 .hud-wanted.active { opacity: 1; }
 .hud-wanted span { color: rgba(255, 255, 255, 0.35); }
@@ -173,3 +173,89 @@ html, body {
 #loading { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #0b0d14; font-family: 'Bangers', sans-serif; font-size: 64px; letter-spacing: 4px; color: #e8e8f0; }
 #loading b { color: #ff8a00; font-weight: normal; }
 #loading span { font-family: 'Russo One', sans-serif; font-size: 16px; letter-spacing: 2px; color: #ffd400; margin-top: 10px; animation: blink 0.7s infinite alternate; }
+
+/* ---------- Checkpoint clock ---------- */
+.hud-clock { text-align: center; font-style: italic; line-height: 0.9; text-shadow: 3px 3px 0 var(--ink); }
+.hud-clock span { display: block; font-size: 13px; letter-spacing: 3px; color: var(--yellow); }
+.hud-clock b { font-size: 64px; font-weight: normal; font-variant-numeric: tabular-nums; }
+.hud-clock.low b { color: var(--red); animation: blink 0.4s infinite alternate; }
+@media (max-width: 720px) { .hud-clock b { font-size: 40px; } }
+
+/* ---------- Menus ---------- */
+.menu { position: fixed; inset: 0; display: none; z-index: 5; color: #fff; }
+.menu.show { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center;
+  background: radial-gradient(ellipse at center, rgba(10, 10, 30, 0.6), rgba(0, 0, 0, 0.88)); padding: 24px 16px; overflow-y: auto; }
+.menu.show.title, .menu.show.main, .menu.show.cars {
+  align-items: flex-start; text-align: left; padding-left: max(24px, 6vw);
+  background: linear-gradient(90deg, rgba(5, 6, 14, 0.92) 0%, rgba(5, 6, 14, 0.7) 38%, rgba(5, 6, 14, 0) 70%); }
+.menu .logo { transform: rotate(-5deg); transform-origin: left center; }
+.menu.title .logo .a35, .menu.main .logo .a35 { font-size: 130px; }
+.menu.title .logo .racer, .menu.main .logo .racer { font-size: 84px; }
+.menu .sub { font-size: 18px; color: var(--yellow); }
+.menu .sub b { color: #fff; font-weight: normal; }
+.menu .press { font-size: 22px; animation: blink 0.7s infinite alternate; margin-top: 10px; }
+.menu-title { font-family: 'Bangers', sans-serif; font-size: 56px; letter-spacing: 2px; font-style: italic; color: var(--yellow); text-shadow: 4px 4px 0 #c4161c; }
+.menu-items { display: flex; flex-direction: column; gap: 8px; min-width: 260px; }
+.menu-items button {
+  font: inherit; font-size: 22px; font-style: italic; text-align: left; color: #fff; cursor: pointer;
+  background: rgba(255, 255, 255, 0.06); border: 0; border-left: 4px solid transparent; padding: 10px 18px;
+  transform: skewX(-8deg); transition: background 0.15s, padding 0.15s;
+}
+.menu-items button.sel, .menu-items button:hover { background: linear-gradient(90deg, var(--orange), rgba(255, 138, 0, 0.15)); border-left-color: var(--yellow); padding-left: 28px; }
+.menu-items button:focus-visible { outline: 2px solid var(--yellow); }
+.menu .hint, .menu .tip { font-family: system-ui, sans-serif; font-size: 13px; opacity: 0.75; max-width: 560px; }
+.menu .controls { display: grid; grid-template-columns: repeat(2, auto); gap: 6px 26px; font-size: 15px; font-family: system-ui, sans-serif; text-align: left; }
+.menu .controls b { color: var(--yellow); font-family: 'Russo One', sans-serif; font-weight: normal; margin-right: 6px; }
+.menu table { border-collapse: collapse; font-size: 17px; min-width: min(560px, 100%); }
+.menu th { font-size: 12px; letter-spacing: 2px; color: var(--yellow); padding: 6px 12px; text-align: left; }
+.menu td { padding: 7px 12px; background: var(--panel); text-align: left; border-bottom: 2px solid rgba(0, 0, 0, 0.4); }
+.menu tr.me td { background: rgba(170, 20, 20, 0.7); }
+.menu td em { color: #ff9a3c; font-style: normal; font-size: 13px; }
+
+.car-pick { display: flex; align-items: center; gap: 14px; }
+.car-pick .arrow { font: inherit; font-size: 42px; color: var(--yellow); background: none; border: 0; cursor: pointer; padding: 0 6px; }
+.car-card { width: min(340px, 70vw); display: grid; gap: 8px; }
+.car-name { font-family: 'Bangers', sans-serif; font-size: 40px; letter-spacing: 1px; font-style: italic; }
+.car-owner { font-size: 13px; letter-spacing: 1px; color: var(--yellow); margin-bottom: 6px; }
+.stat { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 10px; font-size: 13px; letter-spacing: 1px; }
+.stat i { display: block; height: 10px; background: rgba(255, 255, 255, 0.12); transform: skewX(-18deg); }
+.stat b { display: block; height: 100%; background: linear-gradient(90deg, var(--orange), var(--yellow)); }
+
+.initials { display: flex; gap: 18px; margin: 10px 0; }
+.initials .slot { display: grid; justify-items: center; gap: 4px; }
+.initials .slot span { font-family: 'Bangers', sans-serif; font-size: 84px; width: 72px; text-align: center; border-bottom: 4px solid rgba(255, 255, 255, 0.3); cursor: pointer; }
+.initials .slot.sel span { color: var(--yellow); border-color: var(--yellow); animation: blink 0.6s infinite alternate; }
+.initials button, .menu .ok { font: inherit; color: var(--yellow); background: rgba(255, 255, 255, 0.08); border: 0; padding: 6px 16px; cursor: pointer; font-size: 18px; }
+
+@media (max-width: 720px) {
+  .menu.title .logo .a35, .menu.main .logo .a35 { font-size: 80px; }
+  .menu.title .logo .racer, .menu.main .logo .racer { font-size: 52px; }
+  .menu-title { font-size: 36px; }
+  .menu-items button { font-size: 18px; padding: 8px 14px; }
+  .menu.show.title, .menu.show.main, .menu.show.cars { background: linear-gradient(90deg, rgba(5, 6, 14, 0.9), rgba(5, 6, 14, 0.45)); }
+  .menu table { font-size: 12px; }
+  .menu td, .menu th { padding: 4px 6px; }
+}
+
+/* ---------- Touch controls ---------- */
+.touch { position: fixed; inset: 0; pointer-events: none; z-index: 4; user-select: none; -webkit-user-select: none; touch-action: none; }
+.touch button {
+  pointer-events: auto; font: inherit; color: #fff; background: rgba(10, 12, 22, 0.45); border: 2px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%; touch-action: none; -webkit-tap-highlight-color: transparent; letter-spacing: 1px;
+}
+.touch button.on { background: rgba(255, 138, 0, 0.55); border-color: var(--yellow); }
+.touch .t-left { position: absolute; left: 18px; bottom: 24px; display: flex; gap: 14px; }
+.touch .t-left button { width: 84px; height: 84px; font-size: 30px; }
+.touch .t-right { position: absolute; right: 18px; bottom: 24px; display: flex; gap: 14px; align-items: flex-end; }
+.touch .t-right button { width: 78px; height: 78px; font-size: 15px; }
+.touch .t-right [data-k="gas"] { width: 96px; height: 120px; border-radius: 22px; font-size: 20px; }
+.touch .t-mid { position: absolute; right: 230px; bottom: 30px; display: grid; grid-template-columns: repeat(2, 64px); gap: 10px; }
+.touch .t-mid button { width: 64px; height: 50px; border-radius: 12px; font-size: 11px; }
+.touch .t-pause { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; font-size: 14px; }
+@media (max-width: 720px) {
+  .touch .t-left button { width: 70px; height: 70px; }
+  .touch .t-mid { right: 50%; transform: translateX(50%); bottom: 110px; }
+}
+/* Touch HUD tweaks: make room for the buttons. */
+body:has(.touch:not([hidden])) .hud-bl { bottom: 130px; }
+body:has(.touch:not([hidden])) .hud-br { bottom: 150px; }

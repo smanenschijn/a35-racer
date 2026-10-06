@@ -22,6 +22,8 @@ export interface HudState {
   heat: number;
   sirenNear: boolean;
   bust: number;
+  /** Seconds on the checkpoint clock; negative hides it (menu). */
+  timeLeft: number;
 }
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html = ''): HTMLElementTagNameMap[K] => {
@@ -59,6 +61,7 @@ export class Hud {
   private overlay = el('div', 'overlay');
   private help = el('div', 'hud-help');
   private wanted = el('div', 'hud-wanted');
+  private clock = el('div', 'hud-clock', '<span>TIJD</span><b>0</b>');
   private bustBar = el('div', 'bust', '<span>KLEMGEZET</span><div class="bust-fill"></div>');
   private policeGlow = el('div', 'police-glow');
   private flashEl = el('div', 'cam-flash');
@@ -107,7 +110,7 @@ export class Hud {
     bl.append(side);
 
     const top = el('div', 'hud-top');
-    top.append(this.wanted, this.bustBar);
+    top.append(this.clock, this.wanted, this.bustBar);
     this.root.append(this.policeGlow, this.flashEl, top, this.nowPlaying);
 
     this.help.innerHTML =
@@ -118,6 +121,11 @@ export class Hud {
 
   update(h: HudState): void {
     const { player, position, total, rows, distanceLeft, raceTime } = h;
+    this.clock.hidden = h.timeLeft < 0;
+    if (h.timeLeft >= 0) {
+      (this.clock.lastElementChild as HTMLElement).textContent = String(Math.ceil(h.timeLeft));
+      this.clock.classList.toggle('low', h.timeLeft < 10);
+    }
     if (h.stars !== this.lastStars) {
       this.lastStars = h.stars;
       this.wanted.innerHTML = Array.from({ length: 5 }, (_, i) => `<span class="${i < h.stars ? 'on' : ''}">★</span>`).join('');

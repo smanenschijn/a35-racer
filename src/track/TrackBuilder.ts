@@ -394,6 +394,16 @@ export class TrackBuilder {
     banner.add(cloth);
     this.placeOnTrack(banner, f.finishS, 0);
     this.group.add(banner);
+    // Checkpoint gates
+    for (const cp of f.checkpoints) {
+      const gate = banner.clone();
+      const cloth2 = gate.children[gate.children.length - 1] as THREE.Mesh;
+      cloth2.material = new THREE.MeshStandardMaterial({
+        map: bannerTexture('CHECKPOINT'), emissive: 0xffffff, emissiveIntensity: 0.3, side: THREE.DoubleSide,
+      });
+      this.placeOnTrack(gate, cp, 0);
+      this.group.add(gate);
+    }
 
     // Place-name signs: leaving Hengelo at the start, entering Enschede before the finish.
     const sign = (s: number, name: string, sub: string, ended: boolean) => {

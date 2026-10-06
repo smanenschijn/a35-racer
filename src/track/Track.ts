@@ -55,6 +55,8 @@ export interface TrackFeatures {
   gantries: Gantry[];
   exits: { s: number; name: string; ref: string }[];
   landmarks: Landmark[];
+  /** Checkpoint gates (s), each one buys extra time. */
+  checkpoints: number[];
 }
 
 /** Route file produced by tools/osm/build_route.py from OpenStreetMap data. */
@@ -118,6 +120,7 @@ export class Track {
       gantries: gantriesFor(route),
       exits: route.exits,
       landmarks: route.landmarks,
+      checkpoints: [0.27, 0.52, 0.77].map((f) => Math.round(route.startS + (route.finishS - route.startS) * f)),
     };
 
     // Integrate the curvature profile into a centreline (x/z), with heading and height.

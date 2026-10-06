@@ -17,8 +17,36 @@ export interface Controls {
   volumeUp: boolean;
   volumeDown: boolean;
   confirm: boolean;
+  // Menu navigation (edges)
+  navUp: boolean;
+  navDown: boolean;
+  navLeft: boolean;
+  navRight: boolean;
+  back: boolean;
   any: boolean;
 }
+
+/** Held controls fed by the on-screen touch buttons. */
+export interface TouchState {
+  steer: number;
+  throttle: number;
+  brake: number;
+  nitro: boolean;
+  handbrake: boolean;
+}
+
+const NAV_KEYS: Record<string, keyof Controls> = {
+  ArrowUp: 'navUp',
+  KeyW: 'navUp',
+  ArrowDown: 'navDown',
+  KeyS: 'navDown',
+  ArrowLeft: 'navLeft',
+  KeyA: 'navLeft',
+  ArrowRight: 'navRight',
+  KeyD: 'navRight',
+  Escape: 'back',
+  Backspace: 'back',
+};
 
 const EDGE_KEYS: Record<string, keyof Controls> = {
   KeyQ: 'ramLeft',
@@ -48,6 +76,15 @@ export class Input {
   private kbSteer = 0;
   private lastPad: Gamepad | null = null;
   usingGamepad = false;
+  usingTouch = false;
+  readonly touch: TouchState = { steer: 0, throttle: 0, brake: 0, nitro: false, handbrake: false };
+  private stickPrev = { x: 0, y: 0 };
+
+  /** For on-screen buttons and menus: fire a one-shot control. */
+  press(edge: keyof Controls): void {
+    this.edges.add(edge);
+    this.edges.add('any');
+  }
 
   constructor() {
     window.addEventListener('keydown', (e) => {
@@ -55,6 +92,8 @@ export class Input {
       this.keys.add(e.code);
       const edge = EDGE_KEYS[e.code];
       if (edge) this.edges.add(edge);
+      const nav = NAV_KEYS[e.code];
+      if (nav) this.edges.add(nav);
       this.edges.add('any');
       this.usingGamepad = false;
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Backspace'].includes(e.code)) e.preventDefault();
@@ -71,7 +110,8 @@ export class Input {
     const c: Controls = {
       throttle: 0, brake: 0, steer: 0, handbrake: false, nitro: false, ramLeft: false, ramRight: false,
       reset: false, restart: false, pause: false, mute: false, debug: false,
-      nextTrack: false, volumeUp: false, volumeDown: false, confirm: false, any: false,
+      nextTrack: false, volumeUp: false, volumeDown: false, confirm: false,
+      navUp: false, navDown: false, navLeft: false, navRight: false, back: false, any: false,
     };
 
     // Keyboard: smoothed steering so taps make small corrections.
@@ -87,6 +127,14 @@ export class Input {
     c.nitro = this.key('ShiftLeft', 'ShiftRight');
     for (const e of this.edges) (c as unknown as Record<string, boolean>)[e] = true;
     this.edges.clear();
+
+    // Touch buttons
+    const t = this.touch;
+    if (t.steer !== 0) c.steer = t.steer;
+    c.throttle = Math.max(c.throttle, t.throttle);
+    c.brake = Math.max(c.brake, t.brake);
+    c.nitro ||= t.nitro;
+    c.handbrake ||= t.handbrake;
 
     // Gamepad
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
@@ -113,6 +161,19 @@ export class Input {
       c.pause ||= pressed(PAD.start);
       c.confirm ||= pressed(PAD.a) || pressed(PAD.start);
       c.nextTrack ||= pressed(PAD.x);
+      c.back ||= pressed(PAD.b);
+      c.navUp ||= pressed(12);
+      c.navDown ||= pressed(13);
+      c.navLeft ||= pressed(14);
+      c.navRight ||= pressed(15);
+      // The stick also navigates menus (edge when it crosses the threshold).
+      const sx = pad.axes[0] ?? 0;
+      const sy = pad.axes[1] ?? 0;
+      if (sx < -0.6 && this.stickPrev.x >= -0.6) c.navLeft = true;
+      if (sx > 0.6 && this.stickPrev.x <= 0.6) c.navRight = true;
+      if (sy < -0.6 && this.stickPrev.y >= -0.6) c.navUp = true;
+      if (sy > 0.6 && this.stickPrev.y <= 0.6) c.navDown = true;
+      this.stickPrev = { x: sx, y: sy };
       c.any ||= pad.buttons.some((_, i) => pressed(i));
       this.padPrev = pad.buttons.map((b) => b.pressed);
     }

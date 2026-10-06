@@ -10,7 +10,7 @@ const wrap = (a: number) => Math.atan2(Math.sin(a), Math.cos(a));
  * curvature, lane changes to overtake, and opportunistic shoves into rivals.
  */
 export class AIDriver {
-  readonly vehicle: Vehicle;
+  vehicle: Vehicle;
   readonly personality: AIPersonality;
   private targetD: number;
   private laneTimer = 0;

@@ -3,6 +3,7 @@ import { AI_PERSONALITIES, CARS, POLICE_CAR, RIVALS, ROAD, tuning, type CarSpec 
 import type { GameAudio } from '../core/Audio';
 import type { EventBus } from '../core/Events';
 import type { Controls } from '../core/Input';
+import type { Announcer } from '../core/Announcer';
 import type { MusicPlayer } from '../core/Music';
 import type { Effects } from '../fx/Particles';
 import { collideVehicles } from '../physics/Collisions';
@@ -15,7 +16,18 @@ import type { ChaseCamera } from './ChaseCamera';
 import { PoliceManager } from './Police';
 import { TrafficManager } from './Traffic';
 
-export type RaceState = 'title' | 'countdown' | 'racing' | 'finished';
+export type RaceState = 'menu' | 'countdown' | 'racing' | 'finished';
+
+export interface RaceResult {
+  rows: StandingRow[];
+  position: number;
+  time: number;
+  takedowns: number;
+  outOfTime: boolean;
+  /** Top 3 and within time: the stage is cleared. */
+  qualified: boolean;
+  car: string;
+}
 
 const HIT_WORDS = ['BEUK!', 'KNAL!', 'PATS!', 'BAM!', 'KRAK!'];
 
@@ -27,6 +39,7 @@ interface Deps {
   hud: Hud;
   audio: GameAudio;
   music: MusicPlayer;
+  announcer: Announcer;
   cam: ChaseCamera;
   rumble: (strong: number, weak: number, ms: number) => void;
 }
@@ -36,12 +49,22 @@ export class Race {
   readonly vehicles: Vehicle[] = [];
   /** The eight competitors (player first). */
   readonly racers: Vehicle[] = [];
-  readonly player: Vehicle;
+  player: Vehicle;
   private ais: AIDriver[] = [];
   private models = new Map<Vehicle, CarModel>();
   readonly traffic: TrafficManager;
   readonly police: PoliceManager;
-  state: RaceState = 'title';
+  state: RaceState = 'menu';
+  /** Checkpoint clock (seconds left). */
+  timeLeft = 0;
+  private nextCheckpoint = 0;
+  private checkpointBonus: number[] = [];
+  private outOfTime = false;
+  private warned = false;
+  /** In the menu only this racer is shown (showroom). */
+  showroom: Vehicle | null = null;
+  /** Called once the result is known (after the finish or when time runs out). */
+  onFinished: ((r: RaceResult) => void) | null = null;
   paused = false;
   private countdownT = 0;
   private countdownStep = 0;
@@ -148,9 +171,53 @@ export class Race {
     this.respawnT = 0;
     this.prevDs.clear();
     this.paused = false;
+    this.setupClock();
     this.d.cam.snap();
     this.d.hud.hideOverlay();
-    if (this.state !== 'title') this.startCountdown();
+    if (this.state !== 'menu') this.startCountdown();
+  }
+
+  /** Arcade time limit: enough to reach the first checkpoint; each gate buys the next leg. */
+  private setupClock(): void {
+    const f = this.d.track.features;
+    const pace = 40; // m/s (~144 km/h) you need to average, crashes included
+    const gates = [...f.checkpoints, f.finishS];
+    this.timeLeft = (gates[0] - f.startS) / pace + 10;
+    this.checkpointBonus = gates.slice(1).map((g, i) => (g - gates[i]) / pace + 2);
+    this.nextCheckpoint = 0;
+    this.outOfTime = false;
+    this.warned = false;
+  }
+
+  /** Swap cars with the rival who drives `id` (they take over your old car). */
+  setPlayerCar(id: string): void {
+    const target = this.racers.find((v) => v.spec.id === id);
+    if (!target || target === this.player) return;
+    const old = this.player;
+    const ai = this.ais.find((a) => a.vehicle === target)!;
+    const rivalName = target.driverName;
+    target.isPlayer = true;
+    target.driverName = 'Jij';
+    old.isPlayer = false;
+    old.driverName = rivalName;
+    ai.vehicle = old;
+    this.autoDriver.vehicle = target;
+    this.player = target;
+    this.racers.splice(this.racers.indexOf(target), 1);
+    this.racers.unshift(target);
+    this.reset();
+  }
+
+  /** Menu → race. */
+  start(): void {
+    this.state = 'countdown';
+    this.reset();
+  }
+
+  /** Race → menu (grid reset, cars frozen). */
+  toMenu(): void {
+    this.state = 'menu';
+    this.reset();
   }
 
   startCountdown(): void {
@@ -162,7 +229,7 @@ export class Race {
   }
 
   private wireEvents(): void {
-    const { events, fx, hud, audio, cam } = this.d;
+    const { events, fx, hud, audio, cam, announcer } = this.d;
 
     events.on('impact', (e) => {
       const n = Math.min(60, Math.floor(e.strength * 2.5));
@@ -205,6 +272,7 @@ export class Race {
       if (dist < 200) audio.crash(25 * Math.max(0.3, 1 - dist / 200));
       if (victim === this.player) {
         hud.message('TOTAL LOSS!', '#ff2a2a', true, 2.2);
+        announcer.say('Total loss!', { priority: true });
         this.slowMo(0.3, 1.2);
         this.respawnT = 2.6;
         cam.addShake(1);
@@ -215,16 +283,18 @@ export class Race {
       if (victim.isRacer) {
         if (byPlayer) {
           hud.message('TAKEDOWN!', '#ffd400', true, 2);
-          hud.message(`${victim.spec.driver} ligt eruit!`, '#ffffff', false, 2);
+          announcer.say(`Takedown! ${victim.driverName} ligt eruit!`, { priority: true });
+          hud.message(`${victim.driverName} ligt eruit!`, '#ffffff', false, 2);
           this.slowMo(0.35, 1.1);
           cam.addShake(0.6);
           this.d.rumble(0.8, 1, 400);
           this.police.addHeat(0.6);
         } else {
-          hud.message(`${victim.spec.driver} is total loss`, '#ff9a3c', false, 1.6);
+          hud.message(`${victim.driverName} is total loss`, '#ff9a3c', false, 1.6);
         }
       } else if (byPlayer && victim.role === 'police') {
         hud.message('AGENT UITGESCHAKELD!', '#4f8bff', true, 2);
+        announcer.say('Agent uitgeschakeld!');
         this.slowMo(0.4, 0.9);
         this.police.addHeat(1.2);
       } else if (byPlayer) {
@@ -242,29 +312,36 @@ export class Race {
         const ai = this.ais.find((a) => a.vehicle === vehicle);
         const taunts = ai?.personality.taunts ?? [];
         if (taunts.length) {
-          hud.taunt(vehicle.spec.driver, taunts[Math.floor(Math.random() * taunts.length)]);
+          hud.taunt(vehicle.driverName, taunts[Math.floor(Math.random() * taunts.length)]);
           this.lastTaunt = this.simTime;
         }
       }
     });
 
-    events.on('nearMiss', ({ vehicle }) => {
+    events.on('nearMiss', ({ vehicle, other }) => {
       if (vehicle === this.player) {
+        if (other.role === 'traffic' && Math.random() < 0.6) audio.horn(other.spec.kind === 'truck', 0.8);
         hud.message('RAKELINGS!', '#36c6ff', false, 0.9);
         vehicle.nitro = Math.min(1, vehicle.nitro + tuning.nitroFillNearMiss);
       }
     });
 
-    events.on('message', (m) => hud.message(m.text, m.color, m.big, m.big ? 2 : 1.4));
+    events.on('message', (m) => {
+      hud.message(m.text, m.color, m.big, m.big ? 2 : 1.4);
+      if (m.text === 'POLITIE!') announcer.say('Politie!');
+      if (m.text.startsWith('WEGBLOKKADE')) announcer.say('Wegblokkade verderop!');
+    });
 
     events.on('flash', ({ kmh }) => {
       hud.flash();
       audio.flash();
       hud.message(`GEFLITST! ${Math.round(kmh)} km/u`, '#ffffff', false, 1.6);
+      announcer.say('Geflitst!');
     });
 
     events.on('busted', ({ penalty }) => {
       hud.message('BEKEURING!', '#ff2a2a', true, 2);
+      announcer.say(`Bekeuring! ${penalty} seconden erbij.`, { priority: true });
       hud.message(`+${penalty} seconden`, '#ffffff', false, 2);
       audio.crash(6);
     });
@@ -291,17 +368,10 @@ export class Race {
       hud.message(`MUZIEK ${Math.round(vol * 100)}%`, '#ffffff', false, 0.8);
     }
 
-    if (this.state === 'title') {
-      if (c.confirm) this.startCountdown();
-      return;
-    }
+    if (this.state === 'menu') return;
     if (c.restart) {
       this.reset();
       return;
-    }
-    if (c.pause && this.state !== 'finished') {
-      this.paused = !this.paused;
-      hud.showPause(this.paused);
     }
     music.setMuffled(this.paused || this.timeScale < 1);
     if (this.paused) return;
@@ -357,10 +427,10 @@ export class Race {
 
   /** Fixed-timestep simulation. */
   step(dt: number): void {
-    if (this.paused || this.state === 'title') return;
+    if (this.paused || this.state === 'menu') return;
     this.simTime += dt;
     const t = this.d.track;
-    const { hud, audio, music } = this.d;
+    const { hud, audio, music, announcer } = this.d;
 
     if (this.state === 'countdown') {
       this.countdownT += dt;
@@ -370,9 +440,11 @@ export class Race {
         if (step < 3) {
           hud.countdown(String(3 - step));
           audio.beep(false);
+          announcer.say(['Drie', 'Twee', 'Eén'][step], { priority: true, rate: 1.3 });
         } else {
           hud.countdown('GAS GEAVEN!', true);
           audio.beep(true);
+          announcer.say('Gas geaven!', { priority: true, rate: 1.2, pitch: 1.1 });
           this.state = 'racing';
           for (const v of this.racers) v.frozen = false;
           music.playRace();
@@ -382,6 +454,7 @@ export class Race {
     } else {
       this.raceTime += dt;
     }
+    if (this.state === 'racing') this.tickClock(dt);
 
     this.active = this.vehicles.filter((v) => v.active);
     const all = this.active;
@@ -419,13 +492,16 @@ export class Race {
     // Finish line
     const finishS = t.features.finishS;
     for (const v of this.racers) {
-      if (!v.finished && !v.wrecked && v.s >= finishS && this.state === 'racing') {
+      const open = this.state === 'racing' || (this.state === 'finished' && !v.isPlayer);
+      if (!v.finished && !v.wrecked && v.s >= finishS && open && !(v.isPlayer && this.outOfTime)) {
         v.finished = true;
         v.finishTime = this.raceTime + v.penalty;
         this.finishOrder.push(v);
         if (v.isPlayer) {
           const pos = this.finishOrder.filter((o) => o.finishTime <= v.finishTime).length;
           hud.message(pos === 1 ? 'WINNAAR!' : `${pos}e PLAATS`, pos <= 3 ? '#4dff6a' : '#ff9a3c', true, 2.5);
+          announcer.say(pos === 1 ? 'Winnaar! Gas geaven!' : pos <= 3 ? `Finish! Plaats ${pos}` : `Finish. Plaats ${pos}. Dat mot beter.`,
+            { priority: true });
           if (v.penalty > 0) hud.message(`incl. ${v.penalty} s boete`, '#ff9a3c', false, 2.5);
           this.finishedAt = this.raceTime;
           this.state = 'finished';
@@ -436,7 +512,18 @@ export class Race {
     if (this.state === 'finished' && !this.resultsShown && this.raceTime - this.finishedAt > Math.max(2.5, this.player.penalty)) {
       this.resultsShown = true;
       const ranking = this.ranking();
-      hud.showResults(this.standings(), ranking.indexOf(this.player) + 1);
+      const position = ranking.indexOf(this.player) + 1;
+      const result: RaceResult = {
+        rows: this.standings(),
+        position,
+        time: this.player.finished ? this.player.finishTime : this.raceTime,
+        takedowns: this.player.takedowns,
+        outOfTime: this.outOfTime,
+        qualified: !this.outOfTime && position <= 3,
+        car: this.player.spec.name,
+      };
+      if (this.onFinished) this.onFinished(result);
+      else hud.showResults(result.rows, position);
       music.playTitle();
     }
 
@@ -446,10 +533,40 @@ export class Race {
       if (this.respawnT <= 0) {
         this.respawn(this.player, true);
         hud.message('OPGELAPT!', '#4dff6a', false, 1.2);
+        this.d.announcer.say('Kump wal goed!');
       }
     }
 
     this.detectNearMisses();
+  }
+
+  private tickClock(dt: number): void {
+    const { hud, announcer, audio } = this.d;
+    const f = this.d.track.features;
+    const p = this.player;
+    if (this.nextCheckpoint < f.checkpoints.length && p.s >= f.checkpoints[this.nextCheckpoint]) {
+      const bonus = this.checkpointBonus[this.nextCheckpoint];
+      this.timeLeft += bonus;
+      this.nextCheckpoint++;
+      this.warned = false;
+      hud.message('CHECKPOINT!', '#4dff6a', true, 1.8);
+      hud.message(`+${Math.round(bonus)} seconden`, '#ffffff', false, 1.8);
+      audio.chime();
+      announcer.say('Checkpoint! Extra tijd!');
+    }
+    this.timeLeft = Math.max(0, this.timeLeft - dt);
+    if (!this.warned && this.timeLeft < 10) {
+      this.warned = true;
+      announcer.say('Tien seconden!', { priority: true });
+    }
+    if (this.timeLeft <= 0 && !p.finished) {
+      this.outOfTime = true;
+      this.state = 'finished';
+      this.finishedAt = this.raceTime;
+      p.input.throttle = 0;
+      hud.message('TIJD OP!', '#ff2a2a', true, 2.5);
+      announcer.say('Tijd op!', { priority: true });
+    }
   }
 
   private detectNearMisses(): void {
@@ -479,7 +596,7 @@ export class Race {
 
   standings(): StandingRow[] {
     return this.ranking().map((v) => ({
-      name: v.spec.driver,
+      name: v.driverName,
       car: v.spec.name,
       isPlayer: v.isPlayer,
       wrecked: v.wrecked && !v.finished,
@@ -497,7 +614,7 @@ export class Race {
     const p = this.player;
     for (const v of this.vehicles) {
       const model = this.models.get(v)!;
-      model.root.visible = v.active;
+      model.root.visible = v.active && !(this.state === 'menu' && this.showroom && v.isRacer && v !== this.showroom);
       if (!v.active) continue;
       model.sync(v, simDt);
       if (simDt <= 0) continue;
@@ -528,10 +645,12 @@ export class Race {
     }
     this.traffic.renderOncoming(simDt, p.s);
     fx.update(simDt);
-    cam.update(p, Math.max(simDt, 0.0001), time);
+    if (this.state !== 'menu') cam.update(p, Math.max(simDt, 0.0001), time);
 
-    audio.engine(p.speed, p.input.throttle, p.nitroActive, !p.wrecked && this.state !== 'title');
+    audio.engine(p.speed, p.input.throttle, p.nitroActive, !p.wrecked && this.state !== 'menu');
     audio.scrape(this.paused ? 0 : this.playerScrape);
+    const squeal = p.drifting ? 1 : p.braking && p.speed > 22 ? 0.5 : 0;
+    audio.squeal(this.paused || p.wrecked ? 0 : squeal);
     audio.siren(this.paused ? 0 : Math.max(0, 1 - this.police.nearestSiren / 220));
     this.playerScrape = 0;
 
@@ -547,6 +666,7 @@ export class Race {
       heat: this.police.heat,
       sirenNear: this.police.nearestSiren < 120,
       bust: this.police.bustProgress,
+      timeLeft: this.state === 'menu' ? -1 : this.timeLeft,
     });
   }
 }

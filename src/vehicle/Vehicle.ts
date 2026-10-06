@@ -28,7 +28,9 @@ const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
  */
 export class Vehicle {
   readonly spec: CarSpec;
-  readonly isPlayer: boolean;
+  isPlayer: boolean;
+  /** Shown in standings and messages (the player can swap cars with a rival). */
+  driverName: string;
   readonly role: VehicleRole;
   readonly halfL: number;
   readonly halfW: number;
@@ -89,6 +91,7 @@ export class Vehicle {
   constructor(spec: CarSpec, isPlayer: boolean, role: VehicleRole = 'racer') {
     this.spec = spec;
     this.isPlayer = isPlayer;
+    this.driverName = spec.driver;
     this.role = role;
     const len = totalLength(spec);
     this.halfL = len / 2;
