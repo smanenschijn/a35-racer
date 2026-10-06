@@ -13,10 +13,12 @@ export interface VehicleInput {
   nitro: boolean;
   ramLeft: boolean; // edge-triggered, consumed by the vehicle
   ramRight: boolean;
+  /** Ram whichever side has a target (edge-triggered). */
+  ramAuto: boolean;
 }
 
 export const emptyInput = (): VehicleInput => ({
-  throttle: 0, brake: 0, steer: 0, handbrake: false, nitro: false, ramLeft: false, ramRight: false,
+  throttle: 0, brake: 0, steer: 0, handbrake: false, nitro: false, ramLeft: false, ramRight: false, ramAuto: false,
 });
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
@@ -65,6 +67,8 @@ export class Vehicle {
   wreckTime = 0;
   frozen = true;
   drifting = false;
+  /** Seconds the current drift has lasted (only sustained drifts fill nitro). */
+  driftTime = 0;
   scraping = 0;
   braking = false;
   lastHitBy: Vehicle | null = null;
@@ -261,13 +265,20 @@ export class Vehicle {
     if (this.wrecked) grip = 1.5;
     const vLBefore = vL;
     vL *= Math.exp(-grip * dt);
-    // Arcade: part of the lost slide becomes forward speed so drifts don't kill momentum.
-    if (active && vF > 5) vF += Math.abs(vLBefore - vL) * 0.25;
+    // Arcade: a little of the lost slide becomes forward speed so drifts don't kill momentum
+    // (kept small: the handbrake shouldn't be quicker through a bend than driving it clean).
+    if (active && vF > 5) vF += Math.abs(vLBefore - vL) * tuning.driftSpeedReturn;
 
     // --- Ram attack: a sideways shove that locks on to a car beside you ---
-    if (active && this.ramCooldown <= 0 && (inp.ramLeft || inp.ramRight)) {
-      this.ramDir = inp.ramRight ? 1 : -1;
-      this.ramTarget = this.findRamTarget(others);
+    if (active && this.ramCooldown <= 0 && (inp.ramLeft || inp.ramRight || inp.ramAuto)) {
+      if (inp.ramAuto && !inp.ramLeft && !inp.ramRight) {
+        const l = this.findRamTarget(others, -1);
+        const r = this.findRamTarget(others, 1);
+        this.ramDir = r && (!l || r.score < l.score) ? 1 : -1;
+      } else {
+        this.ramDir = inp.ramRight ? 1 : -1;
+      }
+      this.ramTarget = this.findRamTarget(others, this.ramDir)?.v ?? null;
       if (this.ramTarget) {
         this.ramTimer = tuning.ramDuration;
         this.ramCooldown = tuning.ramCooldown;
@@ -278,7 +289,7 @@ export class Vehicle {
       }
       events.emit('ram', { vehicle: this, dir: this.ramDir });
     }
-    inp.ramLeft = inp.ramRight = false;
+    inp.ramLeft = inp.ramRight = inp.ramAuto = false;
     // Never shove ourselves into the rail.
     if (this.ramTimer > 0 && this.ramDir * this.proj.d > ROAD.halfWidth - this.halfW - 0.5) this.ramTimer = 0;
     if (this.ramTimer > 0) {
@@ -301,7 +312,9 @@ export class Vehicle {
     }
 
     this.drifting = active && speed > 15 && Math.abs(vL) > 4;
-    if (this.drifting) this.nitro = Math.min(1, this.nitro + tuning.nitroFillDriftPerSec * dt);
+    this.driftTime = this.drifting ? this.driftTime + dt : 0;
+    // Only a sustained drift pays out, so flicking the handbrake isn't a nitro farm.
+    if (this.driftTime > tuning.driftNitroDelay) this.nitro = Math.min(1, this.nitro + tuning.nitroFillDriftPerSec * dt);
 
     this.vx = fx * vF - fz * vL;
     this.vz = fz * vF + fx * vL;
@@ -322,14 +335,15 @@ export class Vehicle {
     return this.ramTimer > 0 || this.ramHitTimer > 0;
   }
 
-  private findRamTarget(others: Vehicle[]): Vehicle | null {
+  /** Closest car a ram towards `dir` (-1 left, +1 right) would lock on to. */
+  findRamTarget(others: Vehicle[], dir: number): { v: Vehicle; score: number } | null {
     let best: Vehicle | null = null;
     let bestScore = Infinity;
     for (const o of others) {
       if (o === this || o.wrecked || !o.active) continue;
       if (this.role === 'police' && !o.isPlayer) continue; // police only go for the player
       const ds = o.proj.s - this.proj.s;
-      const side = (o.proj.d - this.proj.d) * this.ramDir;
+      const side = (o.proj.d - this.proj.d) * dir;
       if (Math.abs(ds) > 6 || side < 0.8 || side > 6) continue;
       const score = Math.abs(ds) + side;
       if (score < bestScore) {
@@ -337,7 +351,7 @@ export class Vehicle {
         best = o;
       }
     }
-    return best;
+    return best ? { v: best, score: bestScore } : null;
   }
 
   /** The shove landed: end it a moment later so the impact transfers but we don't keep pushing. */

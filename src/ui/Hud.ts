@@ -28,6 +28,15 @@ export interface HudState {
   /** Seconds on the checkpoint clock; negative hides it (menu). */
   timeLeft: number;
   stage: string;
+  /** A ram to the left/right would lock on to someone right now. */
+  ramTargetL: boolean;
+  ramTargetR: boolean;
+  /** A rival is alongside on that side (within a few car lengths). */
+  sideL: boolean;
+  sideR: boolean;
+  lookBack: boolean;
+  /** 0..1 while the restart key is held. */
+  restartHold: number;
 }
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html = ''): HTMLElementTagNameMap[K] => {
@@ -72,7 +81,12 @@ export class Hud {
   private policeGlow = el('div', 'police-glow');
   private flashEl = el('div', 'cam-flash');
   private nowPlaying = el('div', 'now-playing');
-  private resetBtn = el('button', 'hud-reset', '↺ Terug op de weg (⌫ / F)') as HTMLButtonElement;
+  private resetBtn = el('button', 'hud-reset', '↺ Terug op de weg') as HTMLButtonElement;
+  private resetKey = 'F';
+  private sideL = el('div', 'side-warn l', '◀◀');
+  private sideR = el('div', 'side-warn r', '▶▶');
+  private lookBackEl = el('div', 'look-back', 'ACHTERUIT KIJKEN');
+  private restartEl = el('div', 'restart-hold', 'Houd R vast om te herstarten<i><b></b></i>');
   /** Clicked the reset prompt. */
   onReset: (() => void) | null = null;
   private lastPos = 0;
@@ -122,10 +136,7 @@ export class Hud {
 
     const top = el('div', 'hud-top');
     top.append(this.clock, this.wanted, this.bustBar);
-    this.root.append(this.bulletTint, this.policeGlow, this.flashEl, top, this.nowPlaying);
-
-    this.help.innerHTML =
-      '↑↓ / WS gas-rem &nbsp;·&nbsp; ←→ / AD sturen &nbsp;·&nbsp; SPATIE handrem &nbsp;·&nbsp; SHIFT nitro &nbsp;·&nbsp; C bullet time &nbsp;·&nbsp; Q/E rammen &nbsp;·&nbsp; ⌫ / F terug op weg &nbsp;·&nbsp; R herstart &nbsp;·&nbsp; M geluid &nbsp;·&nbsp; N volgend nummer &nbsp;·&nbsp; −/+ muziekvolume';
+    this.root.append(this.bulletTint, this.policeGlow, this.flashEl, top, this.nowPlaying, this.sideL, this.sideR, this.lookBackEl, this.restartEl);
 
     this.resetBtn.type = 'button';
     this.resetBtn.hidden = true;
@@ -183,6 +194,22 @@ export class Hud {
     const ready = player.ramCooldown <= 0;
     this.ramL.classList.toggle('ready', ready);
     this.ramR.classList.toggle('ready', ready);
+    this.ramL.classList.toggle('target', ready && h.ramTargetL);
+    this.ramR.classList.toggle('target', ready && h.ramTargetR);
+    this.sideL.classList.toggle('on', h.sideL);
+    this.sideR.classList.toggle('on', h.sideR);
+    this.lookBackEl.classList.toggle('on', h.lookBack);
+    this.restartEl.classList.toggle('on', h.restartHold > 0.05);
+    (this.restartEl.querySelector('b') as HTMLElement).style.width = `${h.restartHold * 100}%`;
+  }
+
+  /** Key labels for the device in use: the ram indicators, help line and reset prompt. */
+  setKeys(k: { ramL: string; ramR: string; reset: string; help: string; restart: string }): void {
+    this.ramL.textContent = k.ramL;
+    this.ramR.textContent = k.ramR;
+    this.resetKey = k.reset;
+    this.help.innerHTML = k.help;
+    (this.restartEl.firstChild as Text).textContent = `Houd ${k.restart} vast om te herstarten`;
   }
 
   message(text: string, color = '#ffd400', big = false, duration = 1.4): void {
@@ -206,7 +233,7 @@ export class Hud {
         <div><b>SPATIE</b> handrem (drift)</div>
         <div><b>SHIFT</b> nitro</div>
         <div><b>Q / E</b> ram links / rechts</div>
-        <div><b>⌫</b> terug op de weg</div>
+        <div><b>F</b> terug op de weg</div>
         <div><b>N</b> volgend nummer</div>
         <div><b>− / +</b> muziekvolume</div>
         <div><b>M</b> geluid aan/uit</div>
@@ -220,7 +247,7 @@ export class Hud {
       return;
     }
     this.overlay.className = 'overlay show pause';
-    this.overlay.innerHTML = `<div class="big-title">PAUZE</div><div class="press">ESC om verder te gaan · R om te herstarten</div>`;
+    this.overlay.innerHTML = `<div class="big-title">PAUZE</div><div class="press">ESC om verder te gaan · houd R vast om te herstarten</div>`;
   }
 
   showResults(rows: StandingRow[], playerPos: number): void {
@@ -239,7 +266,7 @@ export class Hud {
           )
           .join('')}
       </table>
-      <div class="press">R / SELECT om opnieuw te rijden</div>`;
+      <div class="press">houd R / SELECT vast om opnieuw te rijden</div>`;
   }
 
   hideOverlay(): void {
@@ -283,7 +310,7 @@ export class Hud {
   showReset(v: boolean): void {
     if (this.resetBtn.hidden === !v) return;
     this.resetBtn.hidden = !v;
-    this.resetBtn.textContent = matchMedia('(pointer: coarse)').matches ? '↺ Terug op de weg' : '↺ Terug op de weg (⌫ / F)';
+    this.resetBtn.textContent = matchMedia('(pointer: coarse)').matches ? '↺ Terug op de weg' : `↺ Terug op de weg (${this.resetKey})`;
   }
 
   setVisible(v: boolean): void {

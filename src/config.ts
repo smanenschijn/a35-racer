@@ -7,12 +7,13 @@ export const tuning = {
   dragCoef: 0.0016, // aerodynamic drag factor (per m)
   rollingDecel: 0.6,
   grip: 7.5, // lateral velocity damping (1/s)
-  handbrakeGrip: 1.3,
+  handbrakeGrip: 2.1, // less of a cliff from normal grip, so a drift can be dosed
   driftGripFactor: 0.65, // grip multiplier while already sliding (keeps drifts alive)
   steerRateLow: 1.4, // max yaw rate (rad/s) at low speed
   steerRateHigh: 0.52, // max yaw rate (rad/s) at top speed
   yawResponse: 4, // how fast yaw rate follows steering (1/s)
   handbrakeYawBoost: 1.55,
+  driftSpeedReturn: 0.1, // share of the bled-off slide that turns into forward speed
 
   // Nitro
   nitroAccel: 9,
@@ -21,7 +22,8 @@ export const tuning = {
   nitroFillPerDamage: 0.006,
   nitroFillTakedown: 0.35,
   nitroFillNearMiss: 0.08,
-  nitroFillDriftPerSec: 0.16,
+  nitroFillDriftPerSec: 0.11,
+  driftNitroDelay: 0.6, // seconds a drift must last before it fills nitro
 
   // Ram attack
   ramSideSpeed: 12, // m/s lateral velocity during ram
@@ -44,7 +46,7 @@ export const tuning = {
   railScrapeDamage: 0.03, // damage points per m/s per second while scraping
   takedownWindow: 2, // seconds a hit counts as cause for a rail wreck
   takedownRailBonus: 1.2, // rail damage multiplier when recently rammed by someone
-  playerDamageFactor: 0.6,
+  playerDamageFactor: 0.7,
   aiDamageFactor: 1.0,
   aiSingleDamage: 0.35, // rivals on the two-lane N35 (their own pile-ups only)
   stunTime: 0.45,
@@ -54,7 +56,7 @@ export const tuning = {
   aiCornerLatAccel: 13,
   aiAggression: 1,
   rubberBandBehind: 1.07, // power factor for a rival far behind the player
-  rubberBandAhead: 0.66, // power factor for a rival far ahead of the player (eases in over rubberBandRange)
+  rubberBandAhead: 0.82, // power factor for a rival far ahead of the player (eases in over rubberBandRange)
   rubberBandRange: 420, // metres ahead over which a rival backs off to rubberBandAhead
   playerCatchUp: 0.1, // extra power for the player when far behind the leader
   draftBonus: 0.07, // extra power while tucked in behind another car (slipstream)
@@ -72,7 +74,7 @@ export const tuning = {
   heatDecay: 0.09, // stars per second
   speedCameraKmh: 140,
   bustSeconds: 1.4, // how long the police must pin you down
-  bustPenalty: 5, // seconds per wanted star
+  bustPenalty: 3, // seconds per wanted star
 
   // Camera
   camDistance: 7.2,

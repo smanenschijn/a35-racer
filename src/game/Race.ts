@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { AI_PERSONALITIES, CARS, POLICE_CAR, RIVALS, ROAD, tuning, type CarSpec } from '../config';
 import type { GameAudio } from '../core/Audio';
 import type { EventBus } from '../core/Events';
-import type { Controls } from '../core/Input';
+import type { BindAction, Controls } from '../core/Input';
 import type { Announcer } from '../core/Announcer';
 import type { MusicPlayer } from '../core/Music';
 import type { Effects } from '../fx/Particles';
@@ -54,7 +54,12 @@ interface Deps {
   announcer: Announcer;
   cam: ChaseCamera;
   rumble: (strong: number, weak: number, ms: number) => void;
+  /** Label of the control for an action on the device in use (hints, HUD). */
+  keyLabel: (action: BindAction) => string;
 }
+
+/** How often each contextual hint may still be shown (per page load). */
+const HINTS = { ram: 3, nitro: 2, slow: 1, lookBack: 1 };
 
 export class Race {
   /** Every physics vehicle: racers, traffic and police. */
@@ -102,6 +107,15 @@ export class Race {
   private playerScrape = 0;
   private simTime = 0;
   private lastTaunt = -99;
+  /** One extra stretch of clock per race when time runs out (costs a time penalty). */
+  private lastChanceUsed = false;
+  private helpShown = false;
+  private hintsLeft = { ...HINTS };
+  private lastHint = -99;
+  private keySig = '';
+  private lookBack = false;
+  private restartHold = 0;
+  private rammedOnce = false;
   private active: Vehicle[] = [];
   private d: Deps;
   /** Testing aid: let an AI drive the player's car (?autopilot in the URL). */
@@ -197,6 +211,11 @@ export class Race {
     this.draftT = 0;
     this.slingT = 0;
     this.playerStuck = 0;
+    this.lastChanceUsed = false;
+    this.helpShown = false;
+    this.lookBack = false;
+    this.d.cam.lookBack = false;
+    this.restartHold = 0;
     this.prevDs.clear();
     this.paused = false;
     this.setupClock();
@@ -210,15 +229,16 @@ export class Race {
   private setupClock(): void {
     const f = this.d.track.features;
     const t = this.d.track;
-    // Average speed you need, crashes included: ~144 km/h on the motorway, less on the busy two-lane N35.
+    // Average speed you need, crashes included: ~137 km/h on the motorway, ~100 km/h on the busy
+    // two-lane N35 with its oncoming traffic and real bends.
     const leg = (a: number, b: number) => {
       let time = 0;
-      for (let s = a; s < b; s += 10) time += Math.min(10, b - s) / (t.isSingle(s) ? 31 : 40);
+      for (let s = a; s < b; s += 10) time += Math.min(10, b - s) / (t.isSingle(s) ? 28 : 38);
       return time;
     };
     const gates = [...f.checkpoints, f.finishS];
-    this.timeLeft = leg(f.startS, gates[0]) + 10;
-    this.checkpointBonus = gates.slice(1).map((g, i) => leg(gates[i], g) + 2);
+    this.timeLeft = leg(f.startS, gates[0]) + 12;
+    this.checkpointBonus = gates.slice(1).map((g, i) => leg(gates[i], g) + 3);
     this.nextCheckpoint = 0;
     this.outOfTime = false;
     this.warned = false;
@@ -327,6 +347,8 @@ export class Race {
       if (dist < 200) audio.crash(25 * Math.max(0.3, 1 - dist / 200));
       if (victim === this.player) {
         this.stats.wrecks++;
+        // A total loss should hurt: the nitro tank goes up in flames with the car.
+        victim.nitro = 0;
         hud.message('TOTAL LOSS!', '#ff2a2a', true, 2.2);
         announcer.say('Total loss!', { priority: true });
         this.slowMo(0.3, 1.2);
@@ -345,7 +367,8 @@ export class Race {
           this.slowMo(0.35, 1.1);
           cam.addShake(0.6);
           this.d.rumble(0.8, 1, 400);
-          this.police.addHeat(0.6);
+          // Taking out rivals is the game, not a crime: only a little heat (the crash itself adds some).
+          this.police.addHeat(0.2);
         } else {
           hud.message(`${victim.driverName} is total loss`, '#ff9a3c', false, 1.6);
         }
@@ -363,7 +386,9 @@ export class Race {
     events.on('ram', ({ vehicle }) => {
       if (vehicle === this.player) {
         audio.whoosh();
-        if (vehicle.ramTarget && this.state === 'racing') this.police.addHeat(0.15);
+        this.rammedOnce = true;
+        // Shoving rivals is the race; shoving civilians or the police draws attention.
+        if (vehicle.ramTarget && !vehicle.ramTarget.isRacer && this.state === 'racing') this.police.addHeat(0.15);
       } else if (vehicle.isRacer && vehicle.ramTarget === this.player && this.simTime - this.lastTaunt > 6 && Math.random() < 0.5) {
         // Rivals talk trash when they go for you.
         const ai = this.ais.find((a) => a.vehicle === vehicle);
@@ -440,6 +465,7 @@ export class Race {
     }
 
     if (this.state === 'menu') return;
+    this.restartHold = c.restartHold;
     if (c.restart) {
       this.reset();
       return;
@@ -484,7 +510,10 @@ export class Race {
       p.input.nitro = c.nitro;
       if (c.ramLeft) p.input.ramLeft = true;
       if (c.ramRight) p.input.ramRight = true;
+      if (c.ramAuto) p.input.ramAuto = true;
     }
+    this.lookBack = c.lookBack && this.state !== 'finished';
+    this.d.cam.lookBack = this.lookBack;
 
     this.resetCooldown -= realDt;
     if (c.reset && this.state === 'racing' && !p.wrecked && this.resetCooldown <= 0) {
@@ -504,7 +533,7 @@ export class Race {
       if (!this.vehicles.some((o) => o !== v && o.active && Math.abs(o.s - s) < o.halfL + v.halfL + 4 && Math.abs(o.d - lane) < 2.6)) break;
       s += 8;
     }
-    v.place(t, Math.min(s, t.length - 10), lane, repair ? 18 : 16);
+    v.place(t, Math.min(s, t.length - 10), lane, repair ? 18 : 22);
     v.stun = 0;
     v.angVel = 0;
     if (v === this.player) this.playerStuck = 0;
@@ -538,14 +567,19 @@ export class Race {
           this.state = 'racing';
           for (const v of this.racers) v.frozen = false;
           music.playRace();
-          setTimeout(() => hud.setHelpVisible(false), 8000);
         }
       }
     } else {
       this.raceTime += dt;
     }
+    // Race time, not wall time: a pause doesn't eat the help line.
+    if (this.state === 'racing' && !this.helpShown && this.raceTime > 10) {
+      this.helpShown = true;
+      hud.setHelpVisible(false);
+    }
     if (this.state === 'racing') {
-      this.tickClock(dt);
+      // Bullet time slows the world, not the checkpoint clock: it runs in real time.
+      this.tickClock(this.bulletOn ? dt / Math.max(this.timeScale, 0.01) : dt);
       this.stats.topSpeed = Math.max(this.stats.topSpeed, this.player.speed * 3.6);
       this.stats.distance += Math.max(0, this.player.alongSpeed) * dt;
     }
@@ -648,6 +682,13 @@ export class Race {
     const stuck = this.state === 'racing' && this.raceTime > 5 && !p.wrecked && !p.finished && !p.frozen &&
       (p.speed < 4 || Math.abs(rel) > 1.3 || Math.abs(p.d) > ROAD.halfWidth + 0.5);
     this.playerStuck = stuck ? this.playerStuck + dt : 0;
+    // Still stuck after the prompt has been up a while: put the car back on the road ourselves.
+    const lost = Math.abs(rel) > 1.3 || Math.abs(p.d) > ROAD.halfWidth + 0.5;
+    if (this.playerStuck > (lost ? 3.5 : 5)) {
+      this.respawn(p, false);
+      hud.message('TERUG OP DE WEG', '#ffffff', false, 1);
+    }
+    this.contextHints();
 
     this.detectNearMisses();
   }
@@ -712,6 +753,16 @@ export class Race {
       this.warned = true;
       announcer.say('Tien seconden!', { priority: true });
     }
+    // One last chance per race: a few more seconds, paid for with a penalty on the finish time.
+    if (this.timeLeft <= 0 && !p.finished && !this.lastChanceUsed) {
+      this.lastChanceUsed = true;
+      this.timeLeft = 12;
+      p.penalty += 10;
+      hud.message('LAATSTE KANS!', '#ff9a3c', true, 2);
+      hud.message('+12 s tijd · 10 s straf', '#ffffff', false, 2);
+      announcer.say('Laatste kans! Gas geaven!', { priority: true });
+      audio.chime();
+    }
     if (this.timeLeft <= 0 && !p.finished) {
       this.outOfTime = true;
       this.state = 'finished';
@@ -720,6 +771,61 @@ export class Race {
       hud.message('TIJD OP!', '#ff2a2a', true, 2.5);
       announcer.say('Tijd op!', { priority: true });
     }
+  }
+
+  /** Explain a control the moment it becomes useful (a few times, then trust the player). */
+  private contextHints(): void {
+    if (this.state !== 'racing' || this.simTime - this.lastHint < 6) return;
+    const p = this.player;
+    if (p.wrecked) return;
+    const { hud } = this.d;
+    const key = this.d.keyLabel;
+    const show = (k: keyof typeof HINTS, text: string) => {
+      if (this.hintsLeft[k] <= 0) return false;
+      this.hintsLeft[k]--;
+      this.lastHint = this.simTime;
+      hud.message(text, '#ffffff', false, 2.2);
+      return true;
+    };
+    const rivalBeside = (dir: number) => {
+      const t = p.findRamTarget(this.active, dir)?.v;
+      return !!t && t.isRacer;
+    };
+    if (!this.rammedOnce && p.ramCooldown <= 0 && (rivalBeside(-1) || rivalBeside(1))) {
+      const ram = this.d.keyLabel('ramLeft') === this.d.keyLabel('ramRight') ? key('ramLeft') : `${key('ramLeft')} / ${key('ramRight')}`;
+      if (show('ram', `${ram}: RAM ZE DE VANGRAIL IN!`)) return;
+    }
+    if (p.nitro > 0.99 && !p.nitroActive && show('nitro', `NITRO VOL · ${key('nitro')}`)) return;
+    if (this.bullet > 0.99 && this.police.stars >= 2 && show('slow', `${key('bulletTime')}: BULLET TIME`)) return;
+    if (this.police.stars >= 1 && this.d.keyLabel('lookBack') && show('lookBack', `${key('lookBack')}: ACHTEROM KIJKEN`)) return;
+  }
+
+  /** Is there a rival close alongside on this side (not ahead or behind)? */
+  private rivalAlongside(dir: number): boolean {
+    const p = this.player;
+    for (const o of this.racers) {
+      if (o === p || o.wrecked || o.finished) continue;
+      const side = (o.d - p.d) * dir;
+      if (Math.abs(o.s - p.s) < 9 && side > 0.8 && side < 7) return true;
+    }
+    return false;
+  }
+
+  /** Push the key labels for the device in use to the HUD whenever they change. */
+  private syncKeys(): void {
+    const k = this.d.keyLabel;
+    const touch = k('nitro') === 'NITRO';
+    const ramL = touch ? '◀' : k('ramLeft');
+    const ramR = touch ? '▶' : k('ramRight');
+    const gamepad = k('throttle') === 'R2';
+    const help = gamepad
+      ? 'R2/L2 gas-rem · stick sturen · ✕ handrem · ○ nitro · L1/R1 rammen · L3/R3 bullet time · rechterstick ↓ achterom · △ terug op weg · houd SELECT herstart'
+      : `${k('throttle')} / ${k('brake')} gas-rem &nbsp;·&nbsp; ${k('left')} / ${k('right')} sturen &nbsp;·&nbsp; ${k('handbrake')} handrem &nbsp;·&nbsp; ${k('nitro')} nitro &nbsp;·&nbsp; ${k('bulletTime')} bullet time &nbsp;·&nbsp; ${k('ramLeft')}/${k('ramRight')} rammen &nbsp;·&nbsp; ${k('lookBack')} achterom &nbsp;·&nbsp; ${k('reset')} terug op weg &nbsp;·&nbsp; houd R herstart &nbsp;·&nbsp; M geluid &nbsp;·&nbsp; N volgend nummer`;
+    const restart = gamepad ? 'SELECT' : 'R';
+    const sig = `${ramL}|${ramR}|${help}`;
+    if (sig === this.keySig) return;
+    this.keySig = sig;
+    this.d.hud.setKeys({ ramL, ramR, reset: k('reset'), help, restart });
   }
 
   private detectNearMisses(): void {
@@ -813,6 +919,8 @@ export class Race {
     audio.siren(this.paused ? 0 : Math.max(0, 1 - this.police.nearestSiren / 220));
     this.playerScrape = 0;
 
+    this.syncKeys();
+    const racing = this.state === 'racing' && !p.wrecked && !this.paused;
     const ranking = this.ranking();
     hud.update({
       player: p,
@@ -829,6 +937,12 @@ export class Race {
       bullet: this.bullet,
       bulletOn: this.bulletOn,
       stage: `ETAPPE ${track.stage.id}/5 · ${track.stage.from.toUpperCase()} → ${track.stage.to.toUpperCase()}`,
+      ramTargetL: racing && !!p.findRamTarget(this.active, -1),
+      ramTargetR: racing && !!p.findRamTarget(this.active, 1),
+      sideL: racing && this.rivalAlongside(-1),
+      sideR: racing && this.rivalAlongside(1),
+      lookBack: this.lookBack,
+      restartHold: this.state === 'menu' ? 0 : this.restartHold,
     });
   }
 }
