@@ -376,20 +376,24 @@ def poi(name_part):
 landmarks = [
     lm('raadhuis', *poi('Gemeentehuis Raalte')),
     lm('heuvelrug', 52.343, 6.462, near=380, scale=0.02),
+    lm('tokkolocco', 52.3710, 6.3757, near=34, scale=0.02),  # next to the BP in Haarle
     lm('ravijn', 52.3677, 6.4485),
     lm('gemeentehuis', 52.3643, 6.4614, shift=85),  # out of the tunnel's shadow
     lm('stoomweverij', 52.3635, 6.4700),
     lm('watertoren', 52.3577, 6.5955),
-    lm('heraklus', *poi('Asito')),
+    lm('heraklus', *poi('Asito'), scale=0.02),
+    lm('bauhaus', 52.28698, 6.76177, near=50, shift=-220),  # Westermaat: one after the other
+    lm('ikea', 52.28876, 6.76785, near=50, shift=200),
     lm('metropool', *poi('Metropool') if False else (52.26122, 6.79458)),
-    lm('veste', *poi('Grolsch Veste')),
+    lm('veste', *poi('Grolsch Veste'), scale=0.02),
     lm('brouwerij', *poi('Koninklijke Grolsch')),
     lm('utwente', *poi('Universiteit Twente')),
-    lm('thuisbesteld', 52.2230948, 6.8867369),
+    lm('thuisbesteld', 52.2230948, 6.8867369, scale=0.02),
 ]
 # Keep landmarks inside their stage, away from the start/finish lines.
 for item in landmarks:
-    st = next((st for st in stages if st['startS'] <= item['s'] <= st['finishS']), stages[0] if item['s'] < stages[0]['startS'] else None)
+    st = next((st for st in stages if st['startS'] <= item['s'] <= st['finishS']),
+              stages[0] if item['s'] < stages[0]['startS'] else stages[-1] if item['s'] > stages[-1]['finishS'] else None)
     if st:
         item['s'] = min(max(item['s'], st['startS'] + 150), st['finishS'] - 80)
 

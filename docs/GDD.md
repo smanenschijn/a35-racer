@@ -25,10 +25,10 @@ Elke etappe loopt punt-naar-punt, van plaatsnaambord tot plaatsnaambord, en duur
 
 | # | Etappe | Wegtype | Landmarks |
 |---|---|---|---|
-| 1 | Raalte → Nijverdal | N35, deels enkelbaans met tegenverkeer | Raadhuis Raalte, Het Ravijn, Combiwet-tunnel, gemeentehuis Nijverdal, Sallandse Heuvelrug |
+| 1 | Raalte → Nijverdal | N35, deels enkelbaans met tegenverkeer | Raadhuis Raalte, Tokko Locco (Haarle), Het Ravijn, Combiwet-tunnel, gemeentehuis Nijverdal, Sallandse Heuvelrug |
 | 2 | Nijverdal → Wierden | N35 | Koninklijke Stoomweverij (Ten Cate), watertoren Wierden |
 | 3 | Wierden → Almelo | N35 → A35 | Heraklus-stadion (Heracles) |
-| 4 | Almelo → Hengelo | A35 | Metropool Concertgebouw |
+| 4 | Almelo → Hengelo | A35 | Bouwhaus en IKEO op de Westermaat |
 | 5 | **Hengelo → Enschede** *(prototype)* | A35 | zie hieronder |
 
 **Routegetrouwheid:** het echte wegverloop uit OpenStreetMap, dus bochten, afritten, viaducten en wegtype (enkelbaans, 2x2, snelweg). Lange rechte stukken zonder interesse worden ingekort.

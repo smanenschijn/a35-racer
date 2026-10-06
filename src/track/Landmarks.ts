@@ -5,7 +5,7 @@ import type { Track } from './Track';
 import type { TrackBuilder } from './TrackBuilder';
 
 export const LANDMARK_MODELS = [
-  'lm_raadhuis', 'lm_ravijn', 'lm_gemeentehuis', 'lm_stoomweverij', 'lm_watertoren', 'lm_heraklus', 'lm_metropool', 'lm_utwente', 'lm_veste', 'lm_brouwerij', 'lm_thuisbesteld', 'lm_barge',
+  'lm_raadhuis', 'lm_tokkolocco', 'lm_ravijn', 'lm_gemeentehuis', 'lm_stoomweverij', 'lm_watertoren', 'lm_heraklus', 'lm_bauhaus', 'lm_ikea', 'lm_metropool', 'lm_utwente', 'lm_veste', 'lm_brouwerij', 'lm_thuisbesteld', 'lm_barge',
 ];
 
 /** Merge a static model into one mesh per material (far fewer draw calls). */
@@ -41,6 +41,9 @@ function mergeStatic(src: THREE.Object3D): THREE.Group {
  * Places the Blender landmarks along the route (each turned to face the motorway) and sails
  * a barge on the Twentekanaal.
  */
+/** Landmarks that stand closer to the road than the usual 30 m (front edge to road centre). */
+const CLOSE_TO_ROAD: Record<string, number> = { tokkolocco: 15 };
+
 export class Landmarks {
   readonly group = new THREE.Group();
   private barges: { obj: THREE.Object3D; phase: number; width: number }[] = [];
@@ -54,8 +57,9 @@ export class Landmarks {
       // Model front is +Z; its depth decides how far back it must stand from the road.
       const box = new THREE.Box3().setFromObject(obj);
       const side = Math.sign(lm.d) || 1;
-      // Keep the front edge (max z) at least ~30 m from the road centre (clear of verge and trees).
-      const dist = Math.max(Math.abs(lm.d), 30 + box.max.z);
+      // Keep the front edge (max z) at least ~30 m from the road centre (clear of verge and trees);
+      // the roadside restaurant stands right behind the railing.
+      const dist = Math.max(Math.abs(lm.d), (CLOSE_TO_ROAD[lm.id] ?? 30) + box.max.z);
       const fr = track.frame(lm.s);
       obj.position.set(fr.x + fr.rx * dist * side, 0, fr.z + fr.rz * dist * side);
       // Face the road: the road lies opposite to our side.

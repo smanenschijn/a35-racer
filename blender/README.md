@@ -86,4 +86,4 @@ Je kunt het `.blend`-bestand openen en onderdelen aanpassen. Houd daarbij de obj
 /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python blender/build_landmarks.py
 ```
 
-Bouwt alle landmarks (`raadhuis`, `ravijn`, `gemeentehuis`, `stoomweverij`, `watertoren`, `heraklus`, `metropool`, `utwente`, `veste`, `brouwerij`, `thuisbesteld` en `barge`) uit `landmarks.py` naar `public/models/lm_<naam>.glb`. Een landmark staat met de kant die naar de snelweg moet kijken richting -Y. De game draait hem naar de weg en zet hem op de plek uit het routebestand.
+Bouwt alle landmarks (`raadhuis`, `tokkolocco`, `bauhaus`, `ikea`, `ravijn`, `gemeentehuis`, `stoomweverij`, `watertoren`, `heraklus`, `metropool`, `utwente`, `veste`, `brouwerij`, `thuisbesteld` en `barge`) uit `landmarks.py` naar `public/models/lm_<naam>.glb`. Een landmark staat met de kant die naar de snelweg moet kijken richting -Y. De game draait hem naar de weg en zet hem op de plek uit het routebestand.
