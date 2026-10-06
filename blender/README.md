@@ -33,6 +33,8 @@ Per auto levert dat:
 | `volvi` | Volvi 240 Kombi (Gerrit) | Hoekige stationwagon, eierkratgrille, chromen bumpers, dakdragers, wieldoppen |
 | `spacewagen` | Mitsubushi Space Wagen (Tante Riek) | Hoge MPV, dakrails, staande achterlichten |
 
+Een ontwerp bestaat uit profielcurves (breedte, hoogte, onderkant, schouderlijn, dakhoogte en dakbreedte langs de lengte), de raamindeling met stijlen, en stijlkeuzes voor neus, achterkant, bumpers, spoiler, uitlaat, velgen en extra's.
+
 ### Verkeer en politie
 
 Deze ontwerpen hebben `lod=True`: minder ringen in de carrosserie, eenvoudige banden en geen stuurwiel (~15.000 driehoeken in plaats van ~38.000). De game voegt ze per auto samen tot ongeveer 10 draw calls. Alle effen kleuren komen dan in één materiaal met vertexkleuren. Lak, glas, lampen, kenteken en zwaailichten blijven apart.
@@ -46,8 +48,6 @@ Deze ontwerpen hebben `lod=True`: minder ringen in de carrosserie, eenvoudige ba
 | `tr_van` | Volkswagon Transpoorter | Gesloten bestelbus (`gh_inset` en `seal_mat` maken de laadruimte vlak) |
 
 De vrachtwagen en de caravan zijn nog procedureel (de oplegger krijgt per spawn een bedrijfsnaam).
-
-Een ontwerp bestaat uit profielcurves (breedte, hoogte, onderkant, schouderlijn, dakhoogte en dakbreedte langs de lengte), de raamindeling met stijlen, en stijlkeuzes voor neus, achterkant, bumpers, spoiler, uitlaat, velgen en extra's.
 
 ## Stijl
 
