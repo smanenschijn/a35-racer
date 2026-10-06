@@ -356,6 +356,7 @@ export class TrafficManager {
       }
       const fr = t.frame(o.s);
       o.model.place(fr.x + fr.rx * o.lane, fr.y, fr.z + fr.rz * o.lane, fr.heading + Math.PI, o.speed, dt);
+      o.model.setDetail(Math.abs(o.s - playerS) < 200);
     }
   }
 }

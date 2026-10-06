@@ -42,6 +42,45 @@ function plateTexture(text: string, flipY = true): THREE.Texture {
 interface Deformable {
   mesh: THREE.Mesh;
   original: Float32Array;
+  /** 1 for vertices that dent (body panels), 0 for the rest of a merged mesh. */
+  mask?: Uint8Array;
+}
+
+/** A part that can break off, living as a vertex range inside the merged meshes. */
+interface Loose {
+  zone: string | undefined;
+  centre: THREE.Vector3;
+  ranges: { mesh: THREE.Mesh; start: number; count: number }[];
+  gone: boolean;
+}
+
+/**
+ * One material for (almost) a whole car: base colour, metalness, roughness, clearcoat and emission
+ * come from vertex attributes, so a car with twenty materials draws in a handful of calls and looks
+ * the same. Paint takes the per-car paint colour; head/brake lights and beacons take per-car levels.
+ */
+function uberMaterial(paint: THREE.Color, lights: THREE.Vector4, side: THREE.Side): THREE.MeshPhysicalMaterial {
+  const m = new THREE.MeshPhysicalMaterial({
+    color: 0xffffff, vertexColors: true, metalness: 1, roughness: 1, clearcoat: 1, clearcoatRoughness: 0.12, side,
+  });
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.paintColor = { value: paint };
+    sh.uniforms.lightLevels = { value: lights };
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute vec4 pbr;\nattribute vec4 emi;\nvarying vec4 vPbr;\nvarying vec4 vEmi;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvPbr = pbr;\nvEmi = emi;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform vec3 paintColor;\nuniform vec4 lightLevels;\nvarying vec4 vPbr;\nvarying vec4 vEmi;')
+      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.rgb = mix(diffuseColor.rgb, paintColor, vPbr.w);')
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = vPbr.y;')
+      .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nmetalnessFactor = vPbr.x;')
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+float level = vEmi.w < 0.5 ? 1.0 : vEmi.w < 1.5 ? lightLevels.x : vEmi.w < 2.5 ? lightLevels.y : vEmi.w < 3.5 ? lightLevels.z : lightLevels.w;
+totalEmissiveRadiance = vEmi.rgb * level;`)
+      .replace('#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.clearcoat = clearcoat * vPbr.z;');
+  };
+  m.customProgramCacheKey = () => 'car-uber-1';
+  return m;
 }
 
 const textCache = new Map<string, THREE.Texture>();
@@ -74,8 +113,6 @@ const dark = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.7 })
 const chrome = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 1, roughness: 0.25 });
 const tyreMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
 const white = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.5 });
-/** Traffic and police: every plain-coloured part shares this material via vertex colours. */
-const liteMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.25 });
 
 export class CarModel {
   readonly root = new THREE.Group();
@@ -103,6 +140,14 @@ export class CarModel {
   private spec: CarSpec;
   private color: number;
   readonly detachables: THREE.Object3D[] = [];
+  private loose: Loose[] = [];
+  /** Per-car levels for the batched material: head lights, brake lights, beacon L, beacon R. */
+  private lights = new THREE.Vector4(2.2, 1.2, 0, 0);
+  /** Every merged body mesh with its untouched positions (dents and lost parts are undone from these). */
+  private originals: { mesh: THREE.Mesh; original: Float32Array; normals?: Float32Array }[] = [];
+  /** Small parts that vanish into a few pixels at a distance: wheels, calipers, plates. */
+  private details: THREE.Object3D[] = [];
+  private detailOn = true;
 
   constructor(spec: CarSpec) {
     this.spec = spec;
@@ -119,6 +164,7 @@ export class CarModel {
     else this.buildCar();
     if (spec.trailerLength) this.buildCaravan();
     this.root.add(this.body);
+    this.batch();
     // Only the big pieces cast shadows: the small parts are hidden under them anyway,
     // and each caster costs an extra draw call in the shadow pass.
     this.root.traverse((o) => {
@@ -133,8 +179,6 @@ export class CarModel {
     const spec = this.spec;
     const car = template.clone(true);
     const plateMat = new THREE.MeshStandardMaterial({ map: plateTexture(spec.plate, false), roughness: 0.5 });
-    // Traffic and police are simpler Blender models, flattened to a handful of draw calls.
-    const lite = spec.model!.startsWith('tr_') || spec.model === 'police';
     this.carOffset = spec.trailerLength ? totalLength(spec) / 2 - spec.length / 2 : 0;
     this.body.position.z = this.carOffset;
     car.traverse((o) => {
@@ -186,125 +230,207 @@ export class CarModel {
       }
     }
     this.wheelR = car.userData.wheel_r ?? 0.31;
-    if (lite) this.mergeLite(plateMat);
-    else this.mergeStatic();
   }
 
   /**
-   * Traffic: merge the whole body (loose parts included) into paint, glass, lights, plate and one
-   * vertex-coloured mesh for everything else; each wheel becomes a single mesh. ~10 draw calls.
+   * Flatten the built car: per group (body, each wheel, each hub, things towed on the root) one mesh
+   * with the batched material, plus one per glass or textured material. Loose parts become vertex
+   * ranges; dents keep working through a per-vertex mask.
    */
-  private mergeLite(plateMat: THREE.Material): void {
-    const keep = new Set<THREE.Material>([this.paint, this.brakeMat, this.headMat, plateMat, ...this.beacons]);
-    const groups = new Map<THREE.Material, THREE.BufferGeometry[]>();
-    const deformMats = new Set<THREE.Material>();
+  private batch(): void {
     this.root.updateMatrixWorld(true);
-    const m = new THREE.Matrix4();
-    // Geometry of a subtree in the space of `space`, plain colours baked into vertex colours.
-    const collect = (node: THREE.Object3D, space: THREE.Object3D, into: (mat: THREE.Material, g: THREE.BufferGeometry, deform: boolean) => void) => {
-      const inv = new THREE.Matrix4().copy(space.matrixWorld).invert();
-      node.traverse((o) => {
-        if (!(o instanceof THREE.Mesh)) return;
-        const src = o.material as THREE.MeshStandardMaterial;
-        let g = o.geometry.clone();
-        g.applyMatrix4(m.multiplyMatrices(inv, o.matrixWorld));
-        if (!g.index) g = g.setIndex([...Array(g.attributes.position.count).keys()]);
-        const kept = keep.has(src) || src.name === 'Glass';
-        for (const name of Object.keys(g.attributes)) {
-          if (name !== 'position' && name !== 'normal' && !(name === 'uv' && kept && src.map)) g.deleteAttribute(name);
-        }
-        if (!kept) {
-          const n = g.attributes.position.count;
-          const col = new Float32Array(n * 3);
-          for (let i = 0; i < n; i++) col.set([src.color.r, src.color.g, src.color.b], i * 3);
-          g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-        }
-        into(kept ? src : liteMat, g, !!o.userData.deform);
-      });
+    // Blender models come with double-sided materials (some panels face inwards); keep that.
+    const uber = uberMaterial(this.paint.color, this.lights, this.spec.model ? THREE.DoubleSide : THREE.FrontSide);
+    const deformSet = new Set(this.deformables.map((d) => d.mesh));
+    const looseOf = new Map<THREE.Object3D, Loose>();
+    for (const o of this.detachables) {
+      const box = new THREE.Box3().setFromObject(o);
+      const centre = box.getCenter(new THREE.Vector3());
+      this.body.worldToLocal(centre);
+      const l: Loose = { zone: o.userData.zone, centre, ranges: [], gone: false };
+      this.loose.push(l);
+      o.traverse((c) => looseOf.set(c, l));
+    }
+    const m4 = new THREE.Matrix4();
+    const lin = (c: THREE.Color) => [c.r, c.g, c.b];
+
+    // Attributes for one source mesh under the batched material.
+    const bake = (src: THREE.Material, g: THREE.BufferGeometry) => {
+      const s = src as THREE.MeshPhysicalMaterial;
+      const n = g.attributes.position.count;
+      const paint = src === this.paint;
+      const col = paint ? [1, 1, 1] : lin(s.color ?? new THREE.Color(1, 1, 1));
+      const pbr = [s.metalness ?? 0, s.roughness ?? 0.6, s.clearcoat ?? 0, paint ? 1 : 0];
+      let cls = 0;
+      let e = s.emissive ? lin(s.emissive).map((v) => v * (s.emissiveIntensity ?? 1)) : [0, 0, 0];
+      if (src === this.headMat) (cls = 1), (e = lin(s.emissive));
+      else if (src === this.brakeMat) (cls = 2), (e = lin(s.emissive));
+      else if (this.beacons.includes(s)) (cls = 3 + this.beacons.indexOf(s)), (e = lin(s.emissive));
+      const vc = s.vertexColors ? (g.attributes.color as THREE.BufferAttribute | undefined) : undefined;
+      const color = new Float32Array(n * 3);
+      const pbrA = new Float32Array(n * 4);
+      const emiA = new Float32Array(n * 4);
+      for (let i = 0; i < n; i++) {
+        const f = vc ? [vc.getX(i), vc.getY(i), vc.getZ(i)] : [1, 1, 1];
+        color.set([col[0] * f[0], col[1] * f[1], col[2] * f[2]], i * 3);
+        pbrA.set(pbr, i * 4);
+        emiA.set([e[0], e[1], e[2], cls], i * 4);
+      }
+      g.setAttribute('color', new THREE.BufferAttribute(color, 3));
+      g.setAttribute('pbr', new THREE.BufferAttribute(pbrA, 4));
+      g.setAttribute('emi', new THREE.BufferAttribute(emiA, 4));
     };
 
-    for (const child of [...this.body.children]) {
-      collect(child, this.body, (mat, g, deform) => {
-        if (!groups.has(mat)) groups.set(mat, []);
-        groups.get(mat)!.push(g);
-        if (deform) deformMats.add(mat);
-      });
-      this.body.remove(child);
-    }
-    this.deformables = [];
-    this.detachables.length = 0;
-    for (const [mat, geos] of groups) {
-      const geo = mergeGeometries(geos, false);
-      if (!geo) continue;
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.castShadow = true;
-      this.body.add(mesh);
-      if (deformMats.has(mat)) {
-        const pos = geo.attributes.position as THREE.BufferAttribute;
-        this.deformables.push({ mesh, original: Float32Array.from(pos.array as Float32Array) });
-      }
-    }
-
-    // Wheels: one mesh each; brake calipers on the hubs are dropped.
-    this.wheels = this.wheels.map((wheel) => {
-      const geos: THREE.BufferGeometry[] = [];
-      collect(wheel, wheel, (_mat, g) => {
-        if (!g.attributes.color) {
-          const n = g.attributes.position.count;
-          g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3).fill(0.6), 3));
+    // Merge all meshes under `node` into meshes in the space of `space`, added to `parent`.
+    const flatten = (node: THREE.Object3D, space: THREE.Object3D, parent: THREE.Object3D) => {
+      interface Bucket { mat: THREE.Material; geos: THREE.BufferGeometry[]; deform: boolean[]; loose: (Loose | undefined)[] }
+      const buckets = new Map<THREE.Material, Bucket>();
+      const inv = new THREE.Matrix4().copy(space.matrixWorld).invert();
+      node.traverse((o) => {
+        if (!(o instanceof THREE.Mesh) || Array.isArray(o.material)) return;
+        const src = o.material as THREE.MeshStandardMaterial;
+        let g = o.geometry.clone();
+        g.applyMatrix4(m4.multiplyMatrices(inv, o.matrixWorld));
+        if (m4.determinant() < 0) {
+          // Mirrored part: flip the winding back.
+          const idx = g.index ? Array.from(g.index.array) : [...Array(g.attributes.position.count).keys()];
+          for (let t = 0; t < idx.length; t += 3) [idx[t + 1], idx[t + 2]] = [idx[t + 2], idx[t + 1]];
+          g.setIndex(idx);
         }
-        if (g.attributes.uv) g.deleteAttribute('uv');
-        geos.push(g);
+        if (!g.index) g.setIndex([...Array(g.attributes.position.count).keys()]);
+        const special = src.transparent || src.name === 'Glass' || src === glass || !!src.map;
+        const target = special ? src : uber;
+        for (const name of Object.keys(g.attributes)) {
+          const keep = name === 'position' || name === 'normal' || (name === 'uv' && special && !!src.map) || (name === 'color' && !special);
+          if (!keep) g.deleteAttribute(name);
+        }
+        if (!special) bake(src, g);
+        let b = buckets.get(target);
+        if (!b) buckets.set(target, (b = { mat: target, geos: [], deform: [], loose: [] }));
+        b.geos.push(g);
+        let p: THREE.Object3D | null = o;
+        let dm = false;
+        while (p && p !== node.parent) {
+          if (deformSet.has(p as THREE.Mesh) || p.userData.deform) dm = true;
+          p = p.parent;
+        }
+        b.deform.push(dm);
+        b.loose.push(looseOf.get(o));
       });
-      const hub = wheel.parent!;
-      const mesh = new THREE.Mesh(mergeGeometries(geos, false)!, liteMat);
-      mesh.position.copy(wheel.position);
-      mesh.quaternion.copy(wheel.quaternion);
-      mesh.scale.copy(wheel.scale);
-      for (const c of [...hub.children]) hub.remove(c);
-      hub.add(mesh);
-      return mesh;
-    });
-  }
-
-  /**
-   * Merge every body part that can't break off into one mesh per material. A detailed car
-   * has ~100 parts; this brings it down to a dozen draw calls. Dents keep working because
-   * the merged meshes become the deformables.
-   */
-  private mergeStatic(): void {
-    const groups = new Map<THREE.Material, THREE.BufferGeometry[]>();
-    const deformMats = new Set<THREE.Material>();
-    const merged: THREE.Object3D[] = [];
-    this.body.updateMatrixWorld(true);
-    const toBody = new THREE.Matrix4().copy(this.body.matrixWorld).invert();
-    const m = new THREE.Matrix4();
-    for (const child of this.body.children) {
-      if (this.detachables.includes(child)) continue;
-      child.traverse((o) => {
-        if (!(o instanceof THREE.Mesh)) return;
-        const g = o.geometry.clone();
-        g.applyMatrix4(m.multiplyMatrices(toBody, o.matrixWorld));
-        for (const name of Object.keys(g.attributes)) if (name !== 'position' && name !== 'normal') g.deleteAttribute(name);
-        const mat = o.material as THREE.Material;
-        if (!groups.has(mat)) groups.set(mat, []);
-        groups.get(mat)!.push(g.index ? g : g.setIndex([...Array(g.attributes.position.count).keys()]));
-        if (o.userData.deform) deformMats.add(mat);
-      });
-      merged.push(child);
-    }
-    for (const c of merged) this.body.remove(c);
-    this.deformables = [];
-    for (const [mat, geos] of groups) {
-      const geo = mergeGeometries(geos, false);
-      if (!geo) continue;
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.castShadow = true;
-      this.body.add(mesh);
-      if (deformMats.has(mat)) {
-        const pos = geo.attributes.position as THREE.BufferAttribute;
-        this.deformables.push({ mesh, original: Float32Array.from(pos.array as Float32Array) });
+      for (const b of buckets.values()) {
+        if (!b.geos.length) continue;
+        const geo = b.geos.length === 1 ? b.geos[0] : mergeGeometries(b.geos, false);
+        if (!geo) continue;
+        geo.computeBoundingSphere();
+        const mesh = new THREE.Mesh(geo, b.mat);
+        mesh.castShadow = true;
+        mesh.userData.batched = true;
+        if ((b.mat as THREE.MeshStandardMaterial).map) this.details.push(mesh);
+        parent.add(mesh);
+        const mask = new Uint8Array(geo.attributes.position.count);
+        let start = 0;
+        let anyDeform = false;
+        b.geos.forEach((g, k) => {
+          const count = g.attributes.position.count;
+          if (b.deform[k]) {
+            mask.fill(1, start, start + count);
+            anyDeform = true;
+          }
+          b.loose[k]?.ranges.push({ mesh, start, count });
+          start += count;
+        });
+        const original = Float32Array.from(geo.attributes.position.array as Float32Array);
+        const normals = geo.attributes.normal ? Float32Array.from(geo.attributes.normal.array as Float32Array) : undefined;
+        this.originals.push({ mesh, original, normals });
+        if (anyDeform) this.deformables.push({ mesh, original, mask });
       }
+    };
+
+    this.deformables = [];
+    // Body (leans and pitches).
+    const bodyKids = [...this.body.children];
+    this.body.updateMatrixWorld(true);
+    flatten(this.body, this.body, this.body);
+    for (const c of bodyKids) this.body.remove(c);
+    // Wheels. Two wheels on one axle spin about the same line, so they become one mesh; steered
+    // front wheels of the racers keep their own pivots. Traffic doesn't show steering or calipers.
+    const lite = !this.spec.model || this.spec.model.startsWith('tr_') || this.spec.model === 'police';
+    const steered = (w: THREE.Object3D) => !lite && this.frontWheelPivots.includes(w.parent!);
+    const pivots = new Set<THREE.Object3D>(this.wheels.map((w) => w.parent!));
+    const axles = new Map<string, THREE.Object3D[]>();
+    const spinning: THREE.Object3D[] = [];
+    for (const w of this.wheels) {
+      const pivot = w.parent!;
+      if (steered(w)) {
+        const holder = new THREE.Group();
+        holder.position.copy(w.position);
+        holder.quaternion.copy(w.quaternion);
+        holder.scale.copy(w.scale);
+        flatten(w, w, holder);
+        pivot.remove(w);
+        pivot.add(holder);
+        spinning.push(holder);
+        continue;
+      }
+      const key = `${pivot.position.y.toFixed(3)}|${pivot.position.z.toFixed(3)}`;
+      if (!axles.has(key)) axles.set(key, []);
+      axles.get(key)!.push(w);
+    }
+    for (const ws of axles.values()) {
+      const p0 = ws[0].parent!;
+      const axle = new THREE.Group();
+      axle.position.set(0, p0.position.y, p0.position.z);
+      this.root.add(axle);
+      const tmp = new THREE.Group();
+      this.root.add(tmp);
+      this.root.updateMatrixWorld(true);
+      for (const w of ws) tmp.attach(w);
+      tmp.updateMatrixWorld(true);
+      flatten(tmp, axle, axle);
+      this.root.remove(tmp);
+      spinning.push(axle);
+    }
+    this.wheels = spinning;
+    this.details.push(...spinning);
+    if (lite) this.frontWheelPivots.length = 0;
+    // Brake calipers: on a steered pivot they turn with it; on the others they're fixed to the car.
+    const fixed = new THREE.Group();
+    this.root.add(fixed);
+    for (const pivot of pivots) {
+      const rest = pivot.children.filter((c) => !spinning.includes(c));
+      if (!rest.length) continue;
+      if (lite) {
+        for (const c of rest) pivot.remove(c);
+      } else if (this.frontWheelPivots.includes(pivot)) {
+        const tmp = new THREE.Group();
+        for (const c of rest) tmp.add(c);
+        pivot.add(tmp);
+        tmp.updateMatrixWorld(true);
+        flatten(tmp, pivot, pivot);
+        pivot.remove(tmp);
+      } else {
+        this.root.updateMatrixWorld(true);
+        for (const c of rest) fixed.attach(c);
+      }
+      if (!this.frontWheelPivots.includes(pivot) && pivot.children.length === 0) pivot.removeFromParent();
+    }
+    if (fixed.children.length) {
+      fixed.updateMatrixWorld(true);
+      flatten(fixed, this.root, this.root);
+    }
+    fixed.removeFromParent();
+    pivots.forEach((p) => {
+      if (!this.frontWheelPivots.includes(p) && p.children.length === 0) p.removeFromParent();
+    });
+    // Anything else on the root (a towed caravan).
+    for (const c of [...this.root.children]) {
+      if (c === this.body || pivots.has(c) || spinning.includes(c) || c.userData.batched) continue;
+      const tmp = new THREE.Group();
+      this.root.add(tmp);
+      tmp.add(c);
+      tmp.updateMatrixWorld(true);
+      flatten(tmp, this.root, this.root);
+      this.root.remove(tmp);
     }
   }
 
@@ -605,7 +731,7 @@ export class CarModel {
     // Merge tiny scrape dents so we don't rebuild normals every frame.
     const total = this.pendingDents.reduce((a, d) => a + d.amount, 0);
     if (total < 1.2 && this.pendingDents.length < 30) return;
-    for (const { mesh } of this.deformables) {
+    for (const { mesh, mask } of this.deformables) {
       const pos = mesh.geometry.attributes.position as THREE.BufferAttribute;
       const off = mesh.position;
       for (const dent of this.pendingDents) {
@@ -614,6 +740,7 @@ export class CarModel {
         const cz = dent.lz - this.carOffset;
         const strength = Math.min(0.5, dent.amount * 0.012);
         for (let i = 0; i < pos.count; i++) {
+          if (mask && !mask[i]) continue;
           const x = pos.getX(i) + off.x;
           const z = pos.getZ(i) + off.z;
           const dist = Math.hypot(x - cx, z - cz);
@@ -633,29 +760,43 @@ export class CarModel {
   }
 
   /** Called by the game when a zone gets heavily damaged: drop loose parts. */
-  zoneDamaged(zone: Zone, level: number): THREE.Object3D | null {
-    if (level < 60) return null;
-    const candidates = this.detachables.filter((o) => o.parent === this.body && o.visible).filter((o) => {
-      if (o.userData.zone) return o.userData.zone === zone;
-      if (zone === 'front') return o.position.z > 1;
-      if (zone === 'rear') return o.position.z < -1 || o.position.y > 1;
-      if (zone === 'left') return o.position.x > 0.5;
-      return o.position.x < -0.5;
+  zoneDamaged(zone: Zone, level: number): boolean {
+    if (level < 60) return false;
+    const part = this.loose.find((l) => {
+      if (l.gone) return false;
+      if (l.zone && l.zone !== 'top') return l.zone === zone;
+      const c = l.centre;
+      if (zone === 'front') return c.z > 1;
+      if (zone === 'rear') return c.z < -1 || c.y > 1;
+      if (zone === 'left') return c.x > 0.5;
+      return c.x < -0.5;
     });
-    const part = candidates[0];
-    if (!part) return null;
-    part.visible = false;
-    return part;
+    if (!part) return false;
+    part.gone = true;
+    // Collapse its vertices onto one point: the part is gone, the merged mesh stays one draw call.
+    for (const { mesh, start, count } of part.ranges) {
+      const pos = mesh.geometry.attributes.position as THREE.BufferAttribute;
+      const x = pos.getX(start);
+      const y = pos.getY(start);
+      const z = pos.getZ(start);
+      for (let i = start; i < start + count; i++) pos.setXYZ(i, x, y, z);
+      pos.needsUpdate = true;
+    }
+    return true;
   }
 
   repair(): void {
-    for (const d of this.deformables) {
+    for (const d of this.originals) {
       const pos = d.mesh.geometry.attributes.position as THREE.BufferAttribute;
       (pos.array as Float32Array).set(d.original);
       pos.needsUpdate = true;
-      d.mesh.geometry.computeVertexNormals();
+      if (d.normals) {
+        const nrm = d.mesh.geometry.attributes.normal as THREE.BufferAttribute;
+        (nrm.array as Float32Array).set(d.normals);
+        nrm.needsUpdate = true;
+      }
     }
-    for (const o of this.detachables) o.visible = true;
+    for (const l of this.loose) l.gone = false;
     this.pendingDents.length = 0;
     this.paint.color.setHex(this.color);
   }
@@ -691,6 +832,8 @@ export class CarModel {
 
     this.brakeMat.emissiveIntensity = v.braking ? 5 : 1.2;
     this.headMat.emissiveIntensity = v.wrecked ? 0 : 2.2;
+    this.lights.x = this.headMat.emissiveIntensity;
+    this.lights.y = this.brakeMat.emissiveIntensity;
     if (v.wrecked) this.paint.color.lerp(new THREE.Color(0x221a16), Math.min(1, dt * 0.6));
     if (this.beacons.length) {
       // Alternating blue flashes, two quick pulses per side.
@@ -699,7 +842,17 @@ export class CarModel {
       const pulse = (p: number) => (Math.sin(p * Math.PI * 8) > 0.2 ? 6 : 0);
       this.beacons[0].emissiveIntensity = v.sirenOn && phase < 0.5 ? pulse(phase) : 0;
       this.beacons[1].emissiveIntensity = v.sirenOn && phase >= 0.5 ? pulse(phase) : 0;
+      this.lights.z = this.beacons[0].emissiveIntensity;
+      this.lights.w = this.beacons[1].emissiveIntensity;
     }
+  }
+
+  /** Level of detail: far away, drop the parts nobody can see anyway. */
+  setDetail(on: boolean): void {
+    if (on === this.detailOn) return;
+    this.detailOn = on;
+    for (const o of this.details) o.visible = on;
+    for (const p of this.frontWheelPivots) p.visible = on;
   }
 
   /** For kinematic (oncoming) traffic that isn't a physics Vehicle. */

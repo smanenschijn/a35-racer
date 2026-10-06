@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { getModel } from '../vehicle/models';
+import { freezeStatic } from './chunks';
 import type { Track } from './Track';
 import type { TrackBuilder } from './TrackBuilder';
 
@@ -79,6 +80,7 @@ export class Landmarks {
         this.barges.push({ obj, phase: Math.random() * Math.PI * 2, width: canal.width });
       }
     }
+    freezeStatic(this.group);
   }
 
   update(dt: number): void {

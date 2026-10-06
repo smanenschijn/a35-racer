@@ -31,6 +31,15 @@ export class Game {
   private cam: ChaseCamera;
   private sun = new THREE.DirectionalLight(0xffc48a, 3.2);
   private sunDir = new THREE.Vector3();
+  // Adaptive resolution: full sharpness whenever the machine keeps up, a step down only when it doesn't.
+  private readonly maxRatio = Math.min(window.devicePixelRatio, 1.75);
+  private ratio = Math.min(window.devicePixelRatio, 1.75);
+  private dtAvg = 1 / 60;
+  private slowT = 0;
+  private fastT = 0;
+  private upWait = 6;
+  private lastDrop = -99;
+  private warmup = 3;
   /** Sky box: follows the camera, the route is 31 km long. */
   private sky!: Sky;
   private fill = new THREE.DirectionalLight(0x9fb8ff, 0.9);
@@ -56,7 +65,7 @@ export class Game {
 
   constructor(container: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ powerPreference: 'high-performance', antialias: false, stencil: false, depth: true });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+    this.renderer.setPixelRatio(this.maxRatio);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -204,6 +213,8 @@ export class Game {
     scene.add(builder.build());
     this.landmarks = new Landmarks(this.track, builder);
     scene.add(this.landmarks.group);
+    // Nothing moves the scene root: children only recompute their matrices when they move themselves.
+    scene.matrixAutoUpdate = false;
   }
 
   private toggleSound(): void {
@@ -248,12 +259,54 @@ export class Game {
     loop();
   }
 
+  /**
+   * Below ~52 fps for two seconds: render a quarter step less sharp. Smooth again for a while: step
+   * back up. If stepping up made it slow again, wait longer before the next try.
+   */
+  private adaptResolution(realDt: number): void {
+    if (document.hidden || this.race.state === 'menu' || this.race.paused) {
+      this.slowT = this.fastT = 0;
+      return;
+    }
+    if (this.warmup > 0) {
+      this.warmup -= realDt; // shaders compiling, models uploading
+      return;
+    }
+    this.dtAvg += (realDt - this.dtAvg) * 0.05;
+    if (this.dtAvg > 1 / 52) {
+      this.slowT += realDt;
+      this.fastT = 0;
+    } else if (this.dtAvg < 1 / 58 && this.ratio < this.maxRatio) {
+      this.fastT += realDt;
+      this.slowT = 0;
+    } else {
+      this.slowT = this.fastT = 0;
+    }
+    if (this.slowT > 2 && this.ratio > 1) {
+      if (this.time - this.lastDrop < this.upWait + 4) this.upWait = Math.min(60, this.upWait * 2);
+      this.setRatio(this.ratio - 0.25);
+      this.lastDrop = this.time;
+      this.slowT = 0;
+    } else if (this.fastT > this.upWait) {
+      this.setRatio(this.ratio + 0.25);
+      this.fastT = 0;
+    }
+  }
+
+  private setRatio(r: number): void {
+    this.ratio = Math.max(1, Math.min(this.maxRatio, r));
+    this.renderer.setPixelRatio(this.ratio);
+    this.resize();
+    this.warmup = 0.5;
+  }
+
   private frame(): void {
     const now = performance.now();
     const realDt = Math.min(0.1, (now - this.last) / 1000);
     this.last = now;
     this.time += realDt;
 
+    this.adaptResolution(realDt);
     const controls = this.input.poll(realDt);
     if (controls.any) this.audio.start();
     if (controls.debug) this.debug.toggle();

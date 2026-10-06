@@ -141,8 +141,7 @@ export class Race {
     this.models.set(v, model);
     v.onDamage = (amount, zone, lx, lz) => {
       model.dent(amount, lx, lz);
-      const part = model.zoneDamaged(zone, v.damage[zone]);
-      if (part) {
+      if (model.zoneDamaged(zone, v.damage[zone])) {
         const p = this.localToWorld(v, lx, lz, 0.6);
         this.d.fx.debris(p.x, p.y, p.z, 14, v.vx, v.vz);
       }
@@ -610,7 +609,7 @@ export class Race {
     const fr = this.d.track.frame(p.s);
     let rel = p.heading - fr.heading;
     rel = Math.atan2(Math.sin(rel), Math.cos(rel));
-    const stuck = this.state === 'racing' && !p.wrecked && !p.finished && !p.frozen &&
+    const stuck = this.state === 'racing' && this.raceTime > 5 && !p.wrecked && !p.finished && !p.frozen &&
       (p.speed < 4 || Math.abs(rel) > 1.3 || Math.abs(p.d) > ROAD.halfWidth + 0.5);
     this.playerStuck = stuck ? this.playerStuck + dt : 0;
 
@@ -734,8 +733,10 @@ export class Race {
     const eye = cam.camera.position;
     for (const v of this.vehicles) {
       const model = this.models.get(v)!;
-      // Beyond 700 m a car is a few pixels in the haze: skip it.
-      const far = (v.x - eye.x) ** 2 + (v.z - eye.z) ** 2 > 700 * 700;
+      // Beyond 700 m a car is a few pixels in the haze: skip it. Past 200 m, skip wheels and plates.
+      const d2 = (v.x - eye.x) ** 2 + (v.z - eye.z) ** 2;
+      const far = d2 > 700 * 700;
+      model.setDetail(d2 < 200 * 200);
       model.root.visible = v.active && !far && !(this.state === 'menu' && this.showroom && v.isRacer && v !== this.showroom);
       if (!v.active) continue;
       model.sync(v, simDt);

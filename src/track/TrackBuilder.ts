@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { Track } from './Track';
-import { chunkInstances } from './chunks';
+import { chunkInstances, freezeStatic, mergeStaticByCell } from './chunks';
 import {
   facadeTextures,
   singleRoadTexture,
@@ -188,6 +188,8 @@ export class TrackBuilder {
     this.farms();
     this.cityBlocks();
     chunkInstances(this.group);
+    mergeStaticByCell(this.group);
+    freezeStatic(this.group);
     return this.group;
   }
 
@@ -649,6 +651,7 @@ export class TrackBuilder {
         bank.position.set(0, 0.1, side * (width / 2 + 0.5));
         holder.add(bank);
       }
+      holder.userData.dynamic = true; // the barge sails here
       this.canals.push({ s: c, holder, width });
     } else {
       const road = new THREE.Mesh(
