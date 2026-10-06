@@ -371,7 +371,7 @@ export class Menu {
         break;
       }
       case 'controls': {
-        const k = (a: BindAction) => this.input.bindings[a].map(keyName).join(' / ') || '—';
+        const k = (a: BindAction) => [...new Set(this.input.bindings[a].map(keyName))].join(' / ') || '—';
         this.root.innerHTML = `
           <div class="menu-title">Besturing</div>
           <div class="controls">
@@ -395,7 +395,7 @@ export class Menu {
       case 'keys': {
         const actions = Object.keys(BIND_LABELS) as BindAction[];
         const items = actions.map((a) => ({
-          label: `${BIND_LABELS[a]} <span class="key">${this.capturing === a ? 'druk op een toets…' : this.input.bindings[a].map(keyName).join(' / ') || '—'}</span>`,
+          label: `${BIND_LABELS[a]} <span class="key">${this.capturing === a ? 'druk op een toets…' : [...new Set(this.input.bindings[a].map(keyName))].join(' / ') || '—'}</span>`,
           action: () => this.startRebind(a),
         }));
         items.push({ label: 'Standaard herstellen', action: () => {

@@ -129,7 +129,7 @@ const RESTART_HOLD = 0.8;
 /** Readable name for a key code. */
 export function keyName(code: string): string {
   const names: Record<string, string> = {
-    ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', Space: 'SPATIE', ShiftLeft: 'SHIFT', ShiftRight: 'R-SHIFT',
+    ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', Space: 'SPATIE', ShiftLeft: 'SHIFT', ShiftRight: 'SHIFT',
     ControlLeft: 'CTRL', ControlRight: 'R-CTRL', AltLeft: 'ALT', AltRight: 'ALT GR', Enter: 'ENTER', Comma: ',', Period: '.',
     Slash: '/', Semicolon: ';', Quote: "'", BracketLeft: '[', BracketRight: ']', Backslash: '\\', Backquote: '`', CapsLock: 'CAPS',
   };
@@ -257,7 +257,7 @@ export class Input {
       };
       return p[action];
     }
-    return this.bindings[action].map(keyName).join('/') || '—';
+    return [...new Set(this.bindings[action].map(keyName))].join('/') || '—';
   }
 
   private bound(action: BindAction): boolean {
