@@ -663,9 +663,12 @@ export class Race {
     const { fx, hud, audio, cam, track } = this.d;
     const simDt = this.paused ? 0 : dt * this.timeScale;
     const p = this.player;
+    const eye = cam.camera.position;
     for (const v of this.vehicles) {
       const model = this.models.get(v)!;
-      model.root.visible = v.active && !(this.state === 'menu' && this.showroom && v.isRacer && v !== this.showroom);
+      // Beyond 700 m a car is a few pixels in the haze: skip it.
+      const far = (v.x - eye.x) ** 2 + (v.z - eye.z) ** 2 > 700 * 700;
+      model.root.visible = v.active && !far && !(this.state === 'menu' && this.showroom && v.isRacer && v !== this.showroom);
       if (!v.active) continue;
       model.sync(v, simDt);
       if (simDt <= 0) continue;

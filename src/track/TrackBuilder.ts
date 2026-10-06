@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { Track } from './Track';
+import { chunkInstances } from './chunks';
 import {
   facadeTextures,
   singleRoadTexture,
@@ -186,6 +187,7 @@ export class TrackBuilder {
     this.trees();
     this.farms();
     this.cityBlocks();
+    chunkInstances(this.group);
     return this.group;
   }
 

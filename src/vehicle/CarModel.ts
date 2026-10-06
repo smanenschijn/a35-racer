@@ -117,6 +117,13 @@ export class CarModel {
     else this.buildCar();
     if (spec.trailerLength) this.buildCaravan();
     this.root.add(this.body);
+    // Only the big pieces cast shadows: the small parts are hidden under them anyway,
+    // and each caster costs an extra draw call in the shadow pass.
+    this.root.traverse((o) => {
+      if (!(o instanceof THREE.Mesh) || !o.castShadow) return;
+      if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere();
+      if (o.geometry.boundingSphere!.radius < 0.75) o.castShadow = false;
+    });
   }
 
   /** Detailed Blender model: per-instance paint and geometry, wheels on steering hubs. */

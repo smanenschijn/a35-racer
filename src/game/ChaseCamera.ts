@@ -12,7 +12,7 @@ export class ChaseCamera {
   private initialized = false;
 
   constructor(aspect: number) {
-    this.camera = new THREE.PerspectiveCamera(tuning.camFov, aspect, 0.3, 6000);
+    this.camera = new THREE.PerspectiveCamera(tuning.camFov, aspect, 0.3, 2800) // fog ends at 2600;
   }
 
   addShake(amount: number): void {
