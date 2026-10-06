@@ -9,7 +9,7 @@ Zie [docs/GDD.md](docs/GDD.md) voor het volledige game design.
 
 - De hele N35/A35 van Raalte naar Enschede uit OpenStreetMap, in vijf etappes: Raalte → Nijverdal → Wierden → Almelo → Hengelo → Enschede
 - De N35 als enkelbaansweg met tegenverkeer, de Combiwet-tunnel bij Nijverdal en de Sallandse Heuvelrug
-- Landmarks gebouwd in Blender: raadhuis Raalte, watertoren Wierden, Heraklus-stadion, Metropool, Universiteit Twente, Grolsj Veste, Grolsj-brouwerij, Thuisbesteld-hoofdkantoor en een binnenvaartschip
+- Landmarks gebouwd in Blender: raadhuis Raalte, Het Ravijn, gemeentehuis Nijverdal, Koninklijke Stoomweverij, watertoren Wierden, Heraklus-stadion, Metropool, Universiteit Twente, Grolsj Veste, Grolsj-brouwerij, Thuisbesteld-hoofdkantoor en een binnenvaartschip
 - 8 coureurs in gedetailleerde Blender-auto's, verkeer, politie met wanted level, flitspalen en wegblokkades
 - Etappes los of als "hele race", auto's vrijspelen, statistieken en highscores per etappe
 - Muziekspeler (zie [docs/muziek.md](docs/muziek.md))

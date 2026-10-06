@@ -5,7 +5,7 @@ import type { Track } from './Track';
 import type { TrackBuilder } from './TrackBuilder';
 
 export const LANDMARK_MODELS = [
-  'lm_raadhuis', 'lm_watertoren', 'lm_heraklus', 'lm_metropool', 'lm_utwente', 'lm_veste', 'lm_brouwerij', 'lm_thuisbesteld', 'lm_barge',
+  'lm_raadhuis', 'lm_ravijn', 'lm_gemeentehuis', 'lm_stoomweverij', 'lm_watertoren', 'lm_heraklus', 'lm_metropool', 'lm_utwente', 'lm_veste', 'lm_brouwerij', 'lm_thuisbesteld', 'lm_barge',
 ];
 
 /** Merge a static model into one mesh per material (far fewer draw calls). */

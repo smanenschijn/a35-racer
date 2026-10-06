@@ -355,10 +355,10 @@ for k in range(5):
 # ---- 6. Landmarks ------------------------------------------------------------------------
 
 
-def lm(id_, lat, lon, near=70, scale=0.045):
+def lm(id_, lat, lon, near=70, scale=0.045, shift=0):
     i, d = project(xy(lat, lon))
     side = 1 if d > 0 else -1
-    return {'id': id_, 's': round(gs(i), 1), 'd': round(side * (near + min(abs(d), 4000) * scale), 1),
+    return {'id': id_, 's': round(gs(i) + shift, 1), 'd': round(side * (near + min(abs(d), 4000) * scale), 1),
             'realDistance': round(abs(d))}
 
 
@@ -375,7 +375,10 @@ def poi(name_part):
 
 landmarks = [
     lm('raadhuis', *poi('Gemeentehuis Raalte')),
-    lm('heuvelrug', 52.343, 6.462, near=260, scale=0.02),
+    lm('heuvelrug', 52.343, 6.462, near=380, scale=0.02),
+    lm('ravijn', 52.3677, 6.4485),
+    lm('gemeentehuis', 52.3643, 6.4614, shift=85),  # out of the tunnel's shadow
+    lm('stoomweverij', 52.3635, 6.4700),
     lm('watertoren', 52.3577, 6.5955),
     lm('heraklus', *poi('Asito')),
     lm('metropool', *poi('Metropool') if False else (52.26122, 6.79458)),

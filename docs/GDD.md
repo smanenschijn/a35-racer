@@ -25,8 +25,8 @@ Elke etappe loopt punt-naar-punt, van plaatsnaambord tot plaatsnaambord, en duur
 
 | # | Etappe | Wegtype | Landmarks |
 |---|---|---|---|
-| 1 | Raalte → Nijverdal | N35, deels enkelbaans met tegenverkeer | Raadhuis Raalte, Sallandse Heuvelrug, Combiwet-tunnel |
-| 2 | Nijverdal → Wierden | N35 | Watertoren Wierden |
+| 1 | Raalte → Nijverdal | N35, deels enkelbaans met tegenverkeer | Raadhuis Raalte, Het Ravijn, Combiwet-tunnel, gemeentehuis Nijverdal, Sallandse Heuvelrug |
+| 2 | Nijverdal → Wierden | N35 | Koninklijke Stoomweverij (Ten Cate), watertoren Wierden |
 | 3 | Wierden → Almelo | N35 → A35 | Heraklus-stadion (Heracles) |
 | 4 | Almelo → Hengelo | A35 | Metropool Concertgebouw |
 | 5 | **Hengelo → Enschede** *(prototype)* | A35 | zie hieronder |
@@ -224,7 +224,7 @@ Opgenomen geluidssamples (in plaats van synthese) en echte stemopnames voor de o
 - [x] Vijf etappes met elk een start, drie checkpoints, een finishpoort en plaatsnaamborden; los te rijden of als "hele race" achter elkaar
 - [x] De N35 als enkelbaansweg met groene middenstreep en tegenverkeer op je eigen weg. Inhalen kan, maar de AI kijkt eerst of de weg vrij is. Langzaam verkeer wijkt uit naar de berm als er een racer aankomt.
 - [x] De Combiwet-tunnel bij Nijverdal, de Sallandse Heuvelrug met heide en dennen, en het kanaal Almelo-De Haandrik
-- [x] Nieuwe landmarks uit Blender: het raadhuis van Raalte, de watertoren van Wierden en het Heraklus-stadion in Almelo
+- [x] Nieuwe landmarks uit Blender: het raadhuis van Raalte, Het Ravijn, het gemeentehuis (Huis voor Cultuur en Bestuur) en de Koninklijke Stoomweverij in Nijverdal, de watertoren van Wierden en het Heraklus-stadion in Almelo
 - [x] Unlocks: elke gehaalde etappe speelt een auto vrij (Civik, Volvi, Space Wagen, Calibro, Supremo)
 - [x] Statistieken over al je races (takedowns, rakelings gepasseerd, topsnelheid, hardste klap, bekeuringen, kilometers)
 - [x] Highscores per etappe

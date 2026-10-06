@@ -404,6 +404,16 @@ export class TrackBuilder {
 
   private noiseBarrier(s0: number, s1: number, d: number): void {
     const t = this.track;
+    // Leave a gap in front of landmarks on this side: they should be seen from the road.
+    for (const lm of t.features.landmarks) {
+      if (lm.id === 'heuvelrug' || Math.sign(lm.d) !== Math.sign(d)) continue;
+      const a = lm.s - 170;
+      const b = lm.s + 170;
+      if (b <= s0 || a >= s1) continue;
+      if (a - s0 > 40) this.noiseBarrier(s0, a, d);
+      if (s1 - b > 40) this.noiseBarrier(b, s1, d);
+      return;
+    }
     const mat = new THREE.MeshStandardMaterial({ color: 0x6b5a45, roughness: 0.9, side: THREE.DoubleSide });
     const glass = new THREE.MeshStandardMaterial({
       color: 0x9fc4d0, roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.35, side: THREE.DoubleSide,

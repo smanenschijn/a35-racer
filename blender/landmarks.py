@@ -49,6 +49,23 @@ def materials():
     mk('DeckGreen', (0.08, 0.2, 0.1), roughness=0.7)
     mk('Tyre', (0.012, 0.012, 0.012), roughness=0.92)
     mk('Blue', (0.02, 0.08, 0.4), roughness=0.5)
+    # Nijverdal
+    mk('RedBrick', (0.42, 0.12, 0.055), roughness=0.9)
+    mk('Panel', (0.16, 0.17, 0.17), roughness=0.45, metallic=0.3)
+    mk('Sand', (0.62, 0.5, 0.33), roughness=0.85)
+    mk('SandBrick', (0.6, 0.42, 0.2), roughness=0.9)
+    mk('Cladding', (0.5, 0.52, 0.56), metallic=0.65, roughness=0.32)
+    mk('LogoBlue', (0.04, 0.16, 0.8), roughness=0.3, emission=(0.1, 0.3, 1.0), strength=2.5)
+    mk('Water', (0.08, 0.42, 0.75), roughness=0.05, emission=(0.05, 0.3, 0.55), strength=0.4)
+    mk('Grass', (0.07, 0.22, 0.04), roughness=1.0)
+    mk('SlideRed', (0.6, 0.02, 0.08), roughness=0.3, coat=1.0)
+    mk('Solar', (0.015, 0.03, 0.1), metallic=0.7, roughness=0.15)
+    mk('KswBrick', (0.12, 0.065, 0.06), roughness=0.9)
+    mk('Cream', (0.74, 0.6, 0.38), roughness=0.7)
+    mk('OrangeBrick', (0.62, 0.22, 0.06), roughness=0.8)
+    mk('Slate', (0.1, 0.11, 0.13), roughness=0.6)
+    mk('Pine', (0.025, 0.08, 0.03), roughness=1.0)
+    mk('DoorGreen', (0.02, 0.07, 0.045), roughness=0.5)
     return M
 
 
@@ -131,6 +148,9 @@ class Site:
         return self.add(ck.mesh_object(name, verts, faces, [self.m[mat], self.m['Glass']], face_mats=fmats,
                                        col=self.col))
 
+    def prism(self, name, poly, y0, y1, mat):
+        return self.add(prism_xz(name, poly, y0, y1, self.m[mat], self.col))
+
     def objects_rotate_last(self, angle):
         self.parts[-1].rotation_euler = (0, 0, angle)
 
@@ -139,6 +159,61 @@ class Site:
             if o.parent is None:
                 o.parent = self.root
         return self.root
+
+
+def prism_xz(name, poly, y0, y1, mat, col):
+    """Extrude an (x, z) outline along Y from y0 to y1: facades with arches, gables, window shapes."""
+    n = len(poly)
+    verts = [(x, y0, z) for x, z in poly] + [(x, y1, z) for x, z in poly]
+    faces = [tuple(range(n))[::-1], tuple(range(n, 2 * n))]
+    for i in range(n):
+        j = (i + 1) % n
+        faces.append((i, j, n + j, n + i))
+    obj = ck.mesh_object(name, verts, faces, [mat], col=col)
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(obj.data)
+    bm.free()
+    return ck.mark_sharp(obj, 35)
+
+
+def arc(cx, cz, r, a0, a1, steps=16):
+    return [(cx + r * math.cos(a0 + (a1 - a0) * k / steps), cz + r * math.sin(a0 + (a1 - a0) * k / steps))
+            for k in range(steps + 1)]
+
+
+def round_top(cx, half, z0, z1, steps=16):
+    """Outline of an opening with a semicircular head: z0 = sill, z1 = crown."""
+    zs = z1 - half
+    return [(cx - half, z0), (cx + half, z0)] + arc(cx, zs, half, 0, math.pi, steps)
+
+
+def arch_ring(cx, zs, r_in, r_out, steps=16):
+    """A half ring (brick arch over a window)."""
+    return arc(cx, zs, r_out, 0, math.pi, steps) + arc(cx, zs, r_in, math.pi, 0, steps)
+
+
+def arched_window(S, name, cx, z0, z1, w, yf, arch_mat=None, glass='Glass', frame='White'):
+    """Round-headed window on a facade whose front face is at y = yf (facing -Y)."""
+    S.prism(name + '_frame', round_top(cx, w / 2 + 0.15, z0 - 0.15, z1 + 0.15), yf - 0.06, yf + 0.05, frame)
+    S.prism(name + '_glass', round_top(cx, w / 2, z0, z1), yf - 0.1, yf - 0.06, glass)
+    S.box(name + '_mullion', (0.1, 0.06, z1 - z0 - w / 2), (cx, yf - 0.12, z0 + (z1 - z0 - w / 2) / 2), frame)
+    S.box(name + '_transom', (w, 0.06, 0.1), (cx, yf - 0.12, z1 - w / 2), frame)
+    if arch_mat:
+        S.prism(name + '_arch', arch_ring(cx, z1 - w / 2, w / 2 + 0.15, w / 2 + 0.6), yf - 0.15, yf + 0.05, arch_mat)
+
+
+def diamonds(name, x0, x1, step, z, size, y, mat, col):
+    """A row of small diamond tiles facing -Y in one mesh (brick friezes)."""
+    verts, faces = [], []
+    x = x0
+    while x <= x1:
+        b = len(verts)
+        verts += [(x, y, z - size), (x + size, y, z), (x, y, z + size), (x - size, y, z)]
+        faces.append((b, b + 1, b + 2, b + 3))
+        x += step
+    return ck.mesh_object(name, verts, faces, [mat], col=col)
 
 
 def lathe_z(profile, segments=32):
@@ -528,7 +603,226 @@ def heraklus():
     return S.finish()
 
 
+# ---------------------------------------------------------------------------
+# Nijverdal: Huis voor Cultuur en Bestuur (gemeentehuis), four big brick arches
+# ---------------------------------------------------------------------------
+
+def gemeentehuis():
+    S = Site('Gemeentehuis')
+    yf = -10.0                       # front face of the arches
+    span, pier, zs = 10.0, 2.2, 12.5  # opening width, pier width, springline
+    bay = span + pier
+    W = span / 2 + pier
+    xs = [-31 + k * bay for k in range(4)]
+    xl, xr = xs[0] - W, xs[-1] + W
+    depth = 22
+    S.box('body', (xr - xl, depth, 13.6), ((xl + xr) / 2, yf + 1.5 + depth / 2, 6.8), 'Panel')
+    for k, cx in enumerate(xs):
+        # Brick arch frame: two piers and the round head, one outline.
+        outline = [(cx - W, 0), (cx - W, zs)] + arc(cx, zs, W, math.pi, 0, 24) + [(cx + W, 0), (cx + span / 2, 0)] + \
+            arc(cx, zs, span / 2, 0, math.pi, 24) + [(cx - span / 2, 0)]
+        S.prism(f'arch{k}', outline, yf, yf + 2.2, 'RedBrick')
+        # Barrel roof behind each arch, glass fan in the head.
+        S.cyl(f'vault{k}', span / 2 + 0.4, depth - 0.5, (cx, yf + 1.5 + depth / 2, zs), 'Panel', segments=28, axis='Y')
+        S.prism(f'fan{k}', [(cx - span / 2 + 0.2, zs), (cx + span / 2 - 0.2, zs)] + arc(cx, zs, span / 2 - 0.2, 0, math.pi, 20),
+                yf + 1.3, yf + 1.42, 'Glass')
+        for dx in (-1.7, 1.7):
+            S.box(f'fan_mullion{k}{int(dx * 10)}', (0.18, 0.12, 4.2), (cx + dx, yf + 1.25, zs + 2.0), 'Panel')
+        S.box(f'fan_sill{k}', (span, 0.3, 0.35), (cx, yf + 1.3, zs), 'Panel')
+        # Window bands and a glass ground floor inside the arch.
+        S.windows(f'win{k}', (cx, yf + 1.5, 7.9), span - 1.0, 8.6, 3, 3, face='-Y', size=(0.86, 0.62), lit=0.35, seed=31 + k)
+        for z in (5.2, 8.1, 11.0):
+            S.box(f'band{k}_{int(z)}', (span, 0.25, 0.5), (cx, yf + 1.4, z - 1.6), 'Panel')
+        S.box(f'shop{k}', (span - 0.6, 0.12, 2.9), (cx, yf + 1.45, 1.65), 'Glass')
+        # Little white stones where the arches spring and at the crown.
+        S.box(f'stone{k}c', (0.6, 0.12, 0.6), (cx, yf - 0.05, zs + W - 0.6), 'White')
+    for k in range(5):
+        x = xs[0] - span / 2 - pier / 2 + k * bay
+        S.box(f'stone_spring{k}', (0.6, 0.12, 0.6), (x, yf - 0.05, zs), 'White')
+    S.box('plinth', (xr - xl, 2.6, 0.45), ((xl + xr) / 2, yf - 0.4, 0.22), 'Concrete')
+
+    # East wing: plain brick block with grey framed windows (and a sign, for the road).
+    ex0, ex1, eh = xr, xr + 27, 16.0
+    S.box('east', (ex1 - ex0, depth - 0.5, eh), ((ex0 + ex1) / 2, yf + 0.5 + (depth - 0.5) / 2, eh / 2), 'RedBrick')
+    for r, z in enumerate((5.4, 9.0, 12.6)):
+        for c in range(6):
+            x = ex0 + 2.6 + c * 4.4
+            S.box(f'east_frame{r}{c}', (2.9, 0.16, 2.5), (x, yf + 0.44, z), 'Panel')
+    S.windows('east_win', (ex0 + 2.6 + 2.5 * 4.4, yf + 0.5, 9.0), 6 * 4.4, 10.8, 6, 3, face='-Y', size=(0.58, 0.62),
+              lit=0.45, seed=7)
+    S.box('east_shop', (ex1 - ex0 - 1, 0.12, 3.0), ((ex0 + ex1) / 2, yf + 0.42, 1.7), 'Glass')
+    S.box('east_cornice', (ex1 - ex0 + 0.4, depth, 0.5), ((ex0 + ex1) / 2, yf + 0.5 + depth / 2 - 0.25, eh + 0.25), 'Panel')
+    S.text('sign', 'GEMEENTEHUIS', 1.5, ((ex0 + ex1) / 2, yf + 0.3, 14.0), 'NeonWhite', extrude=0.08)
+
+    # West neighbour: lower sand-coloured block.
+    wx0, wx1 = xl - 17, xl
+    S.box('west', (wx1 - wx0, depth - 4, 11.5), ((wx0 + wx1) / 2, yf + 2 + (depth - 4) / 2, 5.75), 'Sand')
+    S.windows('west_win', ((wx0 + wx1) / 2, yf + 2, 7.5), wx1 - wx0 - 2, 7, 5, 3, face='-Y', size=(0.6, 0.6), lit=0.5,
+              seed=11)
+    S.box('west_shop', (wx1 - wx0 - 1, 0.12, 2.8), ((wx0 + wx1) / 2, yf + 1.92, 1.6), 'Glass')
+    S.box('square', (wx1 - wx0 + ex1 - xl + 4, 12, 0.12), ((wx0 + ex1) / 2, yf - 6, 0.06), 'Concrete')
+    return S.finish()
+
+
+# ---------------------------------------------------------------------------
+# Nijverdal: Het Ravijn, swimming pool and sports hall by the railway
+# ---------------------------------------------------------------------------
+
+def rounded_slab(name, hw, hh, r, z0, z1, mat, col, cx=0.0, cy=0.0, n=96):
+    pts = [rounded_rect(k / n, hw, hh, r)[0] for k in range(n)]
+    verts = [(cx + x, cy + y, z0) for x, y in pts] + [(cx + x, cy + y, z1) for x, y in pts]
+    faces = [tuple(range(n))[::-1], tuple(range(n, 2 * n))]
+    for i in range(n):
+        j = (i + 1) % n
+        faces.append((i, j, n + j, n + i))
+    return ck.mesh_object(name, verts, faces, [mat], col=col)
+
+
+def ravijn():
+    from mathutils import Vector
+    S = Site('Ravijn')
+    yf = -20.0
+    # Swimming hall: silver box, glass along the ground, light well on the roof, the blue logo.
+    hx0, hx1, hh = -48.0, 30.0, 12.5
+    S.box('hall', (hx1 - hx0, 46, hh), ((hx0 + hx1) / 2, yf + 23, hh / 2), 'Cladding')
+    for k, z in enumerate((4.6, 7.4, 10.2)):
+        S.box(f'seam{k}', (hx1 - hx0 + 0.1, 46.1, 0.08), ((hx0 + hx1) / 2, yf + 23, z), 'Panel')
+    S.box('hall_glass', (hx1 - hx0 - 4, 0.12, 3.0), ((hx0 + hx1) / 2 + 2, yf - 0.05, 1.7), 'Glass')
+    S.windows('hall_lit', ((hx0 + hx1) / 2 + 2, yf, 1.7), hx1 - hx0 - 4, 3.0, 18, 1, face='-Y', size=(0.9, 0.95),
+              lit=0.6, seed=5)
+    S.box('roof', (hx1 - hx0 + 0.6, 46.6, 0.5), ((hx0 + hx1) / 2, yf + 23, hh + 0.2), 'White')
+    S.box('lightwell', (24, 16, 0.6), (-8, yf + 22, hh + 0.2), 'Concrete')
+    S.box('lightwell_glass', (22, 14, 0.2), (-8, yf + 22, hh + 0.55), 'Glass')
+    for k in range(3):
+        S.cyl(f'dome{k}', 1.3, 0.6, (-36 + k * 16, yf + 34, hh + 0.6), 'Porcelain', segments=12)
+    S.text('logo', 'Het Ravijn', 5.6, (-14, yf - 0.25, 5.6), 'LogoBlue', extrude=0.15)
+    xs_ = [-34 + i * 0.5 for i in range(81)]
+    S.prism('wave', [(x, 4.6 + 0.5 * math.sin(x * 0.5)) for x in xs_] +
+            [(x, 4.1 + 0.5 * math.sin(x * 0.5)) for x in reversed(xs_)], yf - 0.2, yf - 0.1, 'LogoBlue')
+    # Entrance block in red brick between hall and sports hall.
+    S.box('entrance', (12, 12, 10.5), (36, yf + 3, 5.25), 'RedBrick')
+    S.box('entrance_glass', (8, 0.12, 4.2), (36, yf - 3.05, 2.3), 'Glass')
+    S.box('entrance_canopy', (10, 3, 0.3), (36, yf - 4.5, 4.6), 'Panel')
+    S.text('entrance_sign', 'Het Ravijn', 1.2, (36, yf - 3.2, 6.0), 'LogoBlue', extrude=0.06)
+    # Sports hall: rounded, dark brick below, sand brick band above, solar panels on the roof.
+    cx, cy, w2, h2, rr, sh = 72.0, yf + 17, 30.0, 21.0, 9.0, 9.5
+    S.add(rounded_slab('sports_lower', w2, h2, rr, 0, 4.2, S.m['DarkBrick'], S.col, cx, cy))
+    S.add(rounded_slab('sports_upper', w2, h2, rr, 4.2, sh, S.m['SandBrick'], S.col, cx, cy))
+    S.add(rounded_slab('sports_roof', w2 - 0.4, h2 - 0.4, rr - 0.4, sh, sh + 0.25, S.m['White'], S.col, cx, cy))
+    S.add(rounded_slab('sports_slits', w2 + 0.05, h2 + 0.05, rr + 0.05, 2.0, 2.6, S.m['Glass'], S.col, cx, cy))
+    for a, (ox, oy, rows, cols) in enumerate(((-6, -8, 6, 1), (8, 6, 5, 1))):
+        for r_ in range(rows):
+            S.box(f'solar{a}_{r_}', (24, 1.7, 0.1), (cx + ox, cy + oy + r_ * 2.3, sh + 0.8), 'Solar',
+                  rot=(math.radians(-12), 0, 0))
+    # Outdoor pools behind, with a red slide, and the pine woods of the ravine.
+    S.box('lawn', (80, 46, 0.15), (-10, yf + 70, 0.07), 'Grass')
+    for k, (px, py, sx_, sy_) in enumerate(((-30, yf + 64, 25, 14), (-2, yf + 70, 16, 12))):
+        S.box(f'pool_edge{k}', (sx_ + 2, sy_ + 2, 0.35), (px, py, 0.17), 'Porcelain')
+        S.box(f'pool{k}', (sx_, sy_, 0.4), (px, py, 0.2), 'Water')
+    S.box('slide_tower', (3, 3, 9), (16, yf + 58, 4.5), 'White')
+    pts = []
+    for i in range(41):
+        a = 1.5 * math.pi * i / 40
+        pts.append(Vector((16 + 6 * math.cos(a) - 6, yf + 58 + 6 * math.sin(a), 9.0 - 8.0 * i / 40)))
+    for i in range(40):
+        p0, p1 = pts[i], pts[i + 1]
+        seg = p1 - p0
+        o = S.cyl(f'slide{i}', 0.75, seg.length + 0.1, tuple((p0 + p1) / 2), 'SlideRed', segments=10)
+        o.rotation_euler = Vector((0, 0, 1)).rotation_difference(seg.normalized()).to_euler()
+    import random
+    rnd = random.Random(4)
+    for k in range(26):
+        x, y = -60 + rnd.random() * 150, yf + 95 + rnd.random() * 40
+        h = 14 + rnd.random() * 9
+        S.cyl(f'pine{k}', 3.2 + rnd.random(), h, (x, y, h / 2), 'Pine', segments=7, r2=0.2)
+    S.box('car_park', (40, 30, 0.12), (120, yf + 15, 0.06), 'Concrete')
+    return S.finish()
+
+
+# ---------------------------------------------------------------------------
+# Nijverdal: Koninklijke Stoomweverij (Ten Cate), gable with clock and weaving sheds
+# ---------------------------------------------------------------------------
+
+def stoomweverij():
+    S = Site('Stoomweverij')
+    yf, hw = -12.0, 12.0
+
+    def top(x):
+        ax = abs(x)
+        return 15.0 if ax > 8 else 16.5 + 3.2 * math.cos(ax / 8 * math.pi / 2)
+
+    gable = [(-hw, 0), (hw, 0), (hw, 15), (8, 15)] + [(8 - 16 * i / 32, top(8 - 16 * i / 32)) for i in range(33)] + \
+        [(-8, 15), (-hw, 15)]
+    S.prism('front', gable, yf, yf + 0.8, 'KswBrick')
+    S.box('body', (2 * hw, 29, 13.5), (0, yf + 0.8 + 14.5, 6.75), 'KswBrick')
+    S.prism('roof', [(-hw - 0.4, 13.5), (hw + 0.4, 13.5), (0, 18.5)], yf + 0.9, yf + 30.2, 'Slate')
+    # Cream pilasters up the gable and cream bands across the facade.
+    for i in range(11):
+        x = -7.25 + i * 1.45
+        h = top(x) - 0.7 - 15.4
+        S.box(f'pilaster{i}', (0.55, 0.16, h), (x, yf - 0.06, 15.4 + h / 2), 'Cream')
+    for k, (z, hgt) in enumerate(((2.7, 0.35), (8.7, 0.3), (15.1, 0.5))):
+        S.box(f'cornice{k}', (2 * hw + 0.3, 0.3, hgt), (0, yf - 0.1, z), 'Cream')
+    # Towers at the corners and beside the curved gable.
+    for k, (x, z0, z1) in enumerate(((-11.4, 0, 21.0), (11.4, 0, 21.0), (-8.6, 13, 21.8), (8.6, 13, 21.8))):
+        S.box(f'tower{k}', (1.7, 1.7, z1 - z0), (x, yf + 0.5, (z0 + z1) / 2), 'KswBrick')
+        S.box(f'tower_band{k}', (1.9, 1.9, 0.3), (x, yf + 0.5, z1 - 1.2), 'Cream')
+        S.box(f'tower_cap{k}', (2.1, 2.1, 0.35), (x, yf + 0.5, z1 + 0.15), 'Cream')
+        S.cyl(f'tower_roof{k}', 1.3, 1.6, (x, yf + 0.5, z1 + 1.1), 'Slate', segments=4, r2=0.05)
+        S.objects_rotate_last(math.pi / 4)
+    # Three bays: tall windows below, round-headed windows with orange brick arches above.
+    for k, x in enumerate((-6.6, 0.0, 6.6)):
+        S.box(f'win_frame{k}', (3.6, 0.1, 5.6), (x, yf - 0.05, 5.7), 'White')
+        S.box(f'win_glass{k}', (3.2, 0.1, 5.2), (x, yf - 0.1, 5.7), 'Window' if k != 1 else 'Glass')
+        S.box(f'win_mullion{k}', (0.12, 0.06, 5.2), (x, yf - 0.16, 5.7), 'White')
+        S.box(f'win_transom{k}', (3.2, 0.06, 0.12), (x, yf - 0.16, 7.4), 'White')
+        arched_window(S, f'arch_win{k}', x, 9.3, 12.0, 3.0, yf, arch_mat='OrangeBrick')
+        S.add(diamonds(f'tiles{k}', x - 1.4, x + 1.5, 0.7, 1.4, 0.3, yf - 0.06, S.m['Cream'], S.col))
+    S.box('door', (2.4, 0.12, 2.6), (0, yf - 0.06, 1.3), 'DoorGreen')
+    # The clock and the lettering.
+    S.box('clock_panel', (3.9, 0.3, 3.9), (0, yf - 0.2, 14.4), 'Cream')
+    S.cyl('clock_rim', 1.7, 0.08, (0, yf - 0.38, 14.4), 'Dark', segments=32, axis='Y')
+    S.cyl('clock_face', 1.55, 0.08, (0, yf - 0.43, 14.4), 'Porcelain', segments=32, axis='Y')
+    for h in range(12):
+        a = 2 * math.pi * h / 12
+        S.box(f'clock_mark{h}', (0.12, 0.05, 0.3), (1.25 * math.sin(a), yf - 0.49, 14.4 + 1.25 * math.cos(a)), 'Dark',
+              rot=(0, a, 0))
+    S.box('clock_hour', (0.12, 0.05, 0.85), (0.3, yf - 0.52, 14.4 - 0.25), 'Dark', rot=(0, math.radians(-130), 0))
+    S.box('clock_minute', (0.08, 0.05, 1.25), (0.5, yf - 0.55, 14.6), 'Dark', rot=(0, math.radians(-55), 0))
+    for k, (x, word) in enumerate(((-6.6, 'KONINKLIJKE'), (6.6, 'STOOMWEVERIJ'))):
+        S.box(f'name_border{k}', (7.4, 0.22, 1.8), (x, yf - 0.1, 13.9), 'KswBrick')
+        S.box(f'name_panel{k}', (7.0, 0.26, 1.45), (x, yf - 0.14, 13.9), 'Cream')
+        S.text(f'name{k}', word, 0.6, (x, yf - 0.3, 13.62), 'Dark', extrude=0.05)
+
+    # Weaving sheds left and right: arched windows, a cream frieze, slate roofs, chimneys.
+    def shed(tag, x0, x1, n_win):
+        y0, d, h = yf + 4, 28, 7.2
+        S.box(f'{tag}_shed', (x1 - x0, d, h), ((x0 + x1) / 2, y0 + d / 2, h / 2), 'KswBrick')
+        S.add(ck.extrude_yz(f'{tag}_roof', [(y0 - 0.5, h), (y0 + d + 0.5, h), (y0 + d / 2, h + 2.6)], x0 - 0.3, x1 + 0.3,
+                            S.m['Slate'], col=S.col))
+        S.box(f'{tag}_frieze', (x1 - x0, 0.2, 0.35), ((x0 + x1) / 2, y0 - 0.08, h - 0.35), 'Cream')
+        S.add(diamonds(f'{tag}_teeth', x0 + 0.5, x1 - 0.5, 0.9, h - 1.0, 0.28, y0 - 0.1, S.m['Cream'], S.col))
+        S.box(f'{tag}_plinth', (x1 - x0, 0.2, 0.6), ((x0 + x1) / 2, y0 - 0.08, 0.3), 'Cream')
+        step = (x1 - x0) / n_win
+        for i in range(n_win):
+            x = x0 + step * (i + 0.5)
+            arched_window(S, f'{tag}_win{i}', x, 1.5, 5.4, 2.4, y0, arch_mat='OrangeBrick',
+                          glass='Window' if i % 3 == 1 else 'Glass')
+        return y0, d, h
+
+    y0, d, h = shed('east', hw, 80.0, 10)
+    shed('west', -40.0, -hw, 4)
+    for k, x in enumerate((44.0, 77.0, -38.0)):
+        S.box(f'chimney{k}', (1.5, 1.5, 7), (x, y0 + d - 3, h + 3.5), 'KswBrick')
+        S.box(f'chimney_cap{k}', (1.8, 1.8, 0.3), (x, y0 + d - 3, h + 7.1), 'Cream')
+    S.box('lawn', (130, 14, 0.12), (20, yf - 7, 0.06), 'Grass')
+    return S.finish()
+
+
 BUILDERS = {
+    'gemeentehuis': gemeentehuis,
+    'ravijn': ravijn,
+    'stoomweverij': stoomweverij,
     'raadhuis': raadhuis,
     'watertoren': watertoren,
     'heraklus': heraklus,
