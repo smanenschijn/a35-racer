@@ -39,10 +39,10 @@ export class AIDriver {
     this.laneTimer -= dt;
     this.attackTimer -= dt;
 
-    // --- Rubber banding (light) ---
+    // --- Rubber banding: a pack that ran away eases off, one that fell behind pushes on ---
     const gap = player.s - v.s;
-    if (gap > 90) v.powerFactor = tuning.rubberBandBehind;
-    else if (gap < -150) v.powerFactor = tuning.rubberBandAhead;
+    if (gap > 60) v.powerFactor = 1 + (tuning.rubberBandBehind - 1) * Math.min(1, (gap - 60) / 200);
+    else if (gap < -40) v.powerFactor = 1 - (1 - tuning.rubberBandAhead) * Math.min(1, (-gap - 40) / tuning.rubberBandRange);
     else v.powerFactor = 1;
 
     // --- Look around: who's ahead in our lane, who's beside us ---
@@ -211,7 +211,8 @@ export class AIDriver {
       inp.brake = 0.7;
     }
     inp.handbrake = false;
-    inp.nitro = v.nitro > 0.6 && Math.abs(inp.steer) < 0.3 && speed > 25 && !blocked && Math.random() < 0.02 * (1 + p.skill) ? true : inp.nitro && v.nitro > 0.1 && !blocked;
+    // (No nitro while waiting for a player who fell behind.)
+    inp.nitro = gap < -200 ? false : v.nitro > 0.6 && Math.abs(inp.steer) < 0.3 && speed > 25 && !blocked && Math.random() < 0.02 * (1 + p.skill) ? true : inp.nitro && v.nitro > 0.1 && !blocked;
 
     // --- Stuck recovery ---
     const facingBack = Math.abs(wrap(v.heading - track.frame(v.s).heading)) > 1.8;

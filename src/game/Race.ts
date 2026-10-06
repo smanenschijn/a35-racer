@@ -88,6 +88,11 @@ export class Race {
   timeScale = 1;
   private slowMoT = 0;
   private respawnT = 0;
+  /** Seconds the player has been stuck (stopped, off the road or facing the wrong way). */
+  private playerStuck = 0;
+  /** Slipstream: time spent tucked in behind someone, and the slingshot boost left after pulling out. */
+  private draftT = 0;
+  private slingT = 0;
   private resetCooldown = 0;
   private prevDs = new Map<Vehicle, number>();
   private playerScrape = 0;
@@ -183,6 +188,9 @@ export class Race {
     this.timeScale = 1;
     this.slowMoT = 0;
     this.respawnT = 0;
+    this.draftT = 0;
+    this.slingT = 0;
+    this.playerStuck = 0;
     this.prevDs.clear();
     this.paused = false;
     this.setupClock();
@@ -453,15 +461,18 @@ export class Race {
   private respawn(v: Vehicle, repair: boolean): void {
     const t = this.d.track;
     const lanes = ROAD.laneCenters;
-    const lane = lanes.reduce((a, b) => (Math.abs(b - v.d) < Math.abs(a - v.d) ? b : a));
+    // Nearest lane, but never the oncoming lane of the two-lane N35.
+    const lane = t.isSingle(v.s) ? lanes[1] : lanes.reduce((a, b) => (Math.abs(b - v.d) < Math.abs(a - v.d) ? b : a));
     // Find a spot not overlapping anyone.
     let s = v.s;
     for (let tries = 0; tries < 12; tries++) {
       if (!this.vehicles.some((o) => o !== v && o.active && Math.abs(o.s - s) < o.halfL + v.halfL + 4 && Math.abs(o.d - lane) < 2.6)) break;
       s += 8;
     }
-    v.place(t, Math.min(s, t.length - 10), lane, repair ? 18 : 12);
+    v.place(t, Math.min(s, t.length - 10), lane, repair ? 18 : 16);
     v.stun = 0;
+    v.angVel = 0;
+    if (v === this.player) this.playerStuck = 0;
     if (repair) {
       v.repair(20);
       this.models.get(v)!.repair();
@@ -588,7 +599,63 @@ export class Race {
       }
     }
 
+    // Catch-up for the player: a little extra power when the leader got away.
+    const p = this.player;
+    let leader = -Infinity;
+    for (const v of this.racers) if (v !== p && !v.wrecked && !v.finished) leader = Math.max(leader, v.s);
+    const behind = this.state === 'racing' ? Math.max(0, Math.min(1, (leader - p.s - 60) / 300)) : 0;
+    p.powerFactor = (1 + tuning.playerCatchUp * behind) * (1 + this.slipstream(p, dt));
+
+    // Stuck? Then offer the reset button.
+    const fr = this.d.track.frame(p.s);
+    let rel = p.heading - fr.heading;
+    rel = Math.atan2(Math.sin(rel), Math.cos(rel));
+    const stuck = this.state === 'racing' && !p.wrecked && !p.finished && !p.frozen &&
+      (p.speed < 4 || Math.abs(rel) > 1.3 || Math.abs(p.d) > ROAD.halfWidth + 0.5);
+    this.playerStuck = stuck ? this.playerStuck + dt : 0;
+
     this.detectNearMisses();
+  }
+
+  /**
+   * Slipstream for the player: tucked in close behind another car the air is easier (more power,
+   * nitro trickles in); after a while the slingshot is charged and pulling out gives a burst.
+   * Returns the extra power factor.
+   */
+  private slipstream(p: Vehicle, dt: number): number {
+    const { hud, audio } = this.d;
+    let drafting = false;
+    if (this.state === 'racing' && !p.wrecked && !p.finished && p.alongSpeed > 20) {
+      for (const o of this.active) {
+        if (o === p || o.wrecked || o.alongSpeed < 12) continue;
+        const ds = o.s - p.s - o.halfL - p.halfL;
+        if (ds > 0.5 && ds < 24 && Math.abs(o.d - p.d) < 1.5) {
+          drafting = true;
+          break;
+        }
+      }
+    }
+    if (drafting) {
+      const before = this.draftT;
+      this.draftT += dt;
+      p.nitro = Math.min(1, p.nitro + 0.05 * dt);
+      if (before < tuning.draftCharge && this.draftT >= tuning.draftCharge) {
+        hud.message('IN DE SLIPSTREAM', '#8fd3ff', false, 1.2);
+      }
+    } else {
+      if (this.draftT >= tuning.draftCharge && this.state === 'racing') {
+        this.slingT = tuning.slingshotTime;
+        hud.message('SLINGSHOT!', '#8fd3ff', true, 1.1);
+        audio.whoosh();
+        this.d.cam.addShake(0.2);
+      }
+      this.draftT = 0;
+    }
+    if (this.slingT > 0) {
+      this.slingT -= dt;
+      return tuning.slingshotBonus;
+    }
+    return drafting ? tuning.draftBonus * Math.min(1, this.draftT / 0.8) : 0;
   }
 
   private tickClock(dt: number): void {
@@ -660,6 +727,7 @@ export class Race {
 
   /** Per-render-frame visuals: models, particles, audio, HUD. */
   render(dt: number, time: number): void {
+    this.d.hud.showReset(this.playerStuck > 1.2 && this.state === 'racing');
     const { fx, hud, audio, cam, track } = this.d;
     const simDt = this.paused ? 0 : dt * this.timeScale;
     const p = this.player;

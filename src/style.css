@@ -252,6 +252,7 @@ html, body {
 .touch .t-mid { position: absolute; right: 230px; bottom: 30px; display: grid; grid-template-columns: repeat(2, 64px); gap: 10px; }
 .touch .t-mid button { width: 64px; height: 50px; border-radius: 12px; font-size: 11px; }
 .touch .t-pause { position: absolute; top: 50%; right: 14px; transform: translateY(-50%); width: 46px; height: 46px; font-size: 14px; }
+.touch .t-reset { position: absolute; top: calc(50% + 38px); right: 14px; width: 46px; height: 46px; font-size: 22px; }
 @media (max-width: 720px) {
   .touch .t-left button { width: 70px; height: 70px; }
   .touch .t-mid { right: 50%; transform: translateX(50%); bottom: 110px; }
@@ -291,6 +292,8 @@ body:has(.touch:not([hidden])) .hud-br { bottom: 150px; }
   .countdown.go { font-size: 70px; }
   .hud-help { display: none; }
   .now-playing { bottom: 70px; font-size: 13px; }
+  .hud-reset { bottom: 64px; font-size: 14px; padding: 6px 14px; }
+  .touch .t-reset { top: calc(50% + 32px); width: 40px; height: 40px; font-size: 18px; }
   /* With touch buttons: gauges go up beside the stage info, damage under the position. */
   body:has(.touch:not([hidden])) .hud-bl { bottom: auto; top: 64px; flex-direction: row; }
   body:has(.touch:not([hidden])) .hud-br { bottom: auto; top: 58px; }
@@ -312,3 +315,10 @@ body:has(.touch:not([hidden])) .hud-br { bottom: 150px; }
 .car-card.locked .car-name { opacity: 0.55; }
 .lock { margin-top: 6px; color: #ff9a3c; font-size: 14px; }
 .unlock { color: #4dff6a; font-size: 18px; animation: blink 0.6s infinite alternate; }
+.hud-reset {
+  position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%); z-index: 3; pointer-events: auto;
+  font: inherit; font-size: 18px; color: #fff; background: rgba(255, 138, 0, 0.85); border: 2px solid var(--yellow);
+  border-radius: 999px; padding: 8px 18px; animation: blink 0.6s infinite alternate; cursor: pointer;
+}
+.hud-reset[hidden] { display: none; }
+body:has(.touch:not([hidden])) .hud-reset { bottom: auto; top: 34%; }

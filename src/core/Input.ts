@@ -52,6 +52,7 @@ const EDGE_KEYS: Record<string, keyof Controls> = {
   KeyQ: 'ramLeft',
   KeyE: 'ramRight',
   Backspace: 'reset',
+  KeyF: 'reset',
   KeyR: 'restart',
   Escape: 'pause',
   KeyP: 'pause',

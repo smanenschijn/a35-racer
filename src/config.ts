@@ -53,8 +53,14 @@ export const tuning = {
   // AI
   aiCornerLatAccel: 13,
   aiAggression: 1,
-  rubberBandBehind: 1.08, // power factor when far behind the player
-  rubberBandAhead: 0.96, // power factor when far ahead of the player
+  rubberBandBehind: 1.07, // power factor for a rival far behind the player
+  rubberBandAhead: 0.66, // power factor for a rival far ahead of the player (eases in over rubberBandRange)
+  rubberBandRange: 420, // metres ahead over which a rival backs off to rubberBandAhead
+  playerCatchUp: 0.1, // extra power for the player when far behind the leader
+  draftBonus: 0.07, // extra power while tucked in behind another car (slipstream)
+  draftCharge: 1.2, // seconds in the slipstream before the slingshot is ready
+  slingshotBonus: 0.16, // extra power when you pull out of a charged slipstream
+  slingshotTime: 1.8, // seconds the slingshot lasts
 
   // Traffic & police
   trafficCount: 44,

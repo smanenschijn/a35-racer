@@ -25,7 +25,7 @@ Kaartdata © [OpenStreetMap](https://www.openstreetmap.org/copyright)-bijdragers
 | Handrem | Spatie | ✕ / A |
 | Nitro | Shift | ○ / B |
 | Ram links / rechts | Q / E | L1 / R1 |
-| Terug op de weg | Backspace | △ / Y |
+| Terug op de weg | Backspace of F (of de ↺-knop) | △ / Y |
 | Herstart | R | Select |
 | Pauze | Esc / P | Start |
 | Geluid aan/uit | M | |

@@ -80,6 +80,7 @@ export class Game {
 
     const fx = new Effects(this.scene);
     this.hud = new Hud(document.body);
+    this.hud.onReset = () => this.input.press('reset');
     this.race = new Race({
       scene: this.scene,
       track: this.track,

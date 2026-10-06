@@ -13,7 +13,7 @@ export class DebugPanel {
       ['Nitro', ['nitroAccel', 'nitroTopSpeedFactor', 'nitroDrain', 'nitroFillPerDamage', 'nitroFillTakedown', 'nitroFillNearMiss', 'nitroFillDriftPerSec'], 0, 20, 0.001],
       ['Rammen', ['ramSideSpeed', 'ramDuration', 'ramCooldown', 'ramShoveSpeed', 'ramDamage', 'ramMassFactor', 'ramDamageFactor', 'aggressorRecoil'], 0, 40, 0.01],
       ['Schade', ['damagePerImpulse', 'railDamagePerSpeed', 'railScrapeDamage', 'takedownRailBonus', 'playerDamageFactor', 'aiDamageFactor', 'stunTime', 'wreckTotal', 'carRestitution', 'railRestitution', 'railFriction', 'railGlide'], 0, 5, 0.0001],
-      ['AI', ['aiCornerLatAccel', 'aiAggression', 'rubberBandBehind', 'rubberBandAhead'], 0, 25, 0.01],
+      ['AI', ['aiCornerLatAccel', 'aiAggression', 'rubberBandBehind', 'rubberBandAhead', 'playerCatchUp', 'draftBonus', 'slingshotBonus'], 0, 25, 0.01],
       ['Politie', ['heatDecayDelay', 'heatDecay', 'speedCameraKmh', 'bustSeconds', 'bustPenalty'], 0, 200, 0.01],
       ['Camera', ['camDistance', 'camHeight', 'camFov', 'camFovNitro'], 0, 120, 0.1],
     ];

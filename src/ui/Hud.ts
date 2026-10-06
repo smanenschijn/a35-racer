@@ -67,6 +67,9 @@ export class Hud {
   private policeGlow = el('div', 'police-glow');
   private flashEl = el('div', 'cam-flash');
   private nowPlaying = el('div', 'now-playing');
+  private resetBtn = el('button', 'hud-reset', '↺ Terug op de weg (⌫ / F)') as HTMLButtonElement;
+  /** Clicked the reset prompt. */
+  onReset: (() => void) | null = null;
   private lastPos = 0;
   private lastStars = -1;
 
@@ -115,9 +118,12 @@ export class Hud {
     this.root.append(this.policeGlow, this.flashEl, top, this.nowPlaying);
 
     this.help.innerHTML =
-      '↑↓ / WS gas-rem &nbsp;·&nbsp; ←→ / AD sturen &nbsp;·&nbsp; SPATIE handrem &nbsp;·&nbsp; SHIFT nitro &nbsp;·&nbsp; Q/E rammen &nbsp;·&nbsp; ⌫ terug op weg &nbsp;·&nbsp; R herstart &nbsp;·&nbsp; M geluid &nbsp;·&nbsp; N volgend nummer &nbsp;·&nbsp; −/+ muziekvolume';
+      '↑↓ / WS gas-rem &nbsp;·&nbsp; ←→ / AD sturen &nbsp;·&nbsp; SPATIE handrem &nbsp;·&nbsp; SHIFT nitro &nbsp;·&nbsp; Q/E rammen &nbsp;·&nbsp; ⌫ / F terug op weg &nbsp;·&nbsp; R herstart &nbsp;·&nbsp; M geluid &nbsp;·&nbsp; N volgend nummer &nbsp;·&nbsp; −/+ muziekvolume';
 
-    this.root.append(tl, tr, br, bl, this.messages, this.help, this.overlay);
+    this.resetBtn.type = 'button';
+    this.resetBtn.hidden = true;
+    this.resetBtn.addEventListener('click', () => this.onReset?.());
+    this.root.append(tl, tr, br, bl, this.messages, this.help, this.overlay, this.resetBtn);
   }
 
   update(h: HudState): void {
@@ -260,6 +266,13 @@ export class Hud {
 
   setHelpVisible(v: boolean): void {
     this.help.style.opacity = v ? '1' : '0';
+  }
+
+  /** Show the 'back on the road' prompt while the player is stuck. */
+  showReset(v: boolean): void {
+    if (this.resetBtn.hidden === !v) return;
+    this.resetBtn.hidden = !v;
+    this.resetBtn.textContent = matchMedia('(pointer: coarse)').matches ? '↺ Terug op de weg' : '↺ Terug op de weg (⌫ / F)';
   }
 
   setVisible(v: boolean): void {

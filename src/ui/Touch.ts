@@ -12,6 +12,7 @@ export class TouchControls {
     this.root.className = 'touch';
     this.root.innerHTML = `
       <button type="button" class="t-pause" data-k="pause" aria-label="Pauze">II</button>
+      <button type="button" class="t-reset" data-k="reset" aria-label="Terug op de weg">↺</button>
       <div class="t-left">
         <button type="button" data-k="left" aria-label="Links">◀</button>
         <button type="button" data-k="right" aria-label="Rechts">▶</button>
@@ -36,6 +37,7 @@ export class TouchControls {
       this.held.set(e.pointerId, k);
       b.classList.add('on');
       if (k === 'pause') this.input.press('pause');
+      if (k === 'reset') this.input.press('reset');
       if (k === 'ramL') this.input.press('ramLeft');
       if (k === 'ramR') this.input.press('ramRight');
       this.sync();
