@@ -222,3 +222,36 @@ export function facadeTextures(seed: number, wall: string): { map: THREE.CanvasT
   }
   return { map: finish(c), glow: finish(c2) };
 }
+
+/**
+ * Single-carriageway N-road (N35): edge lines, and the Dutch "groene as" in the centre:
+ * two solid lines with green paint between them. Same width/UV layout as roadTexture.
+ */
+export function singleRoadTexture(): THREE.CanvasTexture {
+  const W = 512;
+  const H = 512;
+  const [c, g] = canvas(W, H);
+  g.fillStyle = '#3e3f42';
+  g.fillRect(0, 0, W, H);
+  noise(g, W, H, 26000, 0.08);
+  const m = (d: number) => ((d + 6) / 12) * W;
+  g.fillStyle = 'rgba(20,20,22,0.18)';
+  for (const lane of [-2.75, 0.75]) {
+    g.fillRect(m(lane - 1.1), 0, m(0.5) - m(0), H);
+    g.fillRect(m(lane + 0.6), 0, m(0.5) - m(0), H);
+  }
+  // Paved shoulder outside the edge lines, a little lighter.
+  g.fillStyle = 'rgba(120,120,110,0.22)';
+  g.fillRect(0, 0, m(-4.5), H);
+  g.fillRect(m(2.6), 0, W - m(2.6), H);
+  // Green centre strip between two solid lines.
+  g.fillStyle = '#3f7d3a';
+  g.fillRect(m(-1.25), 0, m(-0.75) - m(-1.25), H);
+  g.fillStyle = '#e9e9e2';
+  const line = (d: number, wid: number) => g.fillRect(m(d) - (m(wid) - m(0)) / 2, 0, m(wid) - m(0), H);
+  line(-1.25, 0.12);
+  line(-0.75, 0.12);
+  line(-4.5, 0.15);
+  line(2.55, 0.15);
+  return finish(c);
+}

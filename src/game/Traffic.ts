@@ -38,6 +38,7 @@ class TrafficDriver {
   desired: number;
   readonly rightOnly: boolean;
   private laneTimer = 2 + Math.random() * 4;
+  private yieldOff = 0;
   stuck = 0;
 
   constructor(vehicle: Vehicle, rightOnly: boolean, desired: number, lane: number) {
@@ -62,7 +63,7 @@ class TrafficDriver {
       !others.some((o) => {
         if (o === v || !o.active || Math.abs(o.d - lane) > o.halfW + v.halfW + 0.4) return false;
         const ds = o.s - v.s;
-        const reach = back + Math.max(0, o.forwardSpeed - speed) * 3;
+        const reach = back + Math.max(0, o.alongSpeed - speed) * 3;
         return ds > -reach && ds < front;
       });
     for (const o of others) {
@@ -77,8 +78,13 @@ class TrafficDriver {
       }
     }
 
+    // On a single carriageway the left lane is for oncoming traffic: stay right.
+    if (track.isSingle(v.s) && this.lane !== ROAD.laneCenters[1] && this.laneTimer <= 0) {
+      this.lane = ROAD.laneCenters[1];
+      this.laneTimer = 2;
+    }
     // Lane changes: overtake a slower vehicle, drive around obstacles, keep right afterwards.
-    if (this.laneTimer <= 0) {
+    if (this.laneTimer <= 0 && !track.isSingle(v.s + 60)) {
       const [left, right] = ROAD.laneCenters;
       const obstacle = ahead && (ahead.wrecked || ahead.speed < 3) && gap < 60;
       if (obstacle) {
@@ -89,7 +95,7 @@ class TrafficDriver {
           }
         }
         this.laneTimer = 2;
-      } else if (!this.rightOnly && ahead && ahead.forwardSpeed < this.desired - 3 && gap < 50 && this.lane === right && laneFree(left, 25, 40)) {
+      } else if (!this.rightOnly && ahead && ahead.alongSpeed < this.desired - 3 && gap < 50 && this.lane === right && laneFree(left, 25, 40)) {
         this.lane = left;
         this.laneTimer = 5;
       } else if (this.lane !== right && laneFree(right, 20, 45)) {
@@ -100,15 +106,28 @@ class TrafficDriver {
       }
     }
 
+    // N35: a racer closing in from behind? Move over onto the verge so they can squeeze past.
+    let yieldTo = 0;
+    if (track.isSingle(v.s) && this.lane === ROAD.laneCenters[1]) {
+      const racerBehind = others.some((o) => {
+        const ds = o.s - v.s;
+        return o.isRacer && o.active && !o.wrecked && ds < 0 && ds > -90 && o.alongSpeed > speed + 3;
+      });
+      // ...unless someone is already down our right-hand side.
+      const rightBusy = others.some((o) => o !== v && o.active && o.d > v.d + 1 && Math.abs(o.s - v.s) < o.halfL + v.halfL + 3);
+      if (racerBehind && !rightBusy) yieldTo = 2.3;
+    }
+    this.yieldOff += (yieldTo - this.yieldOff) * Math.min(1, dt * 1.2);
+
     // Steering: pure pursuit on our lane.
     const look = 10 + Math.max(0, speed) * 0.6;
-    const target = track.pointAt(v.s + look, this.lane);
+    const target = track.pointAt(v.s + look, this.lane + this.yieldOff);
     const err = wrap(Math.atan2(target.x - v.x, target.z - v.z) - v.heading);
     inp.steer = clamp(-err * 2.4 + v.angVel * 0.2, -1, 1);
 
     // Speed: desired cruise, follow the car in front with a time gap.
     let wanted = this.desired;
-    if (ahead && gap < 90) wanted = Math.min(wanted, Math.max(0, ahead.forwardSpeed + (gap - 8 - speed * 0.6) * 0.5));
+    if (ahead && gap < 90) wanted = Math.min(wanted, Math.max(0, ahead.alongSpeed + (gap - 8 - speed * 0.6) * 0.5));
     inp.throttle = speed < wanted - 0.5 ? 0.7 : 0;
     inp.brake = speed > wanted + 2 ? Math.min(1, (speed - wanted) / 8 + 0.2) : 0;
     inp.handbrake = false;
@@ -117,6 +136,55 @@ class TrafficDriver {
     const facingBack = Math.abs(wrap(v.heading - track.frame(v.s).heading)) > 1.6;
     if ((speed < 2 && !(ahead && gap < 15)) || facingBack) this.stuck += dt;
     else this.stuck = 0;
+  }
+}
+
+/**
+ * Oncoming traffic on a single carriageway: drives against the direction of travel in the
+ * left lane. Swerves to its own verge and brakes when something comes at it in its lane.
+ */
+class OncomingDriver {
+  readonly vehicle: Vehicle;
+  desired = 27;
+  stuck = 0;
+  private lane = ROAD.laneCenters[0];
+
+  constructor(vehicle: Vehicle) {
+    this.vehicle = vehicle;
+  }
+
+  update(dt: number, track: Track, others: Vehicle[]): void {
+    const v = this.vehicle;
+    const inp = v.input;
+    if (v.wrecked) return;
+    const speed = v.forwardSpeed;
+    // Anything ahead of us (lower s) in our lane?
+    let threat = Infinity;
+    let threatD = 0;
+    for (const o of others) {
+      if (o === v || !o.active) continue;
+      const ds = v.s - o.s;
+      if (ds <= 0 || ds > 110) continue;
+      if (Math.abs(o.d - this.lane) < o.halfW + v.halfW + 0.6 && ds < threat) {
+        threat = ds;
+        threatD = o.d;
+      }
+    }
+    // Swerve away from it (usually onto our verge) and brake when threatened.
+    // (Something already on our verge: stay put and just brake.)
+    const targetLane = threat >= 70 || threatD < -3.4 ? ROAD.laneCenters[0] : -4.4;
+    this.lane += (targetLane - this.lane) * Math.min(1, dt * 1.5);
+    const look = 10 + Math.max(0, speed) * 0.6;
+    const target = track.pointAt(v.s - look, this.lane);
+    const err = wrap(Math.atan2(target.x - v.x, target.z - v.z) - v.heading);
+    inp.steer = clamp(-err * 2.4 + v.angVel * 0.2, -1, 1);
+    const wanted = threat < 45 ? this.desired * 0.4 : this.desired;
+    inp.throttle = speed < wanted - 0.5 ? 0.7 : 0;
+    inp.brake = speed > wanted + 2 ? Math.min(1, (speed - wanted) / 8 + 0.3) : 0;
+    inp.handbrake = false;
+    inp.nitro = false;
+    const facingWrong = Math.abs(wrap(v.heading - track.frame(v.s).heading - Math.PI)) > 1.6;
+    this.stuck = (speed < 2 || facingWrong) ? this.stuck + dt : 0;
   }
 }
 
@@ -140,9 +208,14 @@ export interface TrafficDeps {
  * weapon). Oncoming traffic on the other carriageway is decoration on rails.
  */
 export class TrafficManager {
+  private startS = 0;
   readonly vehicles: Vehicle[] = [];
   private drivers: TrafficDriver[] = [];
   private oncoming: Oncoming[] = [];
+  /** Physics oncoming cars for single-carriageway stretches. */
+  readonly against: Vehicle[] = [];
+  private againstDrivers: OncomingDriver[] = [];
+
   private d: TrafficDeps;
 
   constructor(deps: TrafficDeps) {
@@ -153,6 +226,13 @@ export class TrafficManager {
       this.vehicles.push(v);
       const lane = tpl.lane === 'right' ? ROAD.laneCenters[1] : pick(ROAD.laneCenters);
       this.drivers.push(new TrafficDriver(v, tpl.lane === 'right', 0, lane));
+    }
+    for (let i = 0; i < 10; i++) {
+      const tpl = randomTemplate();
+      const v = deps.create(randomSpec(tpl.spec));
+      v.active = false;
+      this.against.push(v);
+      this.againstDrivers.push(new OncomingDriver(v));
     }
     for (let i = 0; i < tuning.oncomingCount; i++) {
       const tpl = randomTemplate();
@@ -170,7 +250,10 @@ export class TrafficManager {
   private spawn(i: number, s: number): boolean {
     const v = this.vehicles[i];
     const drv = this.drivers[i];
-    const lane = drv.rightOnly || Math.random() < 0.6 ? ROAD.laneCenters[1] : ROAD.laneCenters[0];
+    const single = this.d.track.isSingle(s);
+    // The N35 is busy enough as it is: thinner traffic there, and always in the right-hand lane.
+    if (single && Math.random() < 0.45) return false;
+    const lane = single || drv.rightOnly || Math.random() < 0.6 ? ROAD.laneCenters[1] : ROAD.laneCenters[0];
     // Keep a safe distance from anyone already there.
     const clear = (ss: number) =>
       !this.vehicles.some((o, j) => j !== i && o.active && Math.abs(o.s - ss) < o.halfL + v.halfL + 18 && Math.abs(o.d - lane) < 2.5);
@@ -191,15 +274,17 @@ export class TrafficManager {
     return true;
   }
 
-  /** Spread traffic over the stretch, keeping the start area clear. */
-  reset(startS: number): void {
+  /** Spread traffic over the stage, keeping the start area clear. */
+  reset(startS: number, finishS: number): void {
+    this.startS = startS;
     const t = this.d.track;
     const from = startS + 260;
-    const span = t.length - 120 - from;
+    const span = Math.min(t.length - 120, finishS + 300) - from;
     this.vehicles.forEach((v, i) => {
       v.active = false;
       if (!this.spawn(i, from + (span * (i + Math.random() * 0.8)) / this.vehicles.length)) v.active = false;
     });
+    for (const v of this.against) v.active = false;
     for (const o of this.oncoming) {
       o.s = startS - 200 + Math.random() * 1400;
       o.speed = 25 + Math.random() * 9;
@@ -226,6 +311,36 @@ export class TrafficManager {
         v.active = false;
       }
     });
+    this.updateAgainst(dt, all, player, minS);
+  }
+
+  private updateAgainst(dt: number, all: Vehicle[], player: Vehicle, minS: number): void {
+    const t = this.d.track;
+    this.against.forEach((v, i) => {
+      const drv = this.againstDrivers[i];
+      if (!v.active) {
+        // Appear ahead of the player on a single carriageway, coming towards us.
+        if (Math.random() < 0.02 && player.s > this.startS + 500) {
+          const s = player.s + 380 + Math.random() * 600;
+          // Not straight into the face of a racer: nobody may be just short of the spawn point.
+          const clear = !all.some(
+            (o) => o.active && ((Math.abs(o.s - s) < 30 && o.d < -0.5) || (o.isRacer && o.s > s - 300 && o.s < s + 30)),
+          );
+          if (s < t.length - 60 && t.isSingle(s) && t.isSingle(s - 250) && clear) {
+            this.d.repair(v);
+            drv.desired = 24 + Math.random() * 7;
+            drv.stuck = 0;
+            v.place(t, s, ROAD.laneCenters[0], drv.desired, true);
+            v.active = true;
+            v.frozen = false;
+          }
+        }
+        return;
+      }
+      drv.update(dt, t, all);
+      // Gone past everyone, turned off onto the other carriageway, or stuck in a wreck.
+      if (v.s < minS - 150 || !t.isSingle(v.s + 20) || drv.stuck > 4) v.active = false;
+    });
   }
 
   /** Oncoming carriageway: kinematic, recycled around the player. */
@@ -233,8 +348,9 @@ export class TrafficManager {
     const t = this.d.track;
     for (const o of this.oncoming) {
       o.s -= o.speed * dt;
-      if (o.s < playerS - 180 || o.s < 5) {
+      if (o.s < playerS - 180 || o.s < 5 || t.isSingle(o.s)) {
         o.s = Math.min(t.length - 5, playerS + 700 + Math.random() * 700);
+        if (t.isSingle(o.s)) o.s = playerS - 400; // hidden behind us until a dual stretch comes
         o.speed = 25 + Math.random() * 9;
         o.lane = pick(ROAD.oncomingLanes);
       }

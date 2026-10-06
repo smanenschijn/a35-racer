@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { Track } from './Track';
 import {
   facadeTextures,
+  singleRoadTexture,
   roadTexture, grassTexture, fieldTexture, concreteTexture, checkerTexture, signTexture,
   placeSignTexture, bannerTexture,
 } from './textures';
@@ -100,17 +101,35 @@ export class TrackBuilder {
     const concrete = new THREE.MeshStandardMaterial({ map: concreteTex, roughness: 0.9 });
     const metal = new THREE.MeshStandardMaterial({ color: 0xb8bcc0, metalness: 0.85, roughness: 0.35, side: THREE.DoubleSide });
 
+    // Cross-section runs: 'dual' (motorway-style, separate carriageways) and 'single'
+    // (one carriageway, oncoming traffic in the left lane, no median).
+    const singles = f.single;
+    const duals: [number, number][] = [];
+    let at = 0;
+    for (const r of singles) {
+      if (r.s0 > at) duals.push([at, r.s0]);
+      at = r.s1;
+    }
+    if (at < t.length) duals.push([at, t.length]);
+    const roadSingle = new THREE.MeshStandardMaterial({ map: singleRoadTexture(), roughness: 0.82, metalness: 0.05 });
+
     // --- Road surfaces ---
-    this.ribbon({ dL: -6, dR: 6, yL: h, yR: h, step: 2 }, road);
-    // Left edge must have the smaller d, otherwise the surface faces down and gets culled.
-    // u runs 1→0 so the markings mirror for traffic in the other direction.
-    this.ribbon({ dL: OPP_OUT, dR: OPP_IN, yL: h, yR: h, uL: 1, uR: 0, step: 2 }, road);
+    for (const [s0, s1] of duals) {
+      this.ribbon({ s0, s1, dL: -6, dR: 6, yL: h, yR: h, step: 2 }, road);
+      // Left edge must have the smaller d, otherwise the surface faces down and gets culled.
+      // u runs 1→0 so the markings mirror for traffic in the other direction.
+      this.ribbon({ s0, s1, dL: OPP_OUT, dR: OPP_IN, yL: h, yR: h, uL: 1, uR: 0, step: 2 }, road);
+    }
+    for (const r of singles) this.ribbon({ s0: r.s0, s1: r.s1, dL: -6, dR: 6, yL: h, yR: h, step: 2 }, roadSingle);
 
     // --- Median and verges ---
     const verge = (s: number) => h(s) - 0.06;
-    this.ribbon({ dL: -8.5, dR: -6, yL: verge, yR: verge, vScale: 8, uR: 0.3, step: 4 }, grass);
     this.ribbon({ dL: 6, dR: 9.5, yL: verge, yR: verge, vScale: 8, uR: 0.4, step: 4 }, grass);
-    this.ribbon({ dL: -24, dR: OPP_OUT, yL: verge, yR: verge, vScale: 8, uR: 0.4, step: 4 }, grass);
+    for (const [s0, s1] of duals) {
+      this.ribbon({ s0, s1, dL: -8.5, dR: -6, yL: verge, yR: verge, vScale: 8, uR: 0.3, step: 4 }, grass);
+      this.ribbon({ s0, s1, dL: -24, dR: OPP_OUT, yL: verge, yR: verge, vScale: 8, uR: 0.4, step: 4 }, grass);
+    }
+    for (const r of singles) this.ribbon({ s0: r.s0, s1: r.s1, dL: -9.5, dR: -6, yL: verge, yR: verge, vScale: 8, uR: 0.4, step: 4 }, grass);
 
     // --- Embankments down to the fields (with a gap for the canal) ---
     const segmentsOutsideBridge: [number, number][] = [];
@@ -120,29 +139,47 @@ export class TrackBuilder {
       from = sp.c + sp.half;
     }
     segmentsOutsideBridge.push([from, t.length]);
+    const clip = (a: number, b: number, runs: [number, number][]) =>
+      runs.map(([c, d]) => [Math.max(a, c), Math.min(b, d)] as [number, number]).filter(([c, d]) => d - c > 2);
+    const singleRuns = singles.map((r) => [r.s0, r.s1] as [number, number]);
     for (const [s0, s1] of segmentsOutsideBridge) {
       this.ribbon({ s0, s1, dL: 9.5, dR: (s) => 12 + h(s) * 1.8, yL: verge, yR: () => 0, vScale: 8, uR: 1, step: 4 }, grass);
-      this.ribbon({ s0, s1, dL: (s) => -26.5 - h(s) * 1.8, dR: -24, yL: () => 0, yR: verge, vScale: 8, uR: 1, step: 4 }, grass);
+      for (const [a, b] of clip(s0, s1, duals)) {
+        this.ribbon({ s0: a, s1: b, dL: (s) => -26.5 - h(s) * 1.8, dR: -24, yL: () => 0, yR: verge, vScale: 8, uR: 1, step: 4 }, grass);
+      }
+      for (const [a, b] of clip(s0, s1, singleRuns)) {
+        this.ribbon({ s0: a, s1: b, dL: (s) => -12 - h(s) * 1.8, dR: -9.5, yL: () => 0, yR: verge, vScale: 8, uR: 1, step: 4 }, grass);
+      }
     }
 
     // --- Guard rails (vangrail) ---
     const railY0 = (s: number) => h(s) + 0.42;
     const railY1 = (s: number) => h(s) + 0.78;
-    for (const d of [5.6, -5.6, -9.0, -20.0]) {
+    for (const d of [5.6, -5.6]) {
       this.ribbon({ dL: d, dR: d, yL: railY0, yR: railY1, step: 2 }, metal).castShadow = true;
     }
-    this.posts([5.6, -5.6, -9.0, -20.0], 4, new THREE.BoxGeometry(0.12, 0.8, 0.12), metal, 0.4);
+    for (const [s0, s1] of duals) {
+      for (const d of [-9.0, -20.0]) this.ribbon({ s0, s1, dL: d, dR: d, yL: railY0, yR: railY1, step: 2 }, metal).castShadow = true;
+    }
+    const postGeo = new THREE.BoxGeometry(0.12, 0.8, 0.12);
+    this.posts([5.6, -5.6], 4, postGeo, metal, 0.4);
+    this.posts([-9.0, -20.0], 4, postGeo, metal, 0.4, (s) => !t.isSingle(s));
 
     for (const sp of spans) this.bridge(sp.c, sp.half, concrete);
     for (const s of f.viaducts) this.overpass(s, concrete, grass, metal);
     for (const g of f.gantries) this.gantry(g.s, g.text, g.route, metal);
     this.lamps(metal);
     this.hectometerPosts();
-    // Noise barriers where the motorway passes Hengelo and enters Enschede.
-    this.noiseBarrier(f.startS + 200, f.startS + 900, 11);
-    this.noiseBarrier(f.startS + 300, f.startS + 800, -27);
-    this.noiseBarrier(f.finishS - 900, f.finishS - 150, 11);
-    this.noiseBarrier(f.finishS - 700, f.finishS - 100, -27);
+    // Noise barriers where the road passes the towns.
+    for (const st of f.stages) {
+      this.noiseBarrier(st.startS + 200, st.startS + 800, 11);
+      this.noiseBarrier(st.finishS - 800, st.finishS - 150, 11);
+      const left = (s: number) => (t.isSingle(s) ? -12 : -27);
+      this.noiseBarrier(st.startS + 300, st.startS + 700, left(st.startS + 500));
+      this.noiseBarrier(st.finishS - 650, st.finishS - 150, left(st.finishS - 400));
+    }
+    for (const tu of f.tunnels) this.tunnel(tu.s0, tu.s1, concrete, grass);
+    for (const lm of f.landmarks) if (lm.id === 'heuvelrug') this.hills(lm.s, lm.d);
     this.startFinish();
     this.ground();
     for (const sp of spans) this.underpass(sp.c, sp.half, sp.canal);
@@ -158,7 +195,8 @@ export class TrackBuilder {
     obj.rotation.y = fr.heading + yaw;
   }
 
-  private posts(ds: number[], spacing: number, geo: THREE.BufferGeometry, mat: THREE.Material, up: number): void {
+  private posts(ds: number[], spacing: number, geo: THREE.BufferGeometry, mat: THREE.Material, up: number,
+    keep: (s: number) => boolean = () => true): void {
     const t = this.track;
     const n = Math.floor(t.length / spacing) * ds.length;
     const inst = new THREE.InstancedMesh(geo, mat, n);
@@ -167,6 +205,7 @@ export class TrackBuilder {
     const one = new THREE.Vector3(1, 1, 1);
     let i = 0;
     for (let s = 0; s < t.length && i < n; s += spacing) {
+      if (!keep(s)) continue;
       const fr = t.frame(s);
       q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), fr.heading);
       for (const d of ds) {
@@ -184,7 +223,8 @@ export class TrackBuilder {
     const f = this.track.features;
     if (this.spans.some((sp) => Math.abs(s - sp.c) < sp.half + margin)) return true;
     if (f.viaducts.some((v) => Math.abs(s - v) < 24)) return true;
-    return f.landmarks.some((lm) => Math.abs(s - lm.s) < 190 && Math.sign(lm.d) === Math.sign(d));
+    if (this.track.inTunnel(s, 30)) return true;
+    return f.landmarks.some((lm) => Math.abs(s - lm.s) < (lm.id === 'heuvelrug' ? 700 : 190) && Math.sign(lm.d) === Math.sign(d));
   }
 
   private bridge(c: number, half: number, concrete: THREE.Material): void {
@@ -320,8 +360,11 @@ export class TrackBuilder {
     const q = new THREE.Quaternion();
     const one = new THREE.Vector3(1, 1, 1);
     const up = new THREE.Vector3(0, 1, 0);
-    for (let i = 0; i < n; i++) {
-      const s = i * spacing + 20;
+    let i = 0;
+    for (let k = 0; k < n; k++) {
+      const s = k * spacing + 20;
+      // Median lamps only where there is a median (and not inside the tunnel).
+      if (t.isSingle(s) || t.inTunnel(s, 15)) continue;
       const fr = t.frame(s);
       q.setFromAxisAngle(up, fr.heading);
       const p = t.pointAt(s, -7.25, 5.5);
@@ -333,7 +376,10 @@ export class TrackBuilder {
       head.setMatrixAt(i * 2, m);
       m.compose(t.pointAt(s, -9.5, 10.8), q, one);
       head.setMatrixAt(i * 2 + 1, m);
+      i++;
     }
+    pole.count = arm.count = i;
+    head.count = i * 2;
     this.group.add(pole, arm, head);
   }
 
@@ -368,44 +414,34 @@ export class TrackBuilder {
     const t = this.track;
     const f = t.features;
     const checker = new THREE.MeshStandardMaterial({ map: checkerTexture(), roughness: 0.7 });
-    for (const s of [f.startS, f.finishS]) {
-      const line = new THREE.Mesh(new THREE.PlaneGeometry(11, 1.4), checker);
-      line.rotation.x = -Math.PI / 2;
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.6, roughness: 0.4 });
+    const gate = (s: number, text: string) => {
+      const g = new THREE.Group();
+      for (const d of [6.6, -6.4]) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.5, 7.5, 0.5), postMat);
+        post.position.set(-d, 3.75, 0);
+        g.add(post);
+      }
+      const cloth = new THREE.Mesh(
+        new THREE.PlaneGeometry(13.5, 2.1),
+        new THREE.MeshStandardMaterial({ map: bannerTexture(text), emissive: 0xffffff, emissiveIntensity: 0.25, side: THREE.DoubleSide }),
+      );
+      cloth.position.set(0, 6.6, 0);
+      cloth.rotation.y = Math.PI;
+      g.add(cloth);
+      this.placeOnTrack(g, s, 0);
+      this.group.add(g);
+    };
+    const line = (s: number) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(11, 1.4), checker);
+      m.rotation.x = -Math.PI / 2;
+      m.receiveShadow = true;
       const holder = new THREE.Group();
-      holder.add(line);
+      holder.add(m);
       this.placeOnTrack(holder, s, 0, 0.02);
-      line.receiveShadow = true;
       this.group.add(holder);
-    }
-    // Finish banner gantry
-    const banner = new THREE.Group();
-    const metal = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.6, roughness: 0.4 });
-    for (const d of [6.6, -6.4]) {
-      const post = new THREE.Mesh(new THREE.BoxGeometry(0.5, 7.5, 0.5), metal);
-      post.position.set(-d, 3.75, 0);
-      banner.add(post);
-    }
-    const cloth = new THREE.Mesh(
-      new THREE.PlaneGeometry(13.5, 2.1),
-      new THREE.MeshStandardMaterial({ map: bannerTexture('FINISH  •  ENSCHEDE'), emissive: 0xffffff, emissiveIntensity: 0.25, emissiveMap: null, side: THREE.DoubleSide }),
-    );
-    cloth.position.set(0, 6.6, 0);
-    cloth.rotation.y = Math.PI;
-    banner.add(cloth);
-    this.placeOnTrack(banner, f.finishS, 0);
-    this.group.add(banner);
-    // Checkpoint gates
-    for (const cp of f.checkpoints) {
-      const gate = banner.clone();
-      const cloth2 = gate.children[gate.children.length - 1] as THREE.Mesh;
-      cloth2.material = new THREE.MeshStandardMaterial({
-        map: bannerTexture('CHECKPOINT'), emissive: 0xffffff, emissiveIntensity: 0.3, side: THREE.DoubleSide,
-      });
-      this.placeOnTrack(gate, cp, 0);
-      this.group.add(gate);
-    }
-
-    // Place-name signs: leaving Hengelo at the start, entering Enschede before the finish.
+    };
+    // Place-name signs: leaving a town at the start, entering the next before the finish.
     const sign = (s: number, name: string, sub: string, ended: boolean) => {
       const g = new THREE.Group();
       const tex = placeSignTexture(name, sub);
@@ -427,8 +463,129 @@ export class TrackBuilder {
       this.placeOnTrack(g, s, 7.6);
       this.group.add(g);
     };
-    sign(f.startS + 30, 'Hengelo', 'Etappe 5', true);
-    sign(f.finishS - 160, 'Enschede', '', false);
+    for (const st of f.stages) {
+      line(st.startS);
+      line(st.finishS);
+      gate(st.finishS, `FINISH  •  ${st.to.toUpperCase()}`);
+      for (const k of [0.27, 0.52, 0.77]) gate(Math.round(st.startS + (st.finishS - st.startS) * k), 'CHECKPOINT');
+      sign(st.startS + 30, st.from, `Etappe ${st.id}`, true);
+      sign(st.finishS - 160, st.to, '', false);
+    }
+  }
+
+  /** Cut-and-cover tunnel (Nijverdal): walls, roof with grass on top, ceiling lights, portals. */
+  private tunnel(s0: number, s1: number, concrete: THREE.Material, grass: THREE.Material): void {
+    const t = this.track;
+    const h = (s: number) => t.heightAt(s);
+    const roofY = (s: number) => h(s) + 6.4;
+    const wall = (concrete as THREE.MeshStandardMaterial).clone();
+    wall.side = THREE.DoubleSide;
+    wall.color.setHex(0xb8b4ac);
+    const dual = !t.isSingle((s0 + s1) / 2);
+    const outer = dual ? [-22, 7] : [-7, 7];
+    for (const d of dual ? [...outer, -7.3] : outer) {
+      this.ribbon({ s0, s1, dL: d, dR: d, yL: (s) => h(s) - 0.2, yR: roofY, step: 4 }, wall);
+    }
+    const roof = this.ribbon({ s0, s1, dL: outer[0], dR: outer[1], yL: roofY, yR: roofY, step: 4 }, wall);
+    roof.castShadow = true;
+    const cover = this.ribbon({ s0: s0 - 4, s1: s1 + 4, dL: outer[0] - 6, dR: outer[1] + 6, yL: (s) => roofY(s) + 0.7, yR: (s) => roofY(s) + 0.7, vScale: 8, step: 4 }, grass);
+    cover.castShadow = true;
+    // Earth slopes over the portal walls, so the tunnel reads as a park on top.
+    for (const side of [outer[0] - 6, outer[1] + 6]) {
+      const out = side < 0 ? side - 10 : side + 10;
+      this.ribbon({ s0: s0 - 4, s1: s1 + 4, dL: side < 0 ? out : side, dR: side < 0 ? side : out, yL: side < 0 ? () => 0 : (s) => roofY(s) + 0.7, yR: side < 0 ? (s) => roofY(s) + 0.7 : () => 0, vScale: 8, step: 4 }, grass);
+    }
+    // Ceiling light strips
+    const n = Math.floor((s1 - s0) / 8);
+    const lights = new THREE.InstancedMesh(
+      new THREE.BoxGeometry(0.5, 0.08, 4),
+      new THREE.MeshStandardMaterial({ color: 0xfff1d0, emissive: 0xffe2a8, emissiveIntensity: 3.5 }),
+      n * 2,
+    );
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    for (let i = 0; i < n; i++) {
+      const s = s0 + 4 + i * 8;
+      q.setFromAxisAngle(new THREE.Vector3(0, 1, 0), t.frame(s).heading);
+      for (const [k, d] of [[0, -2.5], [1, 2.5]] as const) {
+        m.compose(t.pointAt(s, d, 6.3), q, new THREE.Vector3(1, 1, 1));
+        lights.setMatrixAt(i * 2 + k, m);
+      }
+    }
+    this.group.add(lights);
+    // Portal headers with the road number.
+    for (const [s, yaw] of [[s0, 0], [s1, Math.PI]] as const) {
+      const header = new THREE.Mesh(new THREE.BoxGeometry(outer[1] - outer[0] + 1, 1.6, 0.8), wall);
+      this.placeOnTrack(header, s, (outer[0] + outer[1]) / 2, 7.0, yaw);
+      header.castShadow = true;
+      this.group.add(header);
+    }
+  }
+
+  /** Sallandse Heuvelrug: soft heather-and-pine hills beside the road. */
+  private hills(sCentre: number, dCentre: number): void {
+    const t = this.track;
+    const lenAlong = 1600;
+    const width = 520;
+    const segA = 64;
+    const segW = 26;
+    const geo = new THREE.PlaneGeometry(lenAlong, width, segA, segW);
+    geo.rotateX(-Math.PI / 2);
+    const pos = geo.attributes.position as THREE.BufferAttribute;
+    const colors = new Float32Array(pos.count * 3);
+    const heather = new THREE.Color(0x6b4a6e);
+    const green = new THREE.Color(0x3f5f2a);
+    const sand = new THREE.Color(0x9c8a5c);
+    const c = new THREE.Color();
+    const bumps = [
+      { x: -380, z: 40, r: 260, h: 48 }, { x: 120, z: 90, r: 300, h: 62 }, { x: 520, z: 10, r: 220, h: 38 },
+      { x: -40, z: -60, r: 180, h: 22 },
+    ];
+    const side = Math.sign(dCentre) || 1;
+    for (let i = 0; i < pos.count; i++) {
+      const lx = pos.getX(i); // along the road
+      const lz = pos.getZ(i); // away from the road (+ = further)
+      let y = 0;
+      for (const b of bumps) y += b.h * Math.exp(-((lx - b.x) ** 2 + (lz - b.z) ** 2) / (b.r * b.r));
+      // Fade to flat at the edges so it meets the fields.
+      const edge = Math.min(1, (lenAlong / 2 - Math.abs(lx)) / 220) * Math.min(1, (width / 2 - Math.abs(lz)) / 120);
+      y *= Math.max(0, edge);
+      // Place: centre at (s, d), along-road axis follows the heading at the centre.
+      const s = sCentre + lx;
+      const d = dCentre + side * lz;
+      const fr = t.frame(Math.max(0, Math.min(t.length, s)));
+      const wx = fr.x + fr.rx * d;
+      const wz = fr.z + fr.rz * d;
+      pos.setXYZ(i, wx, y, wz);
+      const k = y / 60;
+      c.copy(green).lerp(heather, Math.min(1, Math.max(0, (Math.sin(lx / 90) + Math.cos(lz / 70)) * 0.35 + k)));
+      if (y < 3) c.lerp(sand, 0.15);
+      colors.set([c.r, c.g, c.b], i * 3);
+    }
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geo.computeVertexNormals();
+    const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, flatShading: true }));
+    mesh.receiveShadow = true;
+    mesh.castShadow = true;
+    mesh.userData.hills = true;
+    this.group.add(mesh);
+    // Pines on the slopes.
+    const n = 260;
+    const pine = new THREE.InstancedMesh(new THREE.ConeGeometry(2.2, 9, 6), new THREE.MeshStandardMaterial({ color: 0x24401f, roughness: 1, flatShading: true }), n);
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    let placed = 0;
+    const tmp = new THREE.Vector3();
+    for (let i = 0; i < n * 3 && placed < n; i++) {
+      const vi = Math.floor(Math.random() * pos.count);
+      tmp.set(pos.getX(vi), pos.getY(vi), pos.getZ(vi));
+      if (tmp.y < 6 || Math.random() < 0.3) continue;
+      m.compose(tmp.clone().setY(tmp.y + 4), q, new THREE.Vector3(1, 0.8 + Math.random() * 0.6, 1));
+      pine.setMatrixAt(placed++, m);
+    }
+    pine.count = placed;
+    pine.castShadow = true;
+    this.group.add(pine);
   }
 
   private ground(): void {
@@ -500,7 +657,8 @@ export class TrackBuilder {
         if (this.blocked(s, side)) continue;
         const density = 0.5 + 0.5 * Math.sin(s / 70 + side * 2.1) * Math.sin(s / 23 + side);
         if (Math.random() > density * 0.55) continue;
-        const near = side > 0 ? 16 + t.heightAt(s) * 1.8 : -30 - t.heightAt(s) * 1.8;
+        const leftNear = t.isSingle(s) ? -16 : -30;
+        const near = side > 0 ? 16 + t.heightAt(s) * 1.8 : leftNear - t.heightAt(s) * 1.8;
         const d = near + side * Math.random() ** 1.6 * 70;
         t.pointAt(s + Math.random() * 4, d, 0, tmp);
         spots.push({ x: tmp.x, z: tmp.z, y: 0, scale: 0.8 + Math.random() * 0.9 });
@@ -541,14 +699,14 @@ export class TrackBuilder {
   private cityBlocks(): void {
     const t = this.track;
     const f = t.features;
-    const zones: [number, number][] = [
-      [Math.max(0, f.startS - 300), f.startS + 1100],
-      [f.finishS - 1700, t.length],
-    ];
+    const zones: [number, number][] = [];
+    for (const st of f.stages) {
+      zones.push([Math.max(0, st.startS - 300), st.startS + 900], [st.finishS - 1300, st.finishS + 250]);
+    }
     const kinds = [
-      { wall: '#8c7c6c', n: 40 },
-      { wall: '#b9b2a6', n: 40 },
-      { wall: '#5e4a40', n: 40 },
+      { wall: '#8c7c6c', n: 110 },
+      { wall: '#b9b2a6', n: 110 },
+      { wall: '#5e4a40', n: 110 },
     ];
     const box = new THREE.BoxGeometry(1, 1, 1);
     box.translate(0, 0.5, 0);

@@ -5,14 +5,16 @@ Zie [docs/GDD.md](docs/GDD.md) voor het volledige game design.
 
 **Speel:** https://smanenschijn.github.io/a35-racer/
 
-## Status: mijlpaal 3 (de echte route met landmarks)
+## Status: mijlpaal 5 (de volledige race)
 
-- De echte A35 van Hengelo naar Enschede uit OpenStreetMap, met bruggen, viaducten, het Twentekanaal en de echte afritten
-- Landmarks gebouwd in Blender: Metropool, Universiteit Twente, Grolsj Veste, Grolsj-brouwerij, Thuisbesteld-hoofdkantoor en een binnenvaartschip
-- 8 coureurs in gedetailleerde Blender-auto's, verkeer, tegenliggers, politie met wanted level, flitspalen en wegblokkades
+- De hele N35/A35 van Raalte naar Enschede uit OpenStreetMap, in vijf etappes: Raalte → Nijverdal → Wierden → Almelo → Hengelo → Enschede
+- De N35 als enkelbaansweg met tegenverkeer, de Combiwet-tunnel bij Nijverdal en de Sallandse Heuvelrug
+- Landmarks gebouwd in Blender: raadhuis Raalte, watertoren Wierden, Heraklus-stadion, Metropool, Universiteit Twente, Grolsj Veste, Grolsj-brouwerij, Thuisbesteld-hoofdkantoor en een binnenvaartschip
+- 8 coureurs in gedetailleerde Blender-auto's, verkeer, politie met wanted level, flitspalen en wegblokkades
+- Etappes los of als "hele race", auto's vrijspelen, statistieken en highscores per etappe
 - Muziekspeler (zie [docs/muziek.md](docs/muziek.md))
 
-Kaartdata © [OpenStreetMap](https://www.openstreetmap.org/copyright)-bijdragers (ODbL). De route opnieuw opbouwen: `python3 tools/osm/build_route.py`.
+Kaartdata © [OpenStreetMap](https://www.openstreetmap.org/copyright)-bijdragers (ODbL). De route opnieuw opbouwen: `python3 tools/osm/build_campaign.py`.
 
 ## Besturing
 

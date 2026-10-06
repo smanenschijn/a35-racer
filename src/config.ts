@@ -46,6 +46,7 @@ export const tuning = {
   takedownRailBonus: 1.2, // rail damage multiplier when recently rammed by someone
   playerDamageFactor: 0.6,
   aiDamageFactor: 1.0,
+  aiSingleDamage: 0.35, // rivals on the two-lane N35 (their own pile-ups only)
   stunTime: 0.45,
   wreckTotal: 45, // average damage over all zones that also means total loss // seconds of reduced control after a hard hit
 

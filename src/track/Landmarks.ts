@@ -4,7 +4,9 @@ import { getModel } from '../vehicle/models';
 import type { Track } from './Track';
 import type { TrackBuilder } from './TrackBuilder';
 
-export const LANDMARK_MODELS = ['lm_metropool', 'lm_utwente', 'lm_veste', 'lm_brouwerij', 'lm_thuisbesteld', 'lm_barge'];
+export const LANDMARK_MODELS = [
+  'lm_raadhuis', 'lm_watertoren', 'lm_heraklus', 'lm_metropool', 'lm_utwente', 'lm_veste', 'lm_brouwerij', 'lm_thuisbesteld', 'lm_barge',
+];
 
 /** Merge a static model into one mesh per material (far fewer draw calls). */
 function mergeStatic(src: THREE.Object3D): THREE.Group {

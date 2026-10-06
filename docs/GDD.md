@@ -218,11 +218,18 @@ De Veste, de UT, de Metropool en het Thuisbesteld-kantoor liggen in werkelijkhei
 
 Opgenomen geluidssamples (in plaats van synthese) en echte stemopnames voor de omroeper zijn nog open; die vragen opnames of een stemacteur.
 
-### M5: De volledige race
+### M5: De volledige race *(afgerond, oktober 2026)*
 
-- De etappes 1 tot en met 4, met naadloze overgangen via plaatsnaamborden
-- Tegenverkeer op de N35
-- Unlocks en statistieken
+- [x] De hele route Raalte → Enschede uit OpenStreetMap (49,7 km echt, 31,5 km in de game: lange rechte stukken zijn ingekort, de bochten zijn echt)
+- [x] Vijf etappes met elk een start, drie checkpoints, een finishpoort en plaatsnaamborden; los te rijden of als "hele race" achter elkaar
+- [x] De N35 als enkelbaansweg met groene middenstreep en tegenverkeer op je eigen weg. Inhalen kan, maar de AI kijkt eerst of de weg vrij is. Langzaam verkeer wijkt uit naar de berm als er een racer aankomt.
+- [x] De Combiwet-tunnel bij Nijverdal, de Sallandse Heuvelrug met heide en dennen, en het kanaal Almelo-De Haandrik
+- [x] Nieuwe landmarks uit Blender: het raadhuis van Raalte, de watertoren van Wierden en het Heraklus-stadion in Almelo
+- [x] Unlocks: elke gehaalde etappe speelt een auto vrij (Civik, Volvi, Space Wagen, Calibro, Supremo)
+- [x] Statistieken over al je races (takedowns, rakelings gepasseerd, topsnelheid, hardste klap, bekeuringen, kilometers)
+- [x] Highscores per etappe
+
+Tussen de etappes zit een uitslagscherm met "Volgende etappe". Een echt naadloze overgang, waarbij je doorrijdt zonder laadmoment, is nog open.
 
 ## 9. Open punten en aannames
 

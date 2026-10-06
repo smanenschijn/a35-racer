@@ -52,10 +52,22 @@ export class AIDriver {
     let ahead: Vehicle | null = null;
     let aheadDs = Infinity;
     let victim: Vehicle | null = null;
+    // Single carriageway (N35): the left lane belongs to oncoming traffic.
+    const single = track.isSingle(v.s) || track.isSingle(v.s + 120);
+    const oppLane = ROAD.laneCenters[0];
+    const ownLane = ROAD.laneCenters[1];
+    let oncomingDs = Infinity;
+    let oncomingSpeed = 0;
+    // Traffic moving over onto the verge for us: squeeze past it on its left.
+    let squeezeD = Infinity;
     for (const o of others) {
       if (o === v || !o.active) continue;
       const ds = o.s - v.s;
       const dd = o.d - v.d;
+      if (single && !o.isRacer && o.alongSpeed > 0 && o.d > 1.9 && ds > -o.halfL - v.halfL - 3 && ds < scan) {
+        squeezeD = Math.min(squeezeD, o.d - o.halfW - v.halfW - 0.5);
+        if (o.d > 2.4) continue; // far enough over: not in our way
+      }
       // Check both our target lane and the lane we're physically in.
       const inLane =
         Math.abs(o.d - this.targetD) < o.halfW + v.halfW + 0.4 || Math.abs(o.d - v.d) < o.halfW + v.halfW + 0.2;
@@ -63,19 +75,23 @@ export class AIDriver {
         ahead = o;
         aheadDs = ds - o.halfL - v.halfL;
       }
+      if (single && o.alongSpeed < -2 && ds > -5 && ds < oncomingDs && Math.abs(o.d - oppLane) < 2.6) {
+        oncomingDs = ds;
+        oncomingSpeed = -o.alongSpeed;
+      }
       if (o.isRacer && !o.wrecked && Math.abs(ds) < 4.5 && Math.abs(dd) < 3.8 && Math.abs(dd) > 1.2) {
         if (!victim || o === player) victim = o;
       }
     }
-    const aheadSlower = ahead !== null && (ahead.forwardSpeed < speed - 1 || ahead.wrecked);
+    const aheadSlower = ahead !== null && (ahead.alongSpeed < speed - 1 || ahead.wrecked);
     // Bennie: a rival in front gets shunted, not overtaken.
     const shunting = p.shunter && ahead !== null && ahead.isRacer && !ahead.wrecked && aheadDs < 30;
-    const closing = ahead ? Math.max(0, speed - ahead.forwardSpeed) : 0;
+    const closing = ahead ? Math.max(0, speed - ahead.alongSpeed) : 0;
     const blocked = aheadSlower && aheadDs < 12 + closing * (0.8 + lookTime) && !shunting;
 
     let laneChanged = false;
     if (blocked && this.laneTimer <= 0) {
-      const lanes = [...ROAD.laneCenters, ROAD.shoulder];
+      const lanes = single ? [...ROAD.laneCenters] : [...ROAD.laneCenters, ROAD.shoulder];
       // Only to an adjacent lane: jumping two lanes cuts straight through the traffic in between.
       const options = lanes.filter((l) => Math.abs(l - this.targetD) > 1.5 && Math.abs(l - v.d) < 4.2);
       // A lane is free if nobody is beside us there and nothing slow is coming up in it.
@@ -85,7 +101,9 @@ export class AIDriver {
             if (o === v || !o.active || Math.abs(o.d - l) > o.halfW + v.halfW + 0.3) return false;
             const ds = o.s - v.s;
             if (ds > -8 - o.halfL && ds < 8 + o.halfL) return true;
-            const close = Math.max(0, speed - o.forwardSpeed);
+            const close = Math.max(0, speed - o.alongSpeed);
+            // Overtaking on the N35: the oncoming lane must be clear for a whole pass.
+            if (single && l < -1 && o.alongSpeed < -2) return ds > -10 && ds < 40 + close * 6;
             return ds > 0 && ds < 15 + close * (1 + lookTime);
           }),
       );
@@ -104,9 +122,24 @@ export class AIDriver {
       this.laneTimer = 0.8;
     }
 
+    // --- N35: back to the right lane after a pass, at once when something's coming ---
+    let headOn = false;
+    if (single && (this.targetD < -1 || v.d < -1)) {
+      const closingOn = speed + oncomingSpeed;
+      headOn = oncomingDs < 30 + closingOn * 2.8;
+      const rightFree = !others.some(
+        (o) => o !== v && o.active && Math.abs(o.d - ownLane) < o.halfW + v.halfW + 0.3 && Math.abs(o.s - v.s) < 7 + o.halfL,
+      );
+      if (rightFree && (headOn || this.laneTimer <= 0)) {
+        this.targetD = ownLane;
+        this.laneTimer = Math.max(this.laneTimer, 0.6);
+      }
+    }
+
     // Aggressive drivers steer into the rival beside them and use the ram.
     let lineD = this.targetD;
-    const aggro = p.aggression * tuning.aiAggression;
+    // The two-lane N35 leaves no room to dodge: less shoving there.
+    const aggro = p.aggression * tuning.aiAggression * (single ? 0.45 : 1);
     // Just got shoved: no counter-attack until we've regained control.
     if (v.lastHitTime !== this.seenHitTime) {
       this.seenHitTime = v.lastHitTime;
@@ -133,7 +166,10 @@ export class AIDriver {
       // Block the player behind us by drifting into their lane.
       lineD += (player.d - lineD) * 0.35 * aggro;
     }
-    lineD = clamp(lineD, -ROAD.halfWidth + 1.3, ROAD.halfWidth - 1.3);
+    // On the N35 there's no hard shoulder: keep off the railings.
+    lineD = clamp(lineD, -ROAD.halfWidth + (single ? 1.9 : 1.3), ROAD.halfWidth - (single ? 2.6 : 1.3));
+    if (headOn) lineD = this.targetD; // no fighting while dodging a head-on
+    if (squeezeD < lineD && !headOn) lineD = Math.max(-ROAD.halfWidth + 1.9, squeezeD);
 
     // --- Steering: pure pursuit towards a point ahead on the chosen line ---
     const look = 9 + Math.max(0, speed) * 0.45;
@@ -152,8 +188,12 @@ export class AIDriver {
       // Stuck behind someone: follow at a distance (reckless drivers leave less room).
       const room = 4 + p.awareness * 0.25;
       // Brake early enough: v² = v_ahead² + 2·a·gap with a comfortable 9 m/s².
-      const safe = Math.sqrt(Math.max(0, ahead.forwardSpeed ** 2 + 2 * 9 * Math.max(0, aheadDs - room)));
+      const safe = Math.sqrt(Math.max(0, Math.max(0, ahead.alongSpeed) ** 2 + 2 * 9 * Math.max(0, aheadDs - room)));
       wanted = Math.min(wanted, safe);
+    }
+    if (headOn && this.targetD < -1) {
+      // Can't get back in yet: drop back behind the car we were passing.
+      wanted = Math.min(wanted, speed - 6);
     }
     if (p.erratic > 0) {
       this.brakeTapTimer -= dt;
@@ -186,6 +226,16 @@ export class AIDriver {
 
   setLane(d: number): void {
     this.targetD = d;
+  }
+
+  /** New race: forget timers from the last one. */
+  reset(d: number): void {
+    this.targetD = d;
+    this.attackTimer = 6 + Math.random() * 4;
+    this.laneTimer = 0;
+    this.recoverTimer = 0;
+    this.stuckTime = 0;
+    this.needsReset = false;
   }
 
   resetLane(): void {

@@ -48,6 +48,7 @@ def materials():
     mk('HullRed', (0.5, 0.03, 0.03), roughness=0.6)
     mk('DeckGreen', (0.08, 0.2, 0.1), roughness=0.7)
     mk('Tyre', (0.012, 0.012, 0.012), roughness=0.92)
+    mk('Blue', (0.02, 0.08, 0.4), roughness=0.5)
     return M
 
 
@@ -129,6 +130,9 @@ class Site:
                 fmats.append(0 if rnd.random() < lit else 1)
         return self.add(ck.mesh_object(name, verts, faces, [self.m[mat], self.m['Glass']], face_mats=fmats,
                                        col=self.col))
+
+    def objects_rotate_last(self, angle):
+        self.parts[-1].rotation_euler = (0, 0, angle)
 
     def finish(self):
         for o in self.parts:
@@ -443,7 +447,91 @@ def barge():
     return S.finish()
 
 
+# ---------------------------------------------------------------------------
+# Gemeentehuis Raalte
+# ---------------------------------------------------------------------------
+
+def raadhuis():
+    S = Site('Raadhuis')
+    S.box('square', (90, 50, 0.15), (0, -6, 0.08), 'Concrete')
+    S.box('hall', (44, 16, 11), (0, 6, 5.5), 'Brick', bevel=0.12)
+    roof = S.add(ck.extrude_yz('roof', [(-8.6, 0), (8.6, 0), (0, 7.5)], -22.6, 22.6, S.m['Dark'], col=S.col))
+    roof.location = (0, 6, 11)
+    S.windows('hall_windows', (0, -2.05, 5.6), 40, 8, 12, 2, face='-Y', size=(0.55, 0.62), lit=0.6, seed=23)
+    for k in range(12):  # white frames
+        S.box(f'frame{k}', (1.9, 0.12, 0.15), (-20 + 1.66 + k * 3.33, -2.1, 7.4), 'White')
+    # Clock tower with spire over the entrance.
+    S.box('tower', (7, 7, 22), (0, -1.5, 11), 'Brick', bevel=0.1)
+    S.box('tower_band', (7.3, 7.3, 0.6), (0, -1.5, 18), 'White')
+    S.add(ck.bm_object('spire', lathe_z([(0.01, 0), (4.6, 0), (0.25, 9), (0.01, 9.4)], 4), [S.m['Dark']], col=S.col,
+                       location=(0, -1.5, 22)))
+    S.objects_rotate_last(math.pi / 4)
+    S.cyl('clock', 1.5, 0.2, (0, -5.1, 19.6), 'White', segments=28, axis='Y')
+    S.box('clock_hand1', (0.12, 0.05, 1.1), (0, -5.25, 19.9), 'Dark')
+    S.box('clock_hand2', (0.8, 0.05, 0.12), (0.3, -5.25, 19.6), 'Dark')
+    S.box('door', (3, 0.3, 4), (0, -5.1, 2), 'Dark')
+    S.text('sign', 'GEMEENTEHUIS', 1.0, (0, -5.2, 4.6), 'NeonWhite', extrude=0.05)
+    # Flag pole with the Dutch flag.
+    S.cyl('flagpole', 0.12, 12, (-16, -12, 6), 'White', segments=8)
+    for k, col_ in enumerate(('TwenteRed', 'White', 'Blue')):
+        S.box(f'flag{k}', (2.4, 0.04, 0.5), (-14.8, -12, 11.4 - k * 0.5), col_)
+    return S.finish()
+
+
+# ---------------------------------------------------------------------------
+# Watertoren Wierden
+# ---------------------------------------------------------------------------
+
+def watertoren():
+    S = Site('Watertoren')
+    S.box('base', (24, 24, 0.2), (0, 0, 0.1), 'Concrete')
+    S.add(ck.bm_object('shaft', lathe_z([(0.01, 0), (5.2, 0), (4.6, 30), (0.01, 30)], 8), [S.m['Brick']], col=S.col,
+                       location=(0, 0, 0)))
+    for k in range(5):
+        S.add(ck.bm_object(f'band{k}', lathe_z([(5.25 - k * 0.12, 5 + k * 5.5), (5.2 - k * 0.12, 5.6 + k * 5.5)], 8),
+                           [S.m['White']], col=S.col))
+    S.add(ck.bm_object('tank', lathe_z([(4.6, 30), (7.6, 31.5), (7.6, 39), (6.8, 40), (0.01, 40)], 8), [S.m['White']],
+                       col=S.col))
+    S.add(ck.bm_object('tank_windows', lathe_z([(7.65, 33.5), (7.65, 36.0)], 8), [S.m['Window']], col=S.col))
+    S.add(ck.bm_object('roof', lathe_z([(7.2, 40), (0.6, 45), (0.01, 45.2)], 8), [S.m['Dark']], col=S.col))
+    S.cyl('lantern', 0.6, 2, (0, 0, 46.2), 'NeonWhite', segments=8)
+    S.box('door', (2, 0.4, 3.2), (0, -4.9, 1.6), 'Dark')
+    for k in range(4):
+        S.box(f'slit{k}', (0.6, 0.3, 2.2), (0, -4.7 + k * 0.08, 8 + k * 6), 'Window')
+    S.text('sign', 'WIERDEN', 1.6, (0, -7.75, 36.3), 'NeonWhite', extrude=0.1)
+    return S.finish()
+
+
+# ---------------------------------------------------------------------------
+# Heraklus stadium (Almelo), black and white
+# ---------------------------------------------------------------------------
+
+def heraklus():
+    S = Site('Heraklus')
+    hw, hh, r = 56, 40, 12
+    S.box('pitch', (105, 68, 0.3), (0, 0, 0.15), 'Pitch')
+    for k in range(9):  # mowing stripes
+        S.box(f'mow{k}', (11.6, 68, 0.02), (-52.5 + 5.8 + k * 11.6, 0, 0.31), 'Line' if False else 'Pitch')
+    S.add(ring_mesh('stands', [(0, 1.5), (12, 8.5), (14, 9.5), (26, 17)], hw, hh, r, S.m['Dark'], S.col))
+    S.add(ring_mesh('stands_rows', [(12.2, 8.7), (13.6, 9.4)], hw, hh, r, S.m['White'], S.col))
+    S.add(ring_mesh('facade', [(28, 17), (28.3, 0)], hw, hh, r, S.m['White'], S.col))
+    for k, z in enumerate((4.0, 9.0, 14.0)):
+        S.add(ring_mesh(f'facade_black{k}', [(28.4, z), (28.4, z + 2.2)], hw, hh, r, S.m['Dark'], S.col))
+    S.add(ring_mesh('roof', [(29.5, 23), (6, 24), (6, 23.3), (29.5, 22.2), (29.5, 23)], hw, hh, r, S.m['Dark'], S.col))
+    S.add(ring_mesh('roof_lights', [(6.2, 23.2), (7.2, 23.1)], hw, hh, r, S.m['NeonWhite'], S.col))
+    n = 22
+    for k in range(n):
+        (x, y), (nx, ny) = rounded_rect(k / n, hw, hh, r)
+        S.cyl(f'column{k}', 0.4, 23, (x + nx * 28.6, y + ny * 28.6, 11.5), 'White', segments=8)
+    S.text('sign', 'HERAKLUS ALMELO', 5.0, (0, -(hh + 28.6) - 0.4, 6.8), 'NeonWhite', extrude=0.3)
+    S.box('car_park', (200, 26, 0.12), (0, -(hh + 50), 0.06), 'Concrete')
+    return S.finish()
+
+
 BUILDERS = {
+    'raadhuis': raadhuis,
+    'watertoren': watertoren,
+    'heraklus': heraklus,
     'metropool': metropool,
     'utwente': utwente,
     'veste': veste,

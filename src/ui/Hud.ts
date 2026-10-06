@@ -24,6 +24,7 @@ export interface HudState {
   bust: number;
   /** Seconds on the checkpoint clock; negative hides it (menu). */
   timeLeft: number;
+  stage: string;
 }
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', html = ''): HTMLElementTagNameMap[K] => {
@@ -152,7 +153,7 @@ export class Hud {
       .map((r, i) => `<div class="row ${r.isPlayer ? 'me' : ''} ${r.wrecked ? 'out' : ''}"><span>${i + 1}</span>${r.name}${r.wrecked ? ' <em>WRAK</em>' : ''}</div>`)
       .join('');
 
-    this.stage.innerHTML = `<div class="stage-name">ETAPPE 5/5 · HENGELO → ENSCHEDE</div>
+    this.stage.innerHTML = `<div class="stage-name">${h.stage}</div>
       <div class="stage-info"><span>${(Math.max(0, distanceLeft) / 1000).toFixed(2)} km</span><span>${fmtTime(raceTime)}</span></div>`;
 
     for (const z of Object.keys(this.zones) as Zone[]) this.zones[z].style.fill = zoneColor(player.damage[z]);

@@ -77,10 +77,14 @@ export class Vehicle {
 
   readonly proj: Projection = { idx: -1, s: 0, d: 0 };
   /** Called whenever damage is dealt: (amount, zone, point in local space x/z). */
+  /** Extra damage multiplier (AI rivals on the narrow N35). */
+  damageScale = 1;
   onDamage: ((amount: number, zone: Zone, lx: number, lz: number) => void) | null = null;
 
   private fr = {} as TrackFrame;
 
+  /** Speed along the road direction (negative for oncoming traffic). */
+  alongSpeed = 0;
   /** Inactive vehicles (parked traffic/police) are skipped by physics and hidden. */
   active = true;
   /** Police: lights and siren on. */
@@ -127,14 +131,17 @@ export class Vehicle {
     return Math.min(100, Math.max(d.front, d.rear, d.left, d.right, (this.totalDamage / tuning.wreckTotal) * 100));
   }
 
-  place(track: Track, s: number, d: number, speed = 0): void {
+  /** Put the car on the road; `reverse` faces it against the direction of travel (oncoming). */
+  place(track: Track, s: number, d: number, speed = 0, reverse = false): void {
     const fr = track.frame(s, this.fr);
     this.x = fr.x + fr.rx * d;
     this.z = fr.z + fr.rz * d;
     this.y = fr.y;
-    this.heading = fr.heading;
-    this.vx = fr.fx * speed;
-    this.vz = fr.fz * speed;
+    this.heading = fr.heading + (reverse ? Math.PI : 0);
+    const dir = reverse ? -1 : 1;
+    this.vx = fr.fx * speed * dir;
+    this.vz = fr.fz * speed * dir;
+    this.alongSpeed = speed * dir;
     this.angVel = 0;
     this.proj.idx = -1;
     track.project(this.x, this.z, -1, this.proj);
@@ -148,13 +155,14 @@ export class Vehicle {
 
   addDamage(zone: Zone, amount: number, lx: number, lz: number, attacker: Vehicle | null, time: number, events: EventBus): void {
     if (this.wrecked || amount <= 0) return;
-    const factor = (this.isPlayer ? tuning.playerDamageFactor : tuning.aiDamageFactor) * (this.spec.armor ?? 1);
+    // Whoever recently hit us gets the credit (and nitro) for this damage.
+    const credit = attacker ?? (time - this.lastHitTime < tuning.takedownWindow ? this.lastHitBy : null);
+    // damageScale softens the pack's own pile-ups; whatever the player dishes out counts in full.
+    const scale = credit?.isPlayer ? 1 : this.damageScale;
+    const factor = (this.isPlayer ? tuning.playerDamageFactor : tuning.aiDamageFactor) * (this.spec.armor ?? 1) * scale;
     const dmg = amount * factor;
     this.damage[zone] = Math.min(100, this.damage[zone] + dmg);
     this.onDamage?.(dmg, zone, lx, lz);
-
-    // Whoever recently hit us gets the credit (and nitro) for this damage.
-    const credit = attacker ?? (time - this.lastHitTime < tuning.takedownWindow ? this.lastHitBy : null);
     if (credit && credit !== this) credit.nitro = Math.min(1, credit.nitro + dmg * tuning.nitroFillPerDamage);
 
     if (this.wreckLevel >= 100) {
@@ -305,6 +313,7 @@ export class Vehicle {
     this.collideRails(track, dt, time, events);
     const fr = track.frame(this.proj.s, this.fr);
     this.y = fr.y;
+    this.alongSpeed = this.vx * fr.fx + this.vz * fr.fz;
     const along = Math.cos(this.heading - fr.heading);
     this.pitch = -Math.atan(fr.slope * along);
   }
@@ -411,7 +420,8 @@ export class Vehicle {
       if (!this.wrecked) {
         let err = this.heading - fr.heading;
         err = Math.atan2(Math.sin(err), Math.cos(err));
-        if (-side * err > 0 && Math.abs(err) < 1.2 && vt > 5) {
+        // (Not while already yawing away: on a bend the frame turns under us and would pin us to the rail.)
+        if (-side * err > 0 && Math.abs(err) < 1.2 && vt > 5 && side * this.angVel < 0.02) {
           this.heading -= err * Math.min(1, tuning.railGlide * dt);
           this.angVel *= Math.exp(-8 * dt);
         }

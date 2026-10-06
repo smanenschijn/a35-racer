@@ -292,7 +292,7 @@ export class PoliceManager {
     if (ds > 10) wanted = v.spec.topSpeed * (1 + 0.04 * this.stars);
     else if (ds > -6) wanted = player.forwardSpeed + ds * 0.6;
     else wanted = this.stars >= 3 ? Math.max(0, player.forwardSpeed - 6) : player.forwardSpeed - 10;
-    if (ahead && gap < 25 && Math.abs(ahead.d - u.lane) < 2) wanted = Math.min(wanted, ahead.forwardSpeed + (gap - 6) * 0.6);
+    if (ahead && gap < 25 && Math.abs(ahead.d - u.lane) < 2) wanted = Math.min(wanted, ahead.alongSpeed + (gap - 6) * 0.6);
     v.powerFactor = ds > 40 ? 1.15 : 1;
     inp.throttle = speed < wanted ? 1 : 0;
     inp.brake = speed > wanted + 3 ? Math.min(1, (speed - wanted) / 10 + 0.3) : 0;

@@ -55,24 +55,38 @@ export interface TrackFeatures {
   gantries: Gantry[];
   exits: { s: number; name: string; ref: string }[];
   landmarks: Landmark[];
-  /** Checkpoint gates (s), each one buys extra time. */
+  /** Checkpoint gates (s) of the current stage, each one buys extra time. */
   checkpoints: number[];
+  stages: Stage[];
+  tunnels: { s0: number; s1: number }[];
+  /** Single-carriageway stretches (oncoming traffic in the left lane). */
+  single: { s0: number; s1: number }[];
+  waters: { s: number; name: string; kind: string }[];
 }
 
-/** Route file produced by tools/osm/build_route.py from OpenStreetMap data. */
+export interface Stage {
+  id: number;
+  from: string;
+  to: string;
+  startS: number;
+  finishS: number;
+}
+
+/** Route file produced by tools/osm/build_campaign.py from OpenStreetMap data. */
 export interface RouteData {
   name: string;
   source: string;
   realLength: number;
   length: number;
-  startS: number;
-  finishS: number;
   curvature: number[];
-  bridges: { s0: number; s1: number; canal: boolean }[];
-  canal: number[];
+  profile: { s0: number; s1: number; type: string }[];
+  tunnels: { s0: number; s1: number }[];
+  bridges: { s0: number; s1: number; canal: boolean; water: string }[];
+  waters: { s: number; name: string; kind: string }[];
   overpasses: number[];
   exits: { s: number; name: string; ref: string }[];
   landmarks: Landmark[];
+  stages: Stage[];
 }
 
 const smoothstep = (e0: number, e1: number, x: number) => {
@@ -85,8 +99,10 @@ function gantriesFor(route: RouteData): Gantry[] {
   const out: Gantry[] = [];
   route.exits.forEach((e, i) => {
     const s = e.s - 350;
-    if (s < route.startS + 80 || out.some((g) => Math.abs(g.s - s) < 300)) return;
-    const through = i >= route.exits.length - 1 ? 'Gronau (D)' : 'Enschede';
+    if (s < route.stages[0].startS + 80 || out.some((g) => Math.abs(g.s - s) < 300)) return;
+    // Through destination: the next big town further along the route.
+    const ahead = route.stages.find((st) => st.finishS > e.s);
+    const through = i >= route.exits.length - 1 ? 'Gronau (D)' : ahead && ahead.to !== e.name ? ahead.to : 'Enschede';
     const exitName = e.name.split(';')[0].trim();
     out.push({ s, text: [through, `${exitName}  ${e.ref.split(';')[0]}`], route: 'A35' });
   });
@@ -107,21 +123,28 @@ export class Track {
 
   constructor(route: RouteData) {
     this.name = route.name;
-    const bridges: Bridge[] = route.bridges.map((b) => ({
-      ...b,
-      height: b.canal ? 7.5 : 6.5,
-      ramp: b.canal ? 200 : 170,
-    }));
+    // Bridges before the first start line are left out so the grid stands on flat road.
+    const bridges: Bridge[] = route.bridges
+      .filter((b) => b.s0 > route.stages[0].startS + 150)
+      .map((b) => ({ s0: b.s0, s1: b.s1, canal: b.canal, height: b.canal ? 7.5 : 6.5, ramp: b.canal ? 200 : 170 }));
+    const st = route.stages[route.stages.length - 1];
     this.features = {
-      startS: route.startS,
-      finishS: route.finishS,
+      startS: st.startS,
+      finishS: st.finishS,
       bridges,
-      viaducts: route.overpasses.filter((s) => s > 40 && s < route.length - 40),
+      viaducts: route.overpasses.filter((s) => s > 40 && s < route.length - 40 && !route.tunnels.some((t) => s > t.s0 - 30 && s < t.s1 + 30)),
       gantries: gantriesFor(route),
       exits: route.exits,
       landmarks: route.landmarks,
-      checkpoints: [0.27, 0.52, 0.77].map((f) => Math.round(route.startS + (route.finishS - route.startS) * f)),
+      checkpoints: [],
+      stages: route.stages,
+      tunnels: route.tunnels,
+      single: route.profile.filter((p) => p.type === 'single').map((p) => ({ s0: p.s0, s1: p.s1 })),
+      waters: route.waters,
     };
+    this.singleMask = new Uint8Array(route.length + 2);
+    for (const p of this.features.single) this.singleMask.fill(1, Math.max(0, p.s0), Math.min(route.length + 1, p.s1));
+    this.setStage(route.stages.length - 1);
 
     // Integrate the curvature profile into a centreline (x/z), with heading and height.
     this.ks = new Float32Array(route.curvature);
@@ -143,6 +166,27 @@ export class Track {
       x += Math.sin(h) * this.spacing;
       z += Math.cos(h) * this.spacing;
     }
+  }
+
+  private singleMask: Uint8Array;
+  stage: Stage = { id: 0, from: '', to: '', startS: 0, finishS: 0 };
+
+  /** Make stage i (0-based) the current one: start/finish lines and checkpoints. */
+  setStage(i: number): void {
+    const st = this.features.stages[i];
+    this.stage = st;
+    this.features.startS = st.startS;
+    this.features.finishS = st.finishS;
+    this.features.checkpoints = [0.27, 0.52, 0.77].map((f) => Math.round(st.startS + (st.finishS - st.startS) * f));
+  }
+
+  /** One carriageway with oncoming traffic in the left lane? */
+  isSingle(s: number): boolean {
+    return this.singleMask[Math.max(0, Math.min(this.singleMask.length - 1, Math.round(s)))] === 1;
+  }
+
+  inTunnel(s: number, margin = 0): boolean {
+    return this.features.tunnels.some((t) => s > t.s0 - margin && s < t.s1 + margin);
   }
 
   /** How much a bridge lifts the road at s (0..height). */

@@ -5,13 +5,14 @@ import {
   VignetteEffect,
 } from 'postprocessing';
 import { Announcer } from '../core/Announcer';
+import { recordRace } from '../core/Progress';
 import { GameAudio } from '../core/Audio';
 import { EventBus } from '../core/Events';
 import { Input } from '../core/Input';
 import { MusicPlayer } from '../core/Music';
 import { Effects } from '../fx/Particles';
 import { Track } from '../track/Track';
-import route from '../track/routes/hengelo-enschede.json';
+import route from '../track/routes/campaign.json';
 import { Landmarks } from '../track/Landmarks';
 import { TrackBuilder } from '../track/TrackBuilder';
 import { DebugPanel } from '../ui/DebugPanel';
@@ -30,6 +31,8 @@ export class Game {
   private cam: ChaseCamera;
   private sun = new THREE.DirectionalLight(0xffc48a, 3.2);
   private sunDir = new THREE.Vector3();
+  /** Sky box: follows the camera, the route is 31 km long. */
+  private sky!: Sky;
   private fill = new THREE.DirectionalLight(0x9fb8ff, 0.9);
   private input = new Input();
   private audio = new GameAudio();
@@ -48,6 +51,8 @@ export class Game {
   private touch: TouchControls;
   private previewId = 'rx';
   private viewOffset = false;
+  /** Running "hele race" campaign: accumulated time of the cleared stages. */
+  private campaign: { total: number } | null = null;
 
   constructor(container: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({ powerPreference: 'high-performance', antialias: false, stencil: false, depth: true });
@@ -94,8 +99,15 @@ export class Game {
 
     this.touch = new TouchControls(this.input);
     this.menu = new Menu({
-      startRace: () => {
+      startStage: (i, campaign) => {
+        this.campaign = campaign ? { total: 0 } : null;
         this.menu.close();
+        this.race.setStage(i);
+        this.race.start();
+      },
+      nextStage: () => {
+        this.menu.close();
+        this.race.setStage(this.race.stageIndex + 1);
         this.race.start();
       },
       restartRace: () => {
@@ -119,8 +131,16 @@ export class Game {
         this.previewId = id;
       },
       sound: () => this.toggleSound(),
-    });
-    this.race.onFinished = (r) => this.menu.showResult(r);
+    }, this.track.features.stages);
+    this.race.onFinished = (r) => {
+      const stageId = this.track.features.stages[r.stage].id;
+      const unlocked = recordRace(stageId, r.position, r.qualified, r.takedowns, r.stats);
+      if (this.campaign) {
+        if (r.qualified) this.campaign.total += r.time;
+      }
+      this.menu.showResult(r, { campaign: !!this.campaign, campaignTotal: this.campaign?.total ?? 0, unlocked });
+      if (this.campaign && !r.qualified) this.campaign = null; // failed: campaign over, the stage can be retried
+    };
     this.menu.open('title');
     // Touch/click also counts as the user gesture that unlocks audio.
     window.addEventListener('pointerdown', () => this.audio.start());
@@ -139,8 +159,8 @@ export class Game {
     const azimuth = THREE.MathUtils.degToRad(-75);
     this.sunDir.setFromSphericalCoords(1, Math.PI / 2 - elevation, azimuth);
 
-    const sky = new Sky();
-    sky.scale.setScalar(20000);
+    const sky = (this.sky = new Sky());
+    sky.scale.setScalar(10000);
     const u = sky.material.uniforms;
     u.turbidity.value = 9;
     u.rayleigh.value = 2.6;
@@ -279,6 +299,7 @@ export class Game {
     this.fill.position.set(cp.x * 2 - p.x, cp.y + 8, cp.z * 2 - p.z);
     this.fill.target.position.set(p.x, p.y, p.z);
 
+    this.sky.position.copy(this.cam.camera.position);
     this.composer.render(realDt);
   }
 }

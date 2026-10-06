@@ -27,6 +27,18 @@ export interface RaceResult {
   /** Top 3 and within time: the stage is cleared. */
   qualified: boolean;
   car: string;
+  stage: number;
+  stats: RaceStats;
+}
+
+/** Per-race numbers for the statistics screen. */
+export interface RaceStats {
+  topSpeed: number; // km/h
+  nearMisses: number;
+  biggestHit: number; // impact speed m/s
+  busted: number;
+  wrecks: number;
+  distance: number; // metres
 }
 
 const HIT_WORDS = ['BEUK!', 'KNAL!', 'PATS!', 'BAM!', 'KRAK!'];
@@ -61,6 +73,7 @@ export class Race {
   private checkpointBonus: number[] = [];
   private outOfTime = false;
   private warned = false;
+  stats: RaceStats = { topSpeed: 0, nearMisses: 0, biggestHit: 0, busted: 0, wrecks: 0, distance: 0 };
   /** In the menu only this racer is shown (showroom). */
   showroom: Vehicle | null = null;
   /** Called once the result is known (after the finish or when time runs out). */
@@ -160,8 +173,9 @@ export class Race {
       v.penalty = 0;
       v.input.throttle = v.input.brake = v.input.steer = 0;
     });
-    this.ais.forEach((ai) => ai.setLane(ai.vehicle.d));
-    this.traffic.reset(start);
+    this.ais.forEach((ai) => ai.reset(ai.vehicle.d));
+    this.autoDriver.reset(ROAD.laneCenters[1]);
+    this.traffic.reset(start, t.features.finishS);
     this.police.reset();
     this.finishOrder = [];
     this.resultsShown = false;
@@ -172,6 +186,7 @@ export class Race {
     this.prevDs.clear();
     this.paused = false;
     this.setupClock();
+    this.stats = { topSpeed: 0, nearMisses: 0, biggestHit: 0, busted: 0, wrecks: 0, distance: 0 };
     this.d.cam.snap();
     this.d.hud.hideOverlay();
     if (this.state !== 'menu') this.startCountdown();
@@ -180,10 +195,16 @@ export class Race {
   /** Arcade time limit: enough to reach the first checkpoint; each gate buys the next leg. */
   private setupClock(): void {
     const f = this.d.track.features;
-    const pace = 40; // m/s (~144 km/h) you need to average, crashes included
+    const t = this.d.track;
+    // Average speed you need, crashes included: ~144 km/h on the motorway, less on the busy two-lane N35.
+    const leg = (a: number, b: number) => {
+      let time = 0;
+      for (let s = a; s < b; s += 10) time += Math.min(10, b - s) / (t.isSingle(s) ? 31 : 40);
+      return time;
+    };
     const gates = [...f.checkpoints, f.finishS];
-    this.timeLeft = (gates[0] - f.startS) / pace + 10;
-    this.checkpointBonus = gates.slice(1).map((g, i) => (g - gates[i]) / pace + 2);
+    this.timeLeft = leg(f.startS, gates[0]) + 10;
+    this.checkpointBonus = gates.slice(1).map((g, i) => leg(gates[i], g) + 2);
     this.nextCheckpoint = 0;
     this.outOfTime = false;
     this.warned = false;
@@ -205,6 +226,17 @@ export class Race {
     this.player = target;
     this.racers.splice(this.racers.indexOf(target), 1);
     this.racers.unshift(target);
+    this.reset();
+  }
+
+  /** 0-based index of the stage being raced. */
+  /** Last time each traffic car cost us heat. */
+  private heatHits = new WeakMap<Vehicle, number>();
+  stageIndex = 4;
+
+  setStage(i: number): void {
+    this.stageIndex = i;
+    this.d.track.setStage(i);
     this.reset();
   }
 
@@ -241,6 +273,7 @@ export class Race {
       const dist = Math.hypot(e.x - this.player.x, e.z - this.player.z);
       if (dist < 120) audio.crash(e.strength * (involvesPlayer ? 1 : Math.max(0.2, 1 - dist / 120)));
       if (involvesPlayer) {
+        this.stats.biggestHit = Math.max(this.stats.biggestHit, e.strength);
         cam.addShake(Math.min(0.9, e.strength / 20));
         this.d.rumble(e.strength / 15, e.strength / 10, 180);
         if (e.kind === 'car' && e.strength > 9) {
@@ -249,8 +282,16 @@ export class Race {
         // Chaos draws the police: hitting traffic or the police themselves.
         const other = e.a === this.player ? e.b : e.a;
         if (other && this.state === 'racing') {
-          if (other.role === 'traffic' && e.strength > 5) this.police.addHeat(Math.min(0.35, e.strength * 0.018));
-          if (other.role === 'police' && e.strength > 3) this.police.addHeat(0.4);
+          // One crash is one offence, however many contacts the physics reports.
+          if (other.role === 'traffic' && e.strength > 5 && this.simTime - (this.heatHits.get(other) ?? -9) > 1.5) {
+            this.heatHits.set(other, this.simTime);
+            this.police.addHeat(Math.min(0.35, e.strength * 0.018));
+          }
+          // Being PIT'ed by the police isn't an offence; ramming them is.
+          if (other.role === 'police' && e.strength > 3 && !other.ramming && this.simTime - (this.heatHits.get(other) ?? -9) > 1.5) {
+            this.heatHits.set(other, this.simTime);
+            this.police.addHeat(0.4);
+          }
         }
       }
     });
@@ -271,6 +312,7 @@ export class Race {
       const dist = Math.hypot(victim.x - this.player.x, victim.z - this.player.z);
       if (dist < 200) audio.crash(25 * Math.max(0.3, 1 - dist / 200));
       if (victim === this.player) {
+        this.stats.wrecks++;
         hud.message('TOTAL LOSS!', '#ff2a2a', true, 2.2);
         announcer.say('Total loss!', { priority: true });
         this.slowMo(0.3, 1.2);
@@ -322,6 +364,7 @@ export class Race {
       if (vehicle === this.player) {
         if (other.role === 'traffic' && Math.random() < 0.6) audio.horn(other.spec.kind === 'truck', 0.8);
         hud.message('RAKELINGS!', '#36c6ff', false, 0.9);
+        this.stats.nearMisses++;
         vehicle.nitro = Math.min(1, vehicle.nitro + tuning.nitroFillNearMiss);
       }
     });
@@ -341,6 +384,7 @@ export class Race {
 
     events.on('busted', ({ penalty }) => {
       hud.message('BEKEURING!', '#ff2a2a', true, 2);
+      this.stats.busted++;
       announcer.say(`Bekeuring! ${penalty} seconden erbij.`, { priority: true });
       hud.message(`+${penalty} seconden`, '#ffffff', false, 2);
       audio.crash(6);
@@ -454,7 +498,11 @@ export class Race {
     } else {
       this.raceTime += dt;
     }
-    if (this.state === 'racing') this.tickClock(dt);
+    if (this.state === 'racing') {
+      this.tickClock(dt);
+      this.stats.topSpeed = Math.max(this.stats.topSpeed, this.player.speed * 3.6);
+      this.stats.distance += Math.max(0, this.player.alongSpeed) * dt;
+    }
 
     this.active = this.vehicles.filter((v) => v.active);
     const all = this.active;
@@ -467,6 +515,7 @@ export class Race {
       }
     }
     for (const ai of this.ais) {
+      ai.vehicle.damageScale = this.d.track.isSingle(ai.vehicle.s) ? tuning.aiSingleDamage : 1;
       ai.update(dt, t, all, this.player);
       const v = ai.vehicle;
       if (v.finished) {
@@ -521,6 +570,8 @@ export class Race {
         outOfTime: this.outOfTime,
         qualified: !this.outOfTime && position <= 3,
         car: this.player.spec.name,
+        stage: this.stageIndex,
+        stats: { ...this.stats },
       };
       if (this.onFinished) this.onFinished(result);
       else hud.showResults(result.rows, position);
@@ -580,7 +631,7 @@ export class Race {
       if (prev === undefined || o.wrecked || Math.abs(ds) > 20) continue;
       if (Math.sign(prev) !== Math.sign(ds)) {
         const gap = Math.abs(o.d - p.d) - p.halfW - o.halfW;
-        const rel = Math.abs(p.forwardSpeed - o.forwardSpeed);
+        const rel = Math.abs(p.alongSpeed - o.alongSpeed);
         const recentContact = this.simTime - p.lastContactTime < 1 && p.lastHitBy === o;
         if (gap < 1.0 && gap > 0 && rel > 6 && !recentContact) this.d.events.emit('nearMiss', { vehicle: p, other: o });
       }
@@ -667,6 +718,7 @@ export class Race {
       sirenNear: this.police.nearestSiren < 120,
       bust: this.police.bustProgress,
       timeLeft: this.state === 'menu' ? -1 : this.timeLeft,
+      stage: `ETAPPE ${track.stage.id}/5 · ${track.stage.from.toUpperCase()} → ${track.stage.to.toUpperCase()}`,
     });
   }
 }
