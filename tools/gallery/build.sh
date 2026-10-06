@@ -6,7 +6,7 @@ cd "$(dirname "$0")/../.."
 OUT=tools/gallery/out
 rm -rf "$OUT" && mkdir -p "$OUT/img" "$OUT/models"
 cp tools/gallery/index.html "$OUT/"
-for f in assets/renders/*_front.png; do
+for f in assets/renders/*_front.png assets/renders/lm_*.png; do
   n=$(basename "$f" .png)
   sips -s format jpeg -s formatOptions 78 -Z 760 "$f" --out "$OUT/img/$n.jpg" >/dev/null
 done

@@ -103,7 +103,7 @@
 <div class="wrap">
   <header>
     <h1 class="logo"><span class="a35">A35</span> <span class="sub">RACER GARAGE</span></h1>
-    <p class="intro">Alle auto's uit de game, in Blender opgebouwd uit <b>90 tot 130 losse onderdelen</b>. Draai ze rond, zoom in, of trek ze uit elkaar om te zien uit welke stukken ze bestaan.</p>
+    <p class="intro">Alle auto's en landmarks uit de game, in Blender opgebouwd uit <b>losse onderdelen</b>. Draai ze rond, zoom in, of trek ze uit elkaar om te zien uit welke stukken ze bestaan. Landmarks staan als miniatuur op de draaitafel.</p>
   </header>
 
   <div class="showroom">
@@ -122,7 +122,7 @@
         <div><dt>Lengte</dt><dd id="spec-length">–</dd></div>
         <div><dt>Onderdelen</dt><dd id="spec-parts">–</dd></div>
         <div><dt>Driehoeken</dt><dd id="spec-tris">–</dd></div>
-        <div><dt>Velgen</dt><dd id="spec-wheels">–</dd></div>
+        <div><dt id="spec-wheels-label">Velgen</dt><dd id="spec-wheels">–</dd></div>
       </dl>
       <div class="control">
         <label for="explode"><span>Uit elkaar</span><span id="explode-val">0%</span></label>
@@ -141,18 +141,11 @@
   </section>
 
   <section>
-    <h3>Landmarks · mijlpaal 3</h3>
-    <div class="landmarks">
-      <div class="landmark"><b>Metropool Hengelo</b><span>Concertgebouw bij de start, met lichtletters op het dak</span><em class="pill">In de maak</em></div>
-      <div class="landmark"><b>Twentekanaal</b><span>De brug over het kanaal, met een binnenvaartschip eronder</span><em class="pill">In de maak</em></div>
-      <div class="landmark"><b>Universiteit Twente</b><span>Campusgebouwen naast de snelweg</span><em class="pill">In de maak</em></div>
-      <div class="landmark"><b>Grolsj Veste</b><span>Het stadion, rode stoelen onder een stalen dak</span><em class="pill">In de maak</em></div>
-      <div class="landmark"><b>Grolsj-brouwerij Boekelo</b><span>Gistingstanks en een reuzenbeugelfles</span><em class="pill">In de maak</em></div>
-      <div class="landmark"><b>Thuisbesteld.nl</b><span>Het hoofdkantoor aan de De Ruyterlaan, bij de finish</span><em class="pill">In de maak</em></div>
-    </div>
+    <h3>Landmarks langs de A35</h3>
+    <div class="fleet" id="landmarks"></div>
   </section>
 
-  <footer>Gebouwd met Python-scripts in Blender 5.2 (blender/carbuilder.py en designs.py in de repo). Alle auto's en merknamen zijn verzonnen parodieën.</footer>
+  <footer>Gebouwd met Python-scripts in Blender 5.2 (blender/carbuilder.py, designs.py en landmarks.py in de repo). Alle auto's en merknamen zijn verzonnen parodieën. Route en landmarkposities: © OpenStreetMap-bijdragers.</footer>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
@@ -179,22 +172,40 @@ const CARS = [
     desc: 'Hoge MPV met dakrails, een glimmende grille en staande achterlichten. Remt op onverwachte momenten.' },
 ];
 
+const LANDMARKS = [
+  { id: 'lm_veste', img: 'lm_veste', name: 'Grolsj Veste', driver: 'Enschede · stadion', color: '#b0121a', length: 250, parts: 81, tris: 12644, wheels: '–',
+    desc: 'Stadionkom met rode stoeltjes, een wit dak met stalen spanten, lichtring, vier lichtmasten en grote letters naar de snelweg.' },
+  { id: 'lm_brouwerij', img: 'lm_brouwerij', name: 'Grolsj-brouwerij', driver: 'Boekelo · direct aan de A35', color: '#1f8a3a', length: 170, parts: 67, tris: 14048, wheels: '–',
+    desc: 'Brouwhuis met neonletters, gistingstanks, silo\'s, schoorsteen met baken, pijpenbrug en een reusachtige beugelfles.' },
+  { id: 'lm_metropool', img: 'lm_metropool', name: 'Metropool', driver: 'Hengelo · Hart van Zuid', color: '#ff2a8a', length: 165, parts: 41, tris: 7076, wheels: '–',
+    desc: 'Concertzaal met glazen foyer en roze neon, naast de oude Stork-hal met zaagtanddak en schoorsteen.' },
+  { id: 'lm_utwente', img: 'lm_utwente', name: 'Universiteit Twente', driver: 'Enschede · campus', color: '#e8e8e8', length: 143, parts: 42, tris: 9552, wheels: '–',
+    desc: 'Lang onderwijsgebouw met raambanden, ronde toren met UT-logo en een glazen kubus.' },
+  { id: 'lm_thuisbesteld', img: 'lm_thuisbesteld', name: 'Thuisbesteld.nl', driver: 'Enschede · De Ruyterlaan', color: '#ff7a00', length: 80, parts: 53, tris: 8654, wheels: '–',
+    desc: 'Glazen toren met oranje lamellen, neon dakbord met huisjeslogo en een rij bezorgscooters voor de deur.' },
+  { id: 'lm_barge', img: 'lm_barge', name: 'Binnenvaartschip', driver: 'Twentekanaal', color: '#1d3f55', length: 80, parts: 24, tris: 1504, wheels: '–',
+    desc: 'De Twentevaart: ruim met luiken, stuurhut, mast met navigatielicht en een auto aan dek.' },
+];
 const nf = new Intl.NumberFormat('nl-NL');
 const $ = (id) => document.getElementById(id);
 
-// ---- Fleet cards ----
-const fleet = $('fleet');
-for (const car of CARS) {
-  const b = document.createElement('button');
-  b.className = 'car';
-  b.type = 'button';
-  b.dataset.id = car.id;
-  b.innerHTML = `<img src="img/${car.id}_front.jpg" alt="${car.name}, render van voren" loading="lazy">
-    <span class="meta"><span class="name"><span class="swatch" style="background:${car.color}"></span>${car.name}</span>
-    <span class="who">${car.driver} · ${nf.format(car.parts)} onderdelen</span></span>`;
-  b.addEventListener('click', () => select(car.id, true));
-  fleet.appendChild(b);
+// ---- Cards ----
+const ITEMS = [...CARS, ...LANDMARKS];
+function cards(list, el, imgOf) {
+  for (const item of list) {
+    const b = document.createElement('button');
+    b.className = 'car';
+    b.type = 'button';
+    b.dataset.id = item.id;
+    b.innerHTML = `<img src="img/${imgOf(item)}.jpg" alt="${item.name}, render" loading="lazy">
+      <span class="meta"><span class="name"><span class="swatch" style="background:${item.color}"></span>${item.name}</span>
+      <span class="who">${item.driver} · ${nf.format(item.parts)} onderdelen</span></span>`;
+    b.addEventListener('click', () => select(item.id, true));
+    el.appendChild(b);
+  }
 }
+cards(CARS, $('fleet'), (c) => `${c.id}_front`);
+cards(LANDMARKS, $('landmarks'), (l) => l.img);
 
 // ---- 3D showroom ----
 const canvas = $('view');
@@ -251,8 +262,17 @@ async function loadModel(id) {
   return new Promise((resolve, reject) => loader.parse(bin.buffer, '', resolve, reject));
 }
 
-function prepare(gltf) {
+function prepare(gltf, isLandmark) {
   const root = gltf.scene.children.length === 1 ? gltf.scene.children[0] : gltf.scene;
+  if (isLandmark) {
+    // Shrink the site to a miniature that fits the turntable.
+    const box = new THREE.Box3().setFromObject(root);
+    const size = box.getSize(new THREE.Vector3());
+    const k = 6.2 / Math.max(size.x, size.z);
+    root.scale.setScalar(k);
+    const centre = box.getCenter(new THREE.Vector3());
+    root.position.set(-centre.x * k, 0, -centre.z * k);
+  }
   root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   const parts = [];
   for (const obj of root.children) {
@@ -273,20 +293,23 @@ function applyExplode() {
 }
 
 async function select(id, fromClick) {
-  const car = CARS.find((c) => c.id === id);
+  const car = ITEMS.find((c) => c.id === id);
+  const isLandmark = id.startsWith('lm_');
   document.querySelectorAll('.car').forEach((b) => b.setAttribute('aria-current', String(b.dataset.id === id)));
   $('car-name').textContent = car.name;
   $('car-driver').textContent = car.driver;
   $('car-desc').textContent = car.desc;
-  $('spec-length').textContent = `${car.length.toFixed(2).replace('.', ',')} m`;
+  $('spec-length').textContent = isLandmark ? `${car.length} m` : `${car.length.toFixed(2).replace('.', ',')} m`;
   $('spec-parts').textContent = nf.format(car.parts);
   $('spec-tris').textContent = nf.format(car.tris);
-  $('spec-wheels').textContent = car.wheels;
+  $('spec-wheels-label').textContent = isLandmark ? 'Ligging' : 'Velgen';
+  $('spec-wheels').textContent = isLandmark ? car.driver.split(' · ')[0] : car.wheels;
+  $('spec-length').previousElementSibling.textContent = isLandmark ? 'Breedte' : 'Lengte';
   $('status').hidden = false;
   $('status').textContent = 'LADEN…';
   if (fromClick) document.querySelector('.showroom').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
   try {
-    if (!cache.has(id)) cache.set(id, prepare(await loadModel(id)));
+    if (!cache.has(id)) cache.set(id, prepare(await loadModel(id), isLandmark));
     if (current) scene.remove(current.root);
     current = cache.get(id);
     scene.add(current.root);
