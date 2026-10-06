@@ -207,13 +207,16 @@ Een grey-box stuk A35 (2x2 met vangrail, ongeveer 3 km, een paar bochten en een 
 
 De Veste, de UT, de Metropool en het Thuisbesteld-kantoor liggen in werkelijkheid 2 à 4 km van de A35. In de game staan ze op hun juiste plek langs de route en aan de juiste kant, maar veel dichterbij. Kaartdata © OpenStreetMap-bijdragers (ODbL).
 
-### M4: Verticale slice
+### M4: Verticale slice *(afgerond, oktober 2026)*
 
-- Checkpoint-timer, finish en top-3-regel
-- Twentse personages met hun taunts, en een omroeper
-- Geluidseffecten (opgenomen samples in plaats van synthese)
-- Menu's, autokeuze, lokale highscores
-- Touch-besturing voor mobiel
+- [x] Checkpoint-klok (drie poorten, gemiddeld ~144 km/u nodig), "Tijd op!" en de top-3-regel
+- [x] Twentse personages met scheldteksten en een omroeper (Nederlandse spraakstem van de browser)
+- [x] Geluidseffecten: claxons bij rakelings passeren (vrachtwagens lager), piepende banden, checkpoint-belletje, sirenes, flitspaal
+- [x] Menu's: titelscherm, hoofdmenu, autokeuze met showroom, highscores, besturing, pauze, uitslag
+- [x] Lokale highscores met initialen in arcadestijl
+- [x] Touch-besturing voor telefoon en tablet, compacte HUD voor liggende telefoons
+
+Opgenomen geluidssamples (in plaats van synthese) en echte stemopnames voor de omroeper zijn nog open; die vragen opnames of een stemacteur.
 
 ### M5: De volledige race
 

@@ -251,11 +251,58 @@ html, body {
 .touch .t-right [data-k="gas"] { width: 96px; height: 120px; border-radius: 22px; font-size: 20px; }
 .touch .t-mid { position: absolute; right: 230px; bottom: 30px; display: grid; grid-template-columns: repeat(2, 64px); gap: 10px; }
 .touch .t-mid button { width: 64px; height: 50px; border-radius: 12px; font-size: 11px; }
-.touch .t-pause { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 44px; height: 44px; font-size: 14px; }
+.touch .t-pause { position: absolute; top: 50%; right: 14px; transform: translateY(-50%); width: 46px; height: 46px; font-size: 14px; }
 @media (max-width: 720px) {
   .touch .t-left button { width: 70px; height: 70px; }
   .touch .t-mid { right: 50%; transform: translateX(50%); bottom: 110px; }
 }
 /* Touch HUD tweaks: make room for the buttons. */
+body:has(.touch:not([hidden])) .hud-help { display: none; }
 body:has(.touch:not([hidden])) .hud-bl { bottom: 130px; }
 body:has(.touch:not([hidden])) .hud-br { bottom: 150px; }
+
+/* ---------- Short screens (phones in landscape) ---------- */
+@media (max-height: 520px) {
+  .hud-tl { top: 8px; left: 12px; }
+  .hud-pos b { font-size: 40px; }
+  .hud-pos small { font-size: 18px; }
+  .hud-standings { display: none; }
+  .hud-tr { top: 8px; right: 12px; }
+  .stage-name { font-size: 10px; padding: 4px 8px; }
+  .stage-info { font-size: 16px; }
+  .hud-top { top: 4px; }
+  .hud-clock b { font-size: 38px; }
+  .hud-clock span { font-size: 10px; }
+  .hud-wanted { font-size: 18px; }
+  .hud-speed { font-size: 40px; }
+  .hud-unit { font-size: 11px; }
+  .gauge { width: 120px; bottom: 16px; }
+  .hud-br { width: 130px; right: 14px; bottom: 10px; }
+  .hud-bl { left: 12px; bottom: 10px; gap: 8px; }
+  .dmg { width: 36px; }
+  .dmg-pct { font-size: 18px; }
+  .boost { width: 110px; height: 12px; }
+  .ram-ind { width: 20px; height: 20px; font-size: 10px; }
+  .hud-messages { top: 22%; }
+  .msg { font-size: 26px; }
+  .msg.big { font-size: 46px; }
+  .msg.taunt { font-size: 14px; }
+  .countdown { font-size: 90px; }
+  .countdown.go { font-size: 70px; }
+  .hud-help { display: none; }
+  .now-playing { bottom: 70px; font-size: 13px; }
+  /* With touch buttons: gauges go up beside the stage info, damage under the position. */
+  body:has(.touch:not([hidden])) .hud-bl { bottom: auto; top: 64px; flex-direction: row; }
+  body:has(.touch:not([hidden])) .hud-br { bottom: auto; top: 58px; }
+  body:has(.touch:not([hidden])) .gauge { display: none; }
+  .touch .t-left button { width: 64px; height: 64px; font-size: 24px; }
+  .touch .t-right button { width: 62px; height: 62px; }
+  .touch .t-right [data-k="gas"] { width: 78px; height: 96px; }
+  .touch .t-mid { right: 50%; transform: translateX(50%); bottom: 14px; grid-template-columns: repeat(4, 56px); }
+  .touch .t-mid button { width: 56px; height: 44px; }
+  .menu.title .logo .a35, .menu.main .logo .a35 { font-size: 64px; }
+  .menu.title .logo .racer, .menu.main .logo .racer { font-size: 42px; }
+  .menu-items button { font-size: 16px; padding: 6px 12px; }
+  .menu.show { gap: 8px; padding-block: 10px; }
+  .big-title { font-size: 54px; }
+}
