@@ -61,6 +61,9 @@ export const tuning = {
   draftCharge: 1.2, // seconds in the slipstream before the slingshot is ready
   slingshotBonus: 0.16, // extra power when you pull out of a charged slipstream
   slingshotTime: 1.8, // seconds the slingshot lasts
+  bulletScale: 0.3, // speed of the world in bullet time
+  bulletSeconds: 4, // real seconds a full meter lasts
+  bulletRecharge: 30, // real seconds to refill an empty meter
 
   // Traffic & police
   trafficCount: 44,

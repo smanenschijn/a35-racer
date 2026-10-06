@@ -228,6 +228,7 @@ Opgenomen geluidssamples (in plaats van synthese) en echte stemopnames voor de o
 - [x] Unlocks: elke gehaalde etappe speelt een auto vrij (Civik, Volvi, Space Wagen, Calibro, Supremo)
 - [x] Statistieken over al je races (takedowns, rakelings gepasseerd, topsnelheid, hardste klap, bekeuringen, kilometers)
 - [x] Highscores per etappe
+- [x] Bullet time: met een knop gaat de wereld ~4 seconden in slow-motion (meter laadt op, takedowns en rakelings passeren vullen bij)
 - [x] Sterkere rubberbanding (een weggereden veld wacht, de speler krijgt wat extra vermogen als hij ver achter ligt), slipstream met slingshot, een ↺-knop en hint om weer recht op de weg te komen
 
 Tussen de etappes zit een uitslagscherm met "Volgende etappe". Een echt naadloze overgang, waarbij je doorrijdt zonder laadmoment, is nog open.

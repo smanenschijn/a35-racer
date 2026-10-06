@@ -344,11 +344,12 @@ export class Menu {
           <div class="controls">
             <div><b>↑ ↓ / W S</b> gas & rem</div><div><b>← → / A D</b> sturen</div>
             <div><b>SPATIE</b> handrem (drift)</div><div><b>SHIFT</b> nitro</div>
+            <div><b>C</b> bullet time</div><div></div>
             <div><b>Q / E</b> ram links / rechts</div><div><b>⌫ / F</b> terug op de weg</div>
             <div><b>ESC / P</b> pauze</div><div><b>R</b> opnieuw</div>
             <div><b>N</b> volgend nummer</div><div><b>− / +</b> muziekvolume</div>
           </div>
-          <div class="tip">Gamepad: R2/L2 gas en rem, ✕ handrem, ○ nitro, L1/R1 rammen. Telefoon: knoppen op het scherm, liefst liggend.</div>
+          <div class="tip">Gamepad: R2/L2 gas en rem, ✕ handrem, ○ nitro, L1/R1 rammen, linkerstick indrukken voor bullet time. Telefoon: knoppen op het scherm, liefst liggend.</div>
           <div class="tip">Slipstream: blijf even vlak achter een auto hangen en stuur er dan uit voor een slingshot. Achteropgeraakt na een crash? Het veld wacht een beetje op je.</div>
           <div class="tip">Op de N35 rijdt het tegenverkeer naast je: inhalen kan, maar kijk uit. Haal de checkpoints op tijd en eindig bij de eerste drie.</div>
           ${this.list([{ label: 'Terug', action: () => this.open('main') }])}`;

@@ -301,7 +301,7 @@ body:has(.touch:not([hidden])) .hud-br { bottom: 150px; }
   .touch .t-left button { width: 64px; height: 64px; font-size: 24px; }
   .touch .t-right button { width: 62px; height: 62px; }
   .touch .t-right [data-k="gas"] { width: 78px; height: 96px; }
-  .touch .t-mid { right: 50%; transform: translateX(50%); bottom: 14px; grid-template-columns: repeat(4, 56px); }
+  .touch .t-mid { right: 50%; transform: translateX(50%); bottom: 14px; grid-template-columns: repeat(5, 52px); }
   .touch .t-mid button { width: 56px; height: 44px; }
   .menu.title .logo .a35, .menu.main .logo .a35 { font-size: 64px; }
   .menu.title .logo .racer, .menu.main .logo .racer { font-size: 42px; }
@@ -322,3 +322,14 @@ body:has(.touch:not([hidden])) .hud-br { bottom: 150px; }
 }
 .hud-reset[hidden] { display: none; }
 body:has(.touch:not([hidden])) .hud-reset { bottom: auto; top: 34%; }
+
+/* Bullet time */
+.bullet-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #7a2cff, #d6a8ff); transition: width 0.1s linear; }
+.bullet-fill.full { box-shadow: 0 0 12px #b57bff; }
+.bullet-fill.active { animation: blink 0.25s infinite alternate; }
+.bullet-tint {
+  position: fixed; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.25s ease;
+  background: radial-gradient(ellipse at center, rgba(170, 120, 255, 0) 45%, rgba(130, 80, 255, 0.34) 82%, rgba(90, 40, 220, 0.58) 100%);
+  mix-blend-mode: screen;
+}
+.bullet-tint.on { opacity: 1; }

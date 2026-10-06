@@ -87,6 +87,10 @@ export class Race {
   private finishedAt = 0;
   timeScale = 1;
   private slowMoT = 0;
+  private slowMoScale = 1;
+  /** Bullet time: a meter the player spends to slow the world down. */
+  private bullet = 1;
+  private bulletOn = false;
   private respawnT = 0;
   /** Seconds the player has been stuck (stopped, off the road or facing the wrong way). */
   private playerStuck = 0;
@@ -186,6 +190,9 @@ export class Race {
     this.raceTime = 0;
     this.timeScale = 1;
     this.slowMoT = 0;
+    this.slowMoScale = 1;
+    this.bullet = 1;
+    this.setBullet(false);
     this.respawnT = 0;
     this.draftT = 0;
     this.slingT = 0;
@@ -332,6 +339,7 @@ export class Race {
       if (victim.isRacer) {
         if (byPlayer) {
           hud.message('TAKEDOWN!', '#ffd400', true, 2);
+          this.bullet = Math.min(1, this.bullet + 0.25);
           announcer.say(`Takedown! ${victim.driverName} ligt eruit!`, { priority: true });
           hud.message(`${victim.driverName} ligt eruit!`, '#ffffff', false, 2);
           this.slowMo(0.35, 1.1);
@@ -371,6 +379,7 @@ export class Race {
       if (vehicle === this.player) {
         if (other.role === 'traffic' && Math.random() < 0.6) audio.horn(other.spec.kind === 'truck', 0.8);
         hud.message('RAKELINGS!', '#36c6ff', false, 0.9);
+        this.bullet = Math.min(1, this.bullet + 0.05);
         this.stats.nearMisses++;
         vehicle.nitro = Math.min(1, vehicle.nitro + tuning.nitroFillNearMiss);
       }
@@ -399,8 +408,19 @@ export class Race {
   }
 
   private slowMo(scale: number, seconds: number): void {
-    this.timeScale = scale;
+    this.slowMoScale = scale;
     this.slowMoT = seconds;
+    this.timeScale = Math.min(scale, this.bulletOn ? tuning.bulletScale : 1);
+  }
+
+  private setBullet(on: boolean): void {
+    if (on === this.bulletOn) return;
+    this.bulletOn = on;
+    this.d.music.setSlow(on);
+    if (on) {
+      this.d.hud.message('BULLET TIME', '#c9a2ff', true, 1.0);
+      this.d.audio.whoosh();
+    }
   }
 
   private localToWorld(v: Vehicle, lx: number, lz: number, up: number): THREE.Vector3 {
@@ -427,11 +447,27 @@ export class Race {
     music.setMuffled(this.paused || this.timeScale < 1);
     if (this.paused) return;
 
-    // Real-time slow-mo timer.
+    // Real-time slow-mo timer (takedowns) and the player's bullet time.
     if (this.slowMoT > 0) {
       this.slowMoT -= realDt;
-      if (this.slowMoT <= 0) this.timeScale = 1;
+      if (this.slowMoT <= 0) this.slowMoScale = 1;
     }
+    const can = this.state === 'racing' && !this.player.wrecked && !this.player.finished;
+    if (c.bulletTime && can) {
+      if (this.bulletOn) this.setBullet(false);
+      else if (this.bullet > 0.15) this.setBullet(true);
+      else hud.message('SLOWMO LEEG', '#c9a2ff', false, 0.8);
+    }
+    if (this.bulletOn) {
+      this.bullet -= realDt / tuning.bulletSeconds;
+      if (this.bullet <= 0 || !can) {
+        this.bullet = Math.max(0, this.bullet);
+        this.setBullet(false);
+      }
+    } else if (this.state === 'racing') {
+      this.bullet = Math.min(1, this.bullet + realDt / tuning.bulletRecharge);
+    }
+    this.timeScale = Math.min(this.slowMoScale, this.bulletOn ? tuning.bulletScale : 1);
 
     const p = this.player;
     if (this.state === 'finished' || p.finished) {
@@ -790,6 +826,8 @@ export class Race {
       sirenNear: this.police.nearestSiren < 120,
       bust: this.police.bustProgress,
       timeLeft: this.state === 'menu' ? -1 : this.timeLeft,
+      bullet: this.bullet,
+      bulletOn: this.bulletOn,
       stage: `ETAPPE ${track.stage.id}/5 · ${track.stage.from.toUpperCase()} → ${track.stage.to.toUpperCase()}`,
     });
   }

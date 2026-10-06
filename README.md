@@ -24,6 +24,7 @@ Kaartdata © [OpenStreetMap](https://www.openstreetmap.org/copyright)-bijdragers
 | Sturen | ← → of A D | linkerstick |
 | Handrem | Spatie | ✕ / A |
 | Nitro | Shift | ○ / B |
+| Bullet time (slow-motion) | C | linkerstick indrukken (L3) |
 | Ram links / rechts | Q / E | L1 / R1 |
 | Terug op de weg | Backspace of F (of de ↺-knop) | △ / Y |
 | Herstart | R | Select |

@@ -9,6 +9,7 @@ export interface Controls {
   ramLeft: boolean;
   ramRight: boolean;
   reset: boolean;
+  bulletTime: boolean;
   restart: boolean;
   pause: boolean;
   mute: boolean;
@@ -53,6 +54,7 @@ const EDGE_KEYS: Record<string, keyof Controls> = {
   KeyE: 'ramRight',
   Backspace: 'reset',
   KeyF: 'reset',
+  KeyC: 'bulletTime',
   KeyR: 'restart',
   Escape: 'pause',
   KeyP: 'pause',
@@ -110,7 +112,7 @@ export class Input {
   poll(dt: number): Controls {
     const c: Controls = {
       throttle: 0, brake: 0, steer: 0, handbrake: false, nitro: false, ramLeft: false, ramRight: false,
-      reset: false, restart: false, pause: false, mute: false, debug: false,
+      reset: false, bulletTime: false, restart: false, pause: false, mute: false, debug: false,
       nextTrack: false, volumeUp: false, volumeDown: false, confirm: false,
       navUp: false, navDown: false, navLeft: false, navRight: false, back: false, any: false,
     };
@@ -158,6 +160,7 @@ export class Input {
       c.ramLeft ||= pressed(PAD.l1);
       c.ramRight ||= pressed(PAD.r1);
       c.reset ||= pressed(PAD.y);
+      c.bulletTime ||= pressed(10); // left stick click
       c.restart ||= pressed(PAD.select);
       c.pause ||= pressed(PAD.start);
       c.confirm ||= pressed(PAD.a) || pressed(PAD.start);

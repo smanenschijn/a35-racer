@@ -22,6 +22,7 @@ export class TouchControls {
         <button type="button" data-k="ramR" aria-label="Ram rechts">▶RAM</button>
         <button type="button" data-k="drift" aria-label="Handrem">DRIFT</button>
         <button type="button" data-k="nitro" aria-label="Nitro">NITRO</button>
+        <button type="button" data-k="slow" aria-label="Bullet time">SLOW</button>
       </div>
       <div class="t-right">
         <button type="button" data-k="brake" aria-label="Rem">REM</button>
@@ -38,6 +39,7 @@ export class TouchControls {
       b.classList.add('on');
       if (k === 'pause') this.input.press('pause');
       if (k === 'reset') this.input.press('reset');
+      if (k === 'slow') this.input.press('bulletTime');
       if (k === 'ramL') this.input.press('ramLeft');
       if (k === 'ramR') this.input.press('ramRight');
       this.sync();

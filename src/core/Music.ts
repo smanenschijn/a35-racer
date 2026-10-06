@@ -151,6 +151,13 @@ export class MusicPlayer {
     this.gain!.gain.setTargetAtTime(this.volume * (m ? 0.6 : 1), t, 0.08);
   }
 
+  /** Bullet time: the track slows down like a tape (pitch drops with it). */
+  setSlow(on: boolean): void {
+    const el = this.el as HTMLAudioElement & { preservesPitch?: boolean };
+    el.preservesPitch = false;
+    el.playbackRate = on ? 0.8 : 1;
+  }
+
   changeVolume(delta: number): number {
     this.volume = Math.min(1, Math.max(0, Math.round((this.volume + delta) * 10) / 10));
     if (this.gain && this.audio.ctx) this.gain.gain.setTargetAtTime(this.volume * (this.muffled ? 0.6 : 1), this.audio.ctx.currentTime, 0.05);

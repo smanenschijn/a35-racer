@@ -22,6 +22,9 @@ export interface HudState {
   heat: number;
   sirenNear: boolean;
   bust: number;
+  /** Bullet-time meter 0..1 and whether it's running. */
+  bullet: number;
+  bulletOn: boolean;
   /** Seconds on the checkpoint clock; negative hides it (menu). */
   timeLeft: number;
   stage: string;
@@ -54,6 +57,8 @@ export class Hud {
   private speed = el('div', 'hud-speed');
   private gaugeArc: SVGPathElement;
   private boostFill = el('div', 'boost-fill');
+  private bulletFill = el('div', 'bullet-fill');
+  private bulletTint = el('div', 'bullet-tint');
   private ramL = el('div', 'ram-ind', 'Q');
   private ramR = el('div', 'ram-ind', 'E');
   private zones: Record<Zone, SVGElement>;
@@ -110,15 +115,17 @@ export class Hud {
     boost.append(this.boostFill);
     const rams = el('div', 'rams');
     rams.append(this.ramL, el('span', 'ram-label', 'RAM'), this.ramR);
-    side.append(el('div', 'dmg-label', 'SCHADE'), this.dmgPct, boost, rams);
+    const bullet = el('div', 'boost bullet', '<span class="boost-label">SLOWMO</span>');
+    bullet.append(this.bulletFill);
+    side.append(el('div', 'dmg-label', 'SCHADE'), this.dmgPct, boost, bullet, rams);
     bl.append(side);
 
     const top = el('div', 'hud-top');
     top.append(this.clock, this.wanted, this.bustBar);
-    this.root.append(this.policeGlow, this.flashEl, top, this.nowPlaying);
+    this.root.append(this.bulletTint, this.policeGlow, this.flashEl, top, this.nowPlaying);
 
     this.help.innerHTML =
-      '↑↓ / WS gas-rem &nbsp;·&nbsp; ←→ / AD sturen &nbsp;·&nbsp; SPATIE handrem &nbsp;·&nbsp; SHIFT nitro &nbsp;·&nbsp; Q/E rammen &nbsp;·&nbsp; ⌫ / F terug op weg &nbsp;·&nbsp; R herstart &nbsp;·&nbsp; M geluid &nbsp;·&nbsp; N volgend nummer &nbsp;·&nbsp; −/+ muziekvolume';
+      '↑↓ / WS gas-rem &nbsp;·&nbsp; ←→ / AD sturen &nbsp;·&nbsp; SPATIE handrem &nbsp;·&nbsp; SHIFT nitro &nbsp;·&nbsp; C bullet time &nbsp;·&nbsp; Q/E rammen &nbsp;·&nbsp; ⌫ / F terug op weg &nbsp;·&nbsp; R herstart &nbsp;·&nbsp; M geluid &nbsp;·&nbsp; N volgend nummer &nbsp;·&nbsp; −/+ muziekvolume';
 
     this.resetBtn.type = 'button';
     this.resetBtn.hidden = true;
@@ -167,6 +174,10 @@ export class Hud {
     this.dmgPct.textContent = `${Math.round(maxD)}%`;
     this.dmgPct.classList.toggle('critical', maxD > 75);
     this.boostFill.style.width = `${player.nitro * 100}%`;
+    this.bulletFill.style.width = `${h.bullet * 100}%`;
+    this.bulletFill.classList.toggle('active', h.bulletOn);
+    this.bulletFill.classList.toggle('full', h.bullet > 0.99);
+    this.bulletTint.classList.toggle('on', h.bulletOn);
     this.boostFill.classList.toggle('active', player.nitroActive);
     this.boostFill.classList.toggle('full', player.nitro > 0.99);
     const ready = player.ramCooldown <= 0;
