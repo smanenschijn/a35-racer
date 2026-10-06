@@ -488,6 +488,12 @@ export class TrackBuilder {
     for (const d of dual ? [...outer, -7.3] : outer) {
       this.ribbon({ s0, s1, dL: d, dR: d, yL: (s) => h(s) - 0.2, yR: roofY, step: 4 }, wall);
     }
+    // Concrete kerbs over the grass verges inside the tube.
+    const kerb = (concrete as THREE.MeshStandardMaterial).clone();
+    kerb.color.setHex(0x8f8b84);
+    const kerbY = (s: number) => h(s) - 0.03;
+    this.ribbon({ s0, s1, dL: 6, dR: outer[1], yL: kerbY, yR: kerbY, vScale: 8, step: 4 }, kerb);
+    this.ribbon({ s0, s1, dL: dual ? -7.3 : outer[0], dR: -6, yL: kerbY, yR: kerbY, vScale: 8, step: 4 }, kerb);
     const roof = this.ribbon({ s0, s1, dL: outer[0], dR: outer[1], yL: roofY, yR: roofY, step: 4 }, wall);
     roof.castShadow = true;
     const cover = this.ribbon({ s0: s0 - 4, s1: s1 + 4, dL: outer[0] - 6, dR: outer[1] + 6, yL: (s) => roofY(s) + 0.7, yR: (s) => roofY(s) + 0.7, vScale: 8, step: 4 }, grass);
