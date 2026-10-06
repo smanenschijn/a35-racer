@@ -172,4 +172,97 @@ DESIGNS = {
         front='twin_rect', grille='slats', chrome_grille=True, rear='tall', bumper='body', exhaust='single',
         wheel_style='steel', rear_seat=True, red_calipers=False, extras=['rails', 'rubbing_strip'],
     ),
+
+    # ---- Traffic and police (simpler: steel wheels, few extras) -------------------------------
+
+    # Opal Vectro: plain four-door saloon.
+    'tr_sedan': dict(
+        root='TrSedan', lod=True, length=4.5, wheel_r=0.30, wheel_w=0.195, track=0.74, front_axle=0.9, wheelbase=2.65,
+        width=[(0, 0.74), (0.03, 0.83), (0.08, 0.87), (0.5, 0.885), (0.92, 0.87), (0.98, 0.84), (1, 0.80)],
+        top=[(0, 0.62), (0.03, 0.68), (0.1, 0.73), (0.3, 0.80), (0.33, 0.81), (0.5, 0.84), (0.8, 0.88),
+             (0.95, 0.9), (1, 0.86)],
+        bottom=[(0, 0.24), (0.05, 0.19), (0.93, 0.19), (1, 0.27)],
+        shoulder=[(0, 0.52), (0.1, 0.66), (0.5, 0.72), (1, 0.76)],
+        roof_h=[(0.32, 0), (0.335, 0.08), (0.45, 0.50), (0.52, 0.53), (0.68, 0.52), (0.76, 0.36), (0.81, 0.06),
+                (0.82, 0)],
+        roof_w=[(0.32, 0.74), (0.42, 0.68), (0.5, 0.64), (0.7, 0.64), (0.82, 0.72)],
+        glass=dict(ws_end=0.45, roof_end=0.69, rear_end=0.815, side0=0.37, side1=0.775, pillars=[(0.565, 0.59)]),
+        splits=dict(nose=0.06, cowl=0.33, door_r=0.73, deck=0.82, tail=0.95),
+        paint=rgb(0x9a9aa0), seat=(0.08, 0.08, 0.09),
+        front='rect', grille='slats', rear='blocks', bumper='black', exhaust='single', wheel_style='steel',
+        rear_seat=True, red_calipers=False, extras=[],
+    ),
+
+    # Fiat Ponto: small five-door hatch.
+    'tr_hatch': dict(
+        root='TrHatch', lod=True, length=4.0, wheel_r=0.29, wheel_w=0.185, track=0.71, front_axle=0.8, wheelbase=2.5,
+        width=[(0, 0.72), (0.03, 0.80), (0.08, 0.84), (0.5, 0.85), (0.94, 0.84), (0.99, 0.81), (1, 0.79)],
+        top=[(0, 0.62), (0.03, 0.68), (0.1, 0.74), (0.25, 0.82), (0.30, 0.84), (0.5, 0.88), (0.95, 0.92),
+             (0.99, 0.92), (1, 0.89)],
+        bottom=[(0, 0.24), (0.05, 0.2), (0.94, 0.2), (1, 0.26)],
+        shoulder=[(0, 0.55), (0.1, 0.66), (0.5, 0.74), (1, 0.78)],
+        roof_h=[(0.29, 0), (0.305, 0.08), (0.42, 0.50), (0.50, 0.53), (0.80, 0.52), (0.92, 0.36), (0.98, 0.08),
+                (0.99, 0)],
+        roof_w=[(0.29, 0.72), (0.39, 0.66), (0.48, 0.62), (0.9, 0.62), (0.99, 0.68)],
+        glass=dict(ws_end=0.42, roof_end=0.84, rear_end=0.98, side0=0.33, side1=0.82, pillars=[(0.565, 0.59)]),
+        splits=dict(nose=0.05, cowl=0.30, door_r=0.75, deck=0.999, tail=0.955),
+        paint=rgb(0x7a1f1f), seat=(0.1, 0.1, 0.11),
+        front='twin_rect', grille='band', rear='tall', bumper='body', exhaust='single', wheel_style='steel',
+        rear_seat=True, red_calipers=False, extras=[],
+    ),
+
+    # Skodo Octavio Kombi: estate that tows the caravan.
+    'tr_estate': dict(
+        root='TrEstate', lod=True, length=4.7, wheel_r=0.31, wheel_w=0.2, track=0.75, front_axle=0.92, wheelbase=2.72,
+        width=[(0, 0.76), (0.03, 0.84), (0.08, 0.875), (0.5, 0.89), (0.95, 0.875), (0.99, 0.85), (1, 0.82)],
+        top=[(0, 0.62), (0.03, 0.69), (0.1, 0.75), (0.28, 0.83), (0.30, 0.84), (0.5, 0.88), (0.95, 0.92),
+             (0.99, 0.92), (1, 0.89)],
+        bottom=[(0, 0.24), (0.05, 0.2), (0.95, 0.2), (1, 0.26)],
+        shoulder=[(0, 0.53), (0.1, 0.67), (0.5, 0.74), (1, 0.78)],
+        roof_h=[(0.29, 0), (0.305, 0.08), (0.42, 0.50), (0.49, 0.53), (0.93, 0.52), (0.975, 0.34), (0.993, 0.06),
+                (1.0, 0)],
+        roof_w=[(0.29, 0.74), (0.39, 0.68), (0.48, 0.65), (0.95, 0.65), (1.0, 0.70)],
+        glass=dict(ws_end=0.42, roof_end=0.975, rear_end=1.0, side0=0.33, side1=0.955,
+                   pillars=[(0.55, 0.575), (0.77, 0.79)]),
+        splits=dict(nose=0.05, cowl=0.30, door_r=0.75, deck=0.999, tail=0.96),
+        paint=rgb(0x1f3f7a), seat=(0.08, 0.08, 0.09),
+        front='rect', grille='slats', chrome_grille=True, rear='tall', bumper='body', exhaust='single',
+        wheel_style='steel', rear_seat=True, red_calipers=False, extras=['rails'],
+    ),
+
+    # Volkswagon Transpoorter: panel van, short nose, windows only up front.
+    'tr_van': dict(
+        root='TrVan', lod=True, length=5.3, wheel_r=0.34, wheel_w=0.215, track=0.83, front_axle=0.98, wheelbase=3.32,
+        width=[(0, 0.86), (0.02, 0.93), (0.06, 0.97), (0.5, 0.98), (0.97, 0.97), (0.995, 0.95), (1, 0.93)],
+        top=[(0, 0.80), (0.02, 0.88), (0.07, 0.98), (0.12, 1.04), (0.14, 1.06), (0.5, 1.10), (1, 1.10)],
+        bottom=[(0, 0.30), (0.05, 0.26), (0.95, 0.26), (1, 0.32)],
+        shoulder=[(0, 0.72), (0.1, 0.90), (0.5, 0.96), (1, 0.98)],
+        roof_h=[(0.135, 0), (0.15, 0.12), (0.25, 0.78), (0.30, 0.85), (0.985, 0.85), (0.996, 0.5), (1.0, 0)],
+        roof_w=[(0.135, 0.9), (0.25, 0.9), (1.0, 0.9)],
+        glass=dict(ws_end=0.25, roof_end=0.999, rear_end=0.999, side0=0.16, side1=0.33, pillars=[]),
+        splits=dict(nose=0.04, cowl=0.15, door_r=0.33, deck=0.999, tail=0.975),
+        top_inset=0.05, gh_inset=0.05, seal_mat='Paint',
+        paint=rgb(0xf2f2f2), seat=(0.1, 0.1, 0.11),
+        front='rect', grille='slats', rear='tall', bumper='black', exhaust='single', wheel_style='steel',
+        red_calipers=False, extras=[],
+    ),
+
+    # Politie Volvi V70: white estate with blue and orange striping and a light bar.
+    'police': dict(
+        root='Police', lod=True, length=4.8, wheel_r=0.31, wheel_w=0.205, track=0.76, front_axle=0.94, wheelbase=2.76,
+        width=[(0, 0.76), (0.03, 0.85), (0.08, 0.885), (0.5, 0.90), (0.95, 0.885), (0.99, 0.86), (1, 0.83)],
+        top=[(0, 0.64), (0.03, 0.71), (0.1, 0.77), (0.29, 0.85), (0.31, 0.86), (0.5, 0.90), (0.95, 0.93),
+             (0.99, 0.93), (1, 0.90)],
+        bottom=[(0, 0.24), (0.05, 0.2), (0.95, 0.2), (1, 0.26)],
+        shoulder=[(0, 0.55), (0.1, 0.68), (0.5, 0.76), (1, 0.80)],
+        roof_h=[(0.30, 0), (0.315, 0.08), (0.43, 0.50), (0.50, 0.53), (0.93, 0.52), (0.975, 0.34), (0.993, 0.06),
+                (1.0, 0)],
+        roof_w=[(0.30, 0.74), (0.40, 0.68), (0.49, 0.65), (0.95, 0.65), (1.0, 0.70)],
+        glass=dict(ws_end=0.43, roof_end=0.975, rear_end=1.0, side0=0.34, side1=0.955,
+                   pillars=[(0.56, 0.585), (0.78, 0.80)]),
+        splits=dict(nose=0.05, cowl=0.31, door_r=0.76, deck=0.999, tail=0.96),
+        paint=rgb(0xf4f6f8), seat=(0.06, 0.06, 0.07),
+        front='slim', grille='band', rear='tall', bumper='body', exhaust='single', wheel_style='fivespoke',
+        rear_seat=True, red_calipers=False, extras=['police', 'antenna'],
+    ),
 }

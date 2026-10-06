@@ -74,6 +74,8 @@ const dark = new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.7 })
 const chrome = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 1, roughness: 0.25 });
 const tyreMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 });
 const white = new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.5 });
+/** Traffic and police: every plain-coloured part shares this material via vertex colours. */
+const liteMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.25 });
 
 export class CarModel {
   readonly root = new THREE.Group();
@@ -131,6 +133,10 @@ export class CarModel {
     const spec = this.spec;
     const car = template.clone(true);
     const plateMat = new THREE.MeshStandardMaterial({ map: plateTexture(spec.plate, false), roughness: 0.5 });
+    // Traffic and police are simpler Blender models, flattened to a handful of draw calls.
+    const lite = spec.model!.startsWith('tr_') || spec.model === 'police';
+    this.carOffset = spec.trailerLength ? totalLength(spec) / 2 - spec.length / 2 : 0;
+    this.body.position.z = this.carOffset;
     car.traverse((o) => {
       if (!(o instanceof THREE.Mesh)) return;
       o.castShadow = true;
@@ -152,6 +158,13 @@ export class CarModel {
         case 'Plate':
           o.material = plateMat;
           break;
+        case 'BeaconL':
+        case 'BeaconR': {
+          const b = new THREE.MeshStandardMaterial({ color: 0x0a1a66, emissive: 0x2a5cff, emissiveIntensity: 0, roughness: 0.2 });
+          this.beacons.push(b);
+          o.material = b;
+          break;
+        }
       }
       if (o.userData.deform) {
         o.geometry = o.geometry.clone();
@@ -163,6 +176,7 @@ export class CarModel {
     for (const child of [...car.children]) {
       if (child.name.startsWith('hub_')) {
         this.root.add(child);
+        child.position.z += this.carOffset;
         if (child.userData.steer) this.frontWheelPivots.push(child);
         const wheel = child.children.find((c) => c.userData.spin);
         if (wheel) this.wheels.push(wheel);
@@ -172,7 +186,85 @@ export class CarModel {
       }
     }
     this.wheelR = car.userData.wheel_r ?? 0.31;
-    this.mergeStatic();
+    if (lite) this.mergeLite(plateMat);
+    else this.mergeStatic();
+  }
+
+  /**
+   * Traffic: merge the whole body (loose parts included) into paint, glass, lights, plate and one
+   * vertex-coloured mesh for everything else; each wheel becomes a single mesh. ~10 draw calls.
+   */
+  private mergeLite(plateMat: THREE.Material): void {
+    const keep = new Set<THREE.Material>([this.paint, this.brakeMat, this.headMat, plateMat, ...this.beacons]);
+    const groups = new Map<THREE.Material, THREE.BufferGeometry[]>();
+    const deformMats = new Set<THREE.Material>();
+    this.root.updateMatrixWorld(true);
+    const m = new THREE.Matrix4();
+    // Geometry of a subtree in the space of `space`, plain colours baked into vertex colours.
+    const collect = (node: THREE.Object3D, space: THREE.Object3D, into: (mat: THREE.Material, g: THREE.BufferGeometry, deform: boolean) => void) => {
+      const inv = new THREE.Matrix4().copy(space.matrixWorld).invert();
+      node.traverse((o) => {
+        if (!(o instanceof THREE.Mesh)) return;
+        const src = o.material as THREE.MeshStandardMaterial;
+        let g = o.geometry.clone();
+        g.applyMatrix4(m.multiplyMatrices(inv, o.matrixWorld));
+        if (!g.index) g = g.setIndex([...Array(g.attributes.position.count).keys()]);
+        const kept = keep.has(src) || src.name === 'Glass';
+        for (const name of Object.keys(g.attributes)) {
+          if (name !== 'position' && name !== 'normal' && !(name === 'uv' && kept && src.map)) g.deleteAttribute(name);
+        }
+        if (!kept) {
+          const n = g.attributes.position.count;
+          const col = new Float32Array(n * 3);
+          for (let i = 0; i < n; i++) col.set([src.color.r, src.color.g, src.color.b], i * 3);
+          g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+        }
+        into(kept ? src : liteMat, g, !!o.userData.deform);
+      });
+    };
+
+    for (const child of [...this.body.children]) {
+      collect(child, this.body, (mat, g, deform) => {
+        if (!groups.has(mat)) groups.set(mat, []);
+        groups.get(mat)!.push(g);
+        if (deform) deformMats.add(mat);
+      });
+      this.body.remove(child);
+    }
+    this.deformables = [];
+    this.detachables.length = 0;
+    for (const [mat, geos] of groups) {
+      const geo = mergeGeometries(geos, false);
+      if (!geo) continue;
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.castShadow = true;
+      this.body.add(mesh);
+      if (deformMats.has(mat)) {
+        const pos = geo.attributes.position as THREE.BufferAttribute;
+        this.deformables.push({ mesh, original: Float32Array.from(pos.array as Float32Array) });
+      }
+    }
+
+    // Wheels: one mesh each; brake calipers on the hubs are dropped.
+    this.wheels = this.wheels.map((wheel) => {
+      const geos: THREE.BufferGeometry[] = [];
+      collect(wheel, wheel, (_mat, g) => {
+        if (!g.attributes.color) {
+          const n = g.attributes.position.count;
+          g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3).fill(0.6), 3));
+        }
+        if (g.attributes.uv) g.deleteAttribute('uv');
+        geos.push(g);
+      });
+      const hub = wheel.parent!;
+      const mesh = new THREE.Mesh(mergeGeometries(geos, false)!, liteMat);
+      mesh.position.copy(wheel.position);
+      mesh.quaternion.copy(wheel.quaternion);
+      mesh.scale.copy(wheel.scale);
+      for (const c of [...hub.children]) hub.remove(c);
+      hub.add(mesh);
+      return mesh;
+    });
   }
 
   /**

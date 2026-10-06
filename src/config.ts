@@ -168,7 +168,7 @@ export const POLICE_CAR: CarSpec = {
   id: 'police', name: 'Politie Volvi V70', driver: 'Politie', color: 0xf4f6f8,
   mass: 1700, length: 4.8, width: 1.8, topSpeed: 73, accelFactor: 1.1, gripFactor: 1.05,
   bodyHeight: 0.64, cabinLength: 2.6, cabinOffset: -0.5, cabinHeight: 0.56, hatch: true, spoiler: false, plate: 'POL-112',
-  livery: 'police', armor: 0.7,
+  livery: 'police', armor: 0.7, model: 'police',
 };
 
 export interface AIPersonality {
@@ -206,25 +206,25 @@ export const TRAFFIC: { weight: number; spec: CarSpec; lane: 'right' | 'any'; sp
   {
     weight: 6, lane: 'any', speed: [29, 35],
     spec: {
-      id: 'sedan', name: 'Personenauto', driver: 'Verkeer', color: 0x888888, mass: 1300, length: 4.5, width: 1.78,
+      id: 'sedan', name: 'Personenauto', driver: 'Verkeer', color: 0x888888, mass: 1300, length: 4.5, width: 1.77,
       topSpeed: 40, accelFactor: 0.7, gripFactor: 1, bodyHeight: 0.6, cabinLength: 2.2, cabinOffset: -0.2, cabinHeight: 0.5,
-      hatch: false, spoiler: false, plate: '12-ABC-3',
+      hatch: false, spoiler: false, plate: '12-ABC-3', model: 'tr_sedan',
     },
   },
   {
     weight: 5, lane: 'any', speed: [28, 34],
     spec: {
-      id: 'hatch', name: 'Hatchback', driver: 'Verkeer', color: 0x888888, mass: 1100, length: 4.0, width: 1.72,
+      id: 'hatch', name: 'Hatchback', driver: 'Verkeer', color: 0x888888, mass: 1100, length: 4.0, width: 1.70,
       topSpeed: 38, accelFactor: 0.7, gripFactor: 1, bodyHeight: 0.62, cabinLength: 2.0, cabinOffset: -0.4, cabinHeight: 0.52,
-      hatch: true, spoiler: false, plate: '45-XYZ-6',
+      hatch: true, spoiler: false, plate: '45-XYZ-6', model: 'tr_hatch',
     },
   },
   {
     weight: 3, lane: 'right', speed: [25, 30],
     spec: {
-      id: 'van', name: 'Bestelbus', driver: 'Verkeer', color: 0xf0f0f0, mass: 2400, length: 5.3, width: 1.98,
+      id: 'van', name: 'Bestelbus', driver: 'Verkeer', color: 0xf0f0f0, mass: 2400, length: 5.3, width: 1.96,
       topSpeed: 33, accelFactor: 0.6, gripFactor: 0.9, bodyHeight: 1.0, cabinLength: 1.2, cabinOffset: 1.5, cabinHeight: 0.9,
-      hatch: true, spoiler: false, plate: 'VB-123-K', kind: 'van', armor: 0.6,
+      hatch: true, spoiler: false, plate: 'VB-123-K', kind: 'van', armor: 0.6, model: 'tr_van',
     },
   },
   {
@@ -238,9 +238,9 @@ export const TRAFFIC: { weight: number; spec: CarSpec; lane: 'right' | 'any'; sp
   {
     weight: 2, lane: 'right', speed: [23, 26],
     spec: {
-      id: 'caravan', name: 'Auto met caravan', driver: 'Verkeer', color: 0x888888, mass: 2700, length: 4.7, width: 1.8,
+      id: 'caravan', name: 'Auto met caravan', driver: 'Verkeer', color: 0x888888, mass: 2700, length: 4.7, width: 1.78,
       topSpeed: 28, accelFactor: 0.5, gripFactor: 0.85, bodyHeight: 0.64, cabinLength: 2.6, cabinOffset: -0.5, cabinHeight: 0.56,
-      hatch: true, spoiler: false, plate: 'DE-77-NL', trailerLength: 5.2, armor: 0.7,
+      hatch: true, spoiler: false, plate: 'DE-77-NL', trailerLength: 5.2, armor: 0.7, model: 'tr_estate',
     },
   },
 ];

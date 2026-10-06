@@ -31,6 +31,7 @@ class Car:
     def __init__(self, d):
         self.d = d
         self.L = d['length']
+        self.lod = d.get('lod', False)  # traffic: fewer rings and simpler wheels
         self.wr = d['wheel_r']
         self.ww = d['wheel_w']
         self.track = d['track']
@@ -112,7 +113,7 @@ class Car:
 
     def gh_half(self, t):
         zg = self.TOP(t) - 0.006
-        wb = self.WIDTH(t) - 0.13
+        wb = self.WIDTH(t) - self.d.get('gh_inset', 0.13)
         wr = min(self.ROOF_W(t), wb)
         hrel = self.ROOF_H(t) if self.g0 < t < self.g1 else 0.0
         zr = zg + hrel
@@ -150,7 +151,8 @@ class Car:
         return 'glass' if tm < gl['rear_end'] else 'roof'
 
     def ring_positions(self):
-        ts = {i / 120 for i in range(121)}
+        n = 40 if self.lod else 120
+        ts = {i / n for i in range(n + 1)}
         splits = [self.sp[k] for k in ('nose', 'cowl', 'door_r', 'deck', 'tail')]
         ts |= set(splits)
         for t0 in splits:
@@ -159,8 +161,9 @@ class Car:
             for e in (-self.arch_r, self.arch_r):
                 for dd in (-0.004, 0.004):
                     ts.add(self.t_of(yc + e + dd))
-            for k in range(1, 14):
-                ts.add(self.t_of(yc - self.arch_r + 2 * self.arch_r * k / 14))
+            na = 7 if self.lod else 14
+            for k in range(1, na):
+                ts.add(self.t_of(yc - self.arch_r + 2 * self.arch_r * k / na))
         return sorted(t for t in ts if 0 <= t <= 1)
 
     def surface_z(self, t, x):
@@ -240,6 +243,40 @@ class Car:
         return ck.mesh_object(name, verts, faces, [mat], col=col)
 
 
+    def side_x(self, t, z):
+        """Outer x of the body side at height z (None where the arch cuts it away)."""
+        half = self.half_profile(t)
+        best = None
+        for (x0, z0), (x1, z1) in zip(half, half[1:]):
+            lo, hi = min(z0, z1), max(z0, z1)
+            if lo <= z <= hi and hi - lo > 1e-6:
+                x = x0 + (x1 - x0) * (z - z0) / (z1 - z0)
+                best = x if best is None else max(best, x)
+        return best
+
+    def side_band(self, name, z0, z1, t_a, t_b, mat, col, lift=0.004, steps=60):
+        """A livery band on both flanks between heights z0 and z1 (skips the wheel arches)."""
+        verts, faces = [], []
+        for sx in (1, -1):
+            prev = None
+            for k in range(steps + 1):
+                t = t_a + (t_b - t_a) * k / steps
+                y = self.y_of(t)
+                lo = max(z0, self.bottom(t) + 0.012)
+                xa, xb = self.side_x(t, lo), self.side_x(t, z1)
+                if lo >= z1 - 0.005 or xa is None or xb is None:
+                    prev = None
+                    continue
+                base = len(verts)
+                verts.append((sx * (xa + lift), y, lo))
+                verts.append((sx * (xb + lift), y, z1))
+                if prev is not None:
+                    a, b = prev, base
+                    faces.append((a, b, b + 1, a + 1) if sx > 0 else (a, a + 1, b + 1, b))
+                prev = base
+        return ck.mesh_object(name, verts, faces, [mat], col=col)
+
+
 # ---------------------------------------------------------------------------
 
 def build(d):
@@ -284,8 +321,9 @@ def build(d):
     keys = {gl['ws_end'], gl['roof_end'], gl['rear_end'], gl['side0'], gl['side1']}
     for a, b in gl['pillars']:
         keys |= {a, b}
-    gts = sorted({car.g0 + (car.g1 - car.g0) * i / 80 for i in range(81)} | {k for k in keys if car.g0 < k < car.g1})
-    gmat = {'glass': m['Glass'], 'roof': m['Paint'], 'seal': m['Trim'], 'pillar': m[gl['pillar_mat']]}
+    ng = 30 if car.lod else 80
+    gts = sorted({car.g0 + (car.g1 - car.g0) * i / ng for i in range(ng + 1)} | {k for k in keys if car.g0 < k < car.g1})
+    gmat = {'glass': m['Glass'], 'roof': m['Paint'], 'seal': m[d.get('seal_mat', 'Trim')], 'pillar': m[gl['pillar_mat']]}
     for name, (verts, faces) in ck.loft_parts(gts, G + 1, car.gh_section, car.gh_part, close_front=False,
                                               close_rear=False).items():
         o = ck.mesh_object(f'cabin_{name}', verts, faces, [gmat[name]], smooth=True, col=col,
@@ -394,6 +432,9 @@ def build(d):
             add(car.top_strip(f'stripe_roof{k}', x0, x1, gl['ws_end'] + 0.005, gl['roof_end'] - 0.005, m['Stripe'],
                               col, roof=True))
             add(car.top_strip(f'stripe_deck{k}', x0, x1, max(car.g1, sp['deck']) + 0.005, 0.995, m['Stripe'], col))
+
+    if 'police' in extras:
+        police(car, d, m, col, add)
 
     interior(car, d, m, col, add)
 
@@ -737,6 +778,36 @@ def roofbox(car, m, col, add):
                    props={'zone': 'top', 'detach': 1}))
 
 
+def police(car, d, m, col, add):
+    """Dutch police striping: a wide blue band over a thin red-orange one, POLITIE, light bar."""
+    blue = ck.material('PoliceBlue', (0.012, 0.045, 0.32), roughness=0.35, coat=1.0)
+    orange = ck.material('PoliceOrange', (0.95, 0.12, 0.02), roughness=0.35, coat=1.0)
+    white = ck.material('White', (0.85, 0.85, 0.85), roughness=0.4)
+    sp, gl, L = car.sp, car.gl, car.L
+    zs = car.SHOULDER(0.5)
+    zb = zs - 0.25
+    band = add(car.side_band('livery_blue', zb, zs - 0.04, 0.035, 0.975, blue, col))
+    band['zone'], band['deform'] = 'left', 1
+    thin = add(car.side_band('livery_orange', zb - 0.075, zb - 0.02, 0.035, 0.975, orange, col))
+    thin['zone'], thin['deform'] = 'right', 1
+    tm = (sp['cowl'] + sp['door_r']) / 2
+    for sx in (1, -1):
+        x = car.side_x(tm, zs - 0.165) or car.WIDTH(tm)
+        add(text_mesh(f'politie_{"L" if sx > 0 else "R"}', 'POLITIE', 0.15, (sx * (x + 0.008), car.y_of(tm),
+                      zs - 0.165), sx, white, col))
+    # Light bar across the roof, just behind the windscreen.
+    tb = gl['ws_end'] + 0.05
+    zr = car.roof_z(tb, 0)
+    y = car.y_of(tb)
+    add(ck.box('lightbar', (1.15, 0.26, 0.06), (0, y, zr + 0.05), m['Trim'], col=col, bevel_width=0.015,
+               props={'zone': 'top', 'detach': 1}))
+    for sx, nm in ((1, 'BeaconL'), (-1, 'BeaconR')):
+        mat = ck.material(nm, (0.02, 0.05, 0.25), roughness=0.2, emission=(0.1, 0.3, 1.0), strength=0.5)
+        ck.set_transparent(mat, 0.85)
+        add(ck.box(f'beacon_{"L" if sx > 0 else "R"}', (0.5, 0.22, 0.11), (sx * 0.29, y, zr + 0.13), mat, col=col,
+                   bevel_width=0.03, props={'zone': 'top', 'detach': 1}))
+
+
 def text_mesh(name, text, size, location, side, mat, col):
     curve = bpy.data.curves.new(name, 'FONT')
     curve.body = text
@@ -773,11 +844,13 @@ def interior(car, d, m, col, add):
     seat_t = dash_t + 0.13
     add(ck.box('console', (0.22, 0.75, 0.2), (0, y_of(seat_t - 0.02), 0.52 + zoff), m['Interior'], col=col,
                bevel_width=0.02))
-    add(ck.ellipsoid('gear_knob', (0.025, 0.025, 0.025), (0, y_of(seat_t - 0.06), 0.67 + zoff), m['Chrome'], col=col))
+    if not car.lod:
+        add(ck.ellipsoid('gear_knob', (0.025, 0.025, 0.025), (0, y_of(seat_t - 0.06), 0.67 + zoff), m['Chrome'], col=col))
     sw_t = dash_t + 0.035
-    sw = ck.torus_x('steering_wheel', 0.17, 0.018, (0.37, y_of(sw_t), dz + 0.08), m['Interior'], col=col)
-    sw.rotation_euler = (0, math.radians(25), math.pi / 2)
-    add(sw)
+    if not car.lod:
+        sw = ck.torus_x('steering_wheel', 0.17, 0.018, (0.37, y_of(sw_t), dz + 0.08), m['Interior'], col=col)
+        sw.rotation_euler = (0, math.radians(25), math.pi / 2)
+        add(sw)
     add(ck.cylinder('steering_hub', 0.05, 0.05, (0.37, y_of(sw_t), dz + 0.08), m['Interior'], col=col, axis='Y'))
     for sx, s in ((1, 'L'), (-1, 'R')):
         x = sx * 0.37
@@ -802,23 +875,26 @@ def interior(car, d, m, col, add):
 def wheel(car, style, m, col, name='wheel_proto'):
     r, w = car.wr, car.ww
     rim_r = r * 0.66
+    seg = 18 if car.lod else 40
     tread = []
     for k in range(6):
         x0 = -w / 2 + 0.03 + k * (w - 0.06) / 5
         tread += [(r, x0), (r - 0.007, x0 + 0.004), (r - 0.007, x0 + 0.01), (r, x0 + 0.014)] if 0 < k < 5 else [(r, x0)]
+    if car.lod:
+        tread = [(r, -w / 2 + 0.03), (r, w / 2 - 0.03)]
     profile = [(rim_r, -w / 2 + 0.012), (r - 0.04, -w / 2), (r - 0.01, -w / 2 + 0.012)] + tread + \
               [(r - 0.01, w / 2 - 0.012), (r - 0.04, w / 2), (rim_r, w / 2 - 0.012)]
-    parts = [ck.bm_object(name + '_tyre', ck.lathe(profile, 40), [m['Tyre']], col=col, smooth=True)]
+    parts = [ck.bm_object(name + '_tyre', ck.lathe(profile, seg), [m['Tyre']], col=col, smooth=True)]
     ck.mark_sharp(parts[0], 50)
     rim_mat = m['Steel'] if style == 'steel' else m['Rim']
     barrel = ck.lathe([(rim_r + 0.004, w / 2 - 0.01), (rim_r - 0.008, w / 2 - 0.02), (rim_r - 0.012, -w / 2 + 0.03),
-                       (rim_r, -w / 2 + 0.012)], 40)
+                       (rim_r, -w / 2 + 0.012)], seg)
     parts.append(ck.bm_object(name + '_barrel', barrel, [rim_mat], col=col, smooth=True))
     face_x = w / 2 - 0.04
 
     if style == 'steel':
         cap = ck.lathe([(0.001, face_x + 0.02), (rim_r * 0.5, face_x + 0.018), (rim_r * 0.92, face_x + 0.004),
-                        (rim_r * 0.98, face_x - 0.01)], 40)
+                        (rim_r * 0.98, face_x - 0.01)], seg)
         parts.append(ck.bm_object(name + '_hubcap', cap, [m['Hubcap']], col=col, smooth=True))
         for k in range(8):
             a = 2 * math.pi * k / 8
@@ -828,7 +904,7 @@ def wheel(car, style, m, col, name='wheel_proto'):
             parts.append(s)
     else:
         lip = ck.lathe([(rim_r - 0.012, w / 2 - 0.012), (rim_r + 0.006, w / 2 - 0.008), (rim_r + 0.006, w / 2 - 0.02)],
-                       40)
+                       seg)
         parts.append(ck.bm_object(name + '_lip', lip, [m['Chrome']], col=col, smooth=True))
         parts.append(ck.cylinder(name + '_hub', rim_r * 0.3, 0.05, (face_x - 0.012, 0, 0), m['Rim'], col=col,
                                  segments=20))
@@ -860,7 +936,8 @@ def wheel(car, style, m, col, name='wheel_proto'):
         if style == 'turbine':
             parts.append(ck.cylinder(name + '_face', rim_r * 0.92, 0.012, (face_x - 0.025, 0, 0), m['Rim'], col=col,
                                      segments=32))
-    parts.append(ck.cylinder(name + '_disc', rim_r * 0.84, 0.024, (-0.025, 0, 0), m['Chrome'], col=col, segments=32))
+    parts.append(ck.cylinder(name + '_disc', rim_r * 0.84, 0.024, (-0.025, 0, 0), m['Chrome'], col=col,
+                             segments=12 if car.lod else 32))
     parts.append(ck.cylinder(name + '_disc_hat', rim_r * 0.42, 0.05, (-0.005, 0, 0), m['Trim'], col=col, segments=20))
     bpy.context.view_layer.update()
     ck.apply_transforms(parts)
