@@ -573,6 +573,7 @@ func _layout_corners() -> void:
 		_br.offset_bottom = _br.offset_top + _br.size.y
 		return
 	var lift := 150.0 if touch else 0.0
+	var lift_right := 225.0 if touch else 0.0 # above the touch action diamond
 	var left := 12.0 if compact else 22.0
 	_bl.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	_bl.offset_left = left
@@ -582,8 +583,8 @@ func _layout_corners() -> void:
 	_br.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	_br.offset_right = -24
 	_br.offset_left = -24 - _br.size.x
-	_br.offset_bottom = -16 - lift
-	_br.offset_top = -16 - lift - _br.size.y
+	_br.offset_bottom = -16 - lift_right
+	_br.offset_top = -16 - lift_right - _br.size.y
 
 
 # ------------------------------------------------------------------ updates

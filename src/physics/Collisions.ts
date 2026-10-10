@@ -304,7 +304,8 @@ function landRam(r: Vehicle, v: Vehicle, px: number, pz: number, time: number, e
 
   const [vlx, vlz] = toLocal(v, px, pz);
   const [rlx, rlz] = toLocal(r, px, pz);
-  v.addDamage(v.zoneAt(vlx, vlz), tuning.ramDamage, vlx, vlz, r, time, events);
+  const dmg = tuning.ramDamage * (r.role === 'police' ? tuning.policeRamDamage : 1);
+  v.addDamage(v.zoneAt(vlx, vlz), dmg, vlx, vlz, r, time, events);
   r.addDamage(r.zoneAt(rlx, rlz), 1.5, rlx, rlz, null, time, events);
   events.emit('impact', { x: px, y: (r.y + v.y) / 2 + 0.6, z: pz, strength: 14, kind: 'car', a: r, b: v });
 }

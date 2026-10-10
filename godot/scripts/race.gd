@@ -348,6 +348,9 @@ func _wire_events() -> void:
 			_respawn_t = 2.6
 			_cam.add_shake(1)
 			_rumble.call(1, 1, 600)
+			# Wrecked by the police: they've made their point and back off, instead of finishing you off again.
+			if attacker != null and attacker.role == "police" and state == "racing":
+				police.back_off()
 			return
 		var by_player := attacker == player
 		if victim.is_racer:
@@ -689,7 +692,7 @@ func step(dt: float) -> void:
 	for v: Vehicle in racers:
 		if v != p and not v.wrecked and not v.finished:
 			leader = maxf(leader, v.s)
-	var behind := clampf((leader - p.s - 60) / 300.0, 0.0, 1.0) if state == "racing" else 0.0
+	var behind := clampf((leader - p.s - 40) / Config.T.playerCatchUpRange, 0.0, 1.0) if state == "racing" else 0.0
 	p.power_factor = (1 + Config.T.playerCatchUp * behind) * (1 + _slipstream(p, dt))
 
 	# Stuck? Then offer the reset button.
