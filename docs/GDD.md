@@ -242,6 +242,7 @@ Tussen de etappes zit een uitslagscherm met "Volgende etappe". Een echt naadloze
 - [x] Achterom kijken (V / rechterstick), ram-indicator die oplicht bij een doelwit, pijlen bij rivalen naast je
 - [x] Gamepad: bullet time ook op R3
 - [x] Touch: duim schuift tussen ◀ en ▶, één RAM-knop die zelf de kant kiest, AUTO GAS
+- [x] Touch: AUTO GAS standaard aan; actieknoppen in een controller-ruit rechts (NITRO onder, REM links, RAM rechts, DRIFT boven, SLOW in de hoek), GAS-pedaal alleen zonder AUTO GAS
 - [x] Drift-economie: handrem minder abrupt, drift geeft minder gratis snelheid en vult nitro pas na een volgehouden drift
 - [x] Rubberbanding milder (een weggereden speler wordt niet meer zo hard ingehaald door wachtende rivalen)
 - [x] Total loss kost je nitro; speler iets kwetsbaarder

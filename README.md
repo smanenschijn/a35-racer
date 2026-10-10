@@ -36,7 +36,7 @@ Kaartdata © [OpenStreetMap](https://www.openstreetmap.org/copyright)-bijdragers
 | Tuningpaneel | T | |
 
 De rijtoetsen zijn te wijzigen via *Besturing → Toetsen instellen* (bewaard in de browser).
-Op een telefoon kun je met je duim tussen ◀ en ▶ schuiven, kiest de RAM-knop zelf de kant en houdt AUTO GAS het gas voor je ingedrukt.
+Op een telefoon kun je met je duim tussen ◀ en ▶ schuiven, kiest de RAM-knop zelf de kant en staat AUTO GAS standaard aan. Rechts zitten de actieknoppen in een ruit, zoals op een controller: NITRO onder je duim, REM links, RAM rechts, DRIFT boven en SLOW in de hoek. Zet je AUTO GAS uit, dan verschijnt er een GAS-pedaal naast de ruit.
 
 ## Ontwikkelen
 

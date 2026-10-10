@@ -1,11 +1,15 @@
 class_name TouchControls
 extends CanvasLayer
-## On-screen controls for iPhone and iPad: steering pads on the left, pedals on the right,
-## nitro/handbrake/ram/slow-mo buttons in between and pause, reset and auto-gas at the edge.
-## Multi-touch; a finger can slide from one steering pad to the other without lifting.
+## On-screen controls for iPhone and iPad: steering pads on the left, a controller-style diamond
+## of action buttons on the right (nitro, brake, ram, drift; slow-mo in the corner) and pause,
+## reset and auto-gas at the edge. Auto-gas is on by default; turned off, a GAS pedal appears
+## beside the diamond. Multi-touch; a finger can slide between the steering pads, or across the
+## diamond, without lifting.
 ## Port of src/ui/Touch.ts.
 
 const SETTINGS := "user://settings.cfg"
+const SLIDE := [["left", "right"], ["brake", "nitro", "drift", "gas"]]
+const NITRO_RIM := Color(1, 216 / 255.0, 0, 0.6)
 
 var input: InputCtl
 var enabled := false
@@ -13,7 +17,7 @@ var _root: Control
 var _buttons := {} # key → Panel
 var _held := {} # finger index → key
 ## Auto-gas: throttle stays on unless you brake (no thumb pinned to GAS the whole race).
-var _auto_gas := false
+var _auto_gas := true
 var _font: Font
 
 
@@ -34,37 +38,34 @@ func _ready() -> void:
 	var steer := (64.0 if phone else 84.0) * k
 	_add("left", "◀", Control.PRESET_BOTTOM_LEFT, Vector2(18 * k, -24 * k - steer), Vector2(steer, steer), circle, 26 * k)
 	_add("right", "▶", Control.PRESET_BOTTOM_LEFT, Vector2(18 * k + steer + 14 * k, -24 * k - steer), Vector2(steer, steer), circle, 26 * k)
-	# Right: pedals
-	var gas := (Vector2(78, 96) if phone else Vector2(96, 120)) * k
-	var brake := (62.0 if phone else 78.0) * k
-	_add("gas", "GAS", Control.PRESET_BOTTOM_RIGHT, Vector2(-18 * k - gas.x, -24 * k - gas.y), gas, int(20 * k), 18 * k)
-	_add("brake", "REM", Control.PRESET_BOTTOM_RIGHT, Vector2(-18 * k - gas.x - 14 * k - brake, -24 * k - brake), Vector2(brake, brake), circle, 14 * k)
-	# Middle: ram, drift, nitro, slow
-	var mid := ["ram", "drift", "nitro", "slow"]
-	var labels := {"ram": "RAM", "drift": "DRIFT", "nitro": "NITRO", "slow": "SLOW"}
-	if phone:
-		# One row centred at the bottom, between the thumbs.
-		var bs := Vector2(56, 44)
-		var gap := 8.0
-		var w := 4 * bs.x + 3 * gap
-		for i in 4:
-			_add(mid[i], labels[mid[i]], Control.PRESET_CENTER_BOTTOM, Vector2(-w / 2 + i * (bs.x + gap), -14 - bs.y), bs, 12, 11)
-	else:
-		var bs := Vector2(64, 50) * k
-		var right := 18 * k + gas.x + 14 * k + brake + 40 * k
-		for i in 4:
-			var col := i % 2
-			var row := i / 2
-			_add(mid[i], labels[mid[i]], Control.PRESET_BOTTOM_RIGHT,
-				Vector2(-right - (2 - col) * (bs.x + 10 * k), -30 * k - (2 - row) * (bs.y + 10 * k)), bs, int(12 * k), 11 * k)
-	# Edge: pause, reset, auto-gas
+	# Right: action diamond like a controller's face buttons — NITRO under the thumb, REM left,
+	# RAM right, DRIFT on top, SLOW small in the top-left corner.
+	var d := (60.0 if phone else 76.0) * k
+	var cell := d * 0.78
+	var pad := Vector2(-(14 if phone else 18) * k - 3 * cell, -(14 if phone else 24) * k - 3 * cell) # top-left of the 3×3 grid
+	var at := func(col: int, row: int, size: float) -> Vector2:
+		return pad + Vector2((col + 0.5) * cell, (row + 0.5) * cell) - Vector2(size, size) / 2
+	var fs := (11.0 if phone else 13.0) * k
+	_add("drift", "DRIFT", Control.PRESET_BOTTOM_RIGHT, at.call(1, 0, d), Vector2(d, d), circle, fs)
+	_add("brake", "REM", Control.PRESET_BOTTOM_RIGHT, at.call(0, 1, d), Vector2(d, d), circle, fs)
+	_add("ram", "RAM", Control.PRESET_BOTTOM_RIGHT, at.call(2, 1, d), Vector2(d, d), circle, fs)
+	_add("nitro", "NITRO", Control.PRESET_BOTTOM_RIGHT, at.call(1, 2, d), Vector2(d, d), circle, fs + k)
+	var slow := d * 0.62
+	_add("slow", "SLOW", Control.PRESET_BOTTOM_RIGHT, pad, Vector2(slow, slow), circle, (8.0 if phone else 9.0) * k)
+	# Gas pedal left of the diamond, only while auto-gas is off.
+	var gas := (Vector2(74, 92) if phone else Vector2(92, 116)) * k
+	_add("gas", "GAS", Control.PRESET_BOTTOM_RIGHT, Vector2(pad.x - 14 * k - gas.x, pad.y + 3 * cell - gas.y), gas, int(20 * k), (16.0 if phone else 19.0) * k)
+	# Edge: pause, reset, auto-gas (a bit higher on phones, clear of the diamond)
 	var e := (40.0 if phone else 46.0) * k
-	_add("auto", "AUTO\nGAS", Control.PRESET_CENTER_RIGHT, Vector2(-14 * k - e, -e / 2 - (82 if phone else 96) * k), Vector2(e, e), circle, 8 * k)
-	_add("pause", "II", Control.PRESET_CENTER_RIGHT, Vector2(-14 * k - e, -e / 2), Vector2(e, e), circle, 13 * k)
-	_add("reset", "↺", Control.PRESET_CENTER_RIGHT, Vector2(-14 * k - e, e / 2 + (32 if phone else 38) * k - e / 2), Vector2(e, e), circle, 20 * k)
+	var up := 30.0 if phone else 0.0
+	_add("auto", "AUTO\nGAS", Control.PRESET_CENTER_RIGHT, Vector2(-14 * k - e, -e / 2 - up - (82 if phone else 96) * k), Vector2(e, e), circle, 8 * k)
+	_add("pause", "II", Control.PRESET_CENTER_RIGHT, Vector2(-14 * k - e, -e / 2 - up), Vector2(e, e), circle, 13 * k)
+	_add("reset", "↺", Control.PRESET_CENTER_RIGHT, Vector2(-14 * k - e, (32 if phone else 38) * k - up), Vector2(e, e), circle, 20 * k)
+	_set_auto_gas(true, false)
 	var cfg := ConfigFile.new()
 	if cfg.load(SETTINGS) == OK:
-		_set_auto_gas(cfg.get_value("touch", "auto_gas", false))
+		# (v2 key: auto-gas became the default; the old key stored false for everyone.)
+		_set_auto_gas(cfg.get_value("touch", "auto_gas2", true), false)
 	set_shown(false)
 
 
@@ -108,7 +109,7 @@ func set_shown(v: bool) -> void:
 func _key_at(pos: Vector2) -> String:
 	for k in _buttons:
 		var p: Panel = _buttons[k]
-		if p.get_global_rect().grow(6).has_point(pos):
+		if p.visible and p.get_global_rect().grow(6).has_point(pos):
 			return k
 	return ""
 
@@ -139,13 +140,15 @@ func _input(e: InputEvent) -> void:
 	else:
 		return
 	if drag:
-		# Steering: sliding the thumb across to the other pad switches direction.
+		# Sliding the thumb switches between the steering pads, or between the held diamond
+		# buttons (e.g. from REM onto NITRO). Taps like RAM and SLOW only fire on a fresh press.
 		var k: String = _held.get(idx, "")
-		if k == "left" or k == "right":
-			var nk := _key_at(pos)
-			if (nk == "left" or nk == "right") and nk != k:
-				_held[idx] = nk
-				_sync()
+		for group in SLIDE:
+			if k in group:
+				var nk := _key_at(pos)
+				if nk != k and nk in group:
+					_held[idx] = nk
+					_sync()
 		return
 	if pressed:
 		var k := _key_at(pos)
@@ -171,19 +174,21 @@ func _input(e: InputEvent) -> void:
 		_sync()
 
 
-func _set_auto_gas(on: bool) -> void:
+func _set_auto_gas(on: bool, save := true) -> void:
 	_auto_gas = on
-	var cfg := ConfigFile.new()
-	cfg.load(SETTINGS)
-	cfg.set_value("touch", "auto_gas", on)
-	cfg.save(SETTINGS)
+	_buttons["gas"].visible = not on
+	if save:
+		var cfg := ConfigFile.new()
+		cfg.load(SETTINGS)
+		cfg.set_value("touch", "auto_gas2", on)
+		cfg.save(SETTINGS)
 	_sync()
 
 
 func _style(k: String, on: bool) -> void:
 	var sb := _buttons[k].get_theme_stylebox("panel") as StyleBoxFlat
 	sb.bg_color = Color(1, 138 / 255.0, 0, 0.55) if on else Color(10 / 255.0, 12 / 255.0, 22 / 255.0, 0.45)
-	sb.border_color = Hud.YELLOW if on else Color(1, 1, 1, 0.35)
+	sb.border_color = Hud.YELLOW if on else (NITRO_RIM if k == "nitro" else Color(1, 1, 1, 0.35))
 
 
 func _sync() -> void:

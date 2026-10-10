@@ -30,7 +30,8 @@ Eén build werkt op iPhone én iPad (liggend).
 
 Toetsenbord en gamepad zoals in de webversie (zie de README in de root; toetsen zijn te wijzigen via
 *Besturing → Toetsen instellen*). Op iPhone en iPad verschijnen knoppen op het scherm: schuif met je duim
-tussen ◀ en ▶, de RAM-knop kiest zelf de kant, AUTO GAS houdt het gas voor je ingedrukt. Een MFi- of
+tussen ◀ en ▶, de RAM-knop kiest zelf de kant, AUTO GAS staat standaard aan en rechts zitten NITRO, REM, RAM en DRIFT in een
+ruit zoals op een controller (GAS-pedaal verschijnt alleen als je AUTO GAS uitzet). Een MFi- of
 PlayStation/Xbox-controller werkt ook.
 
 ## Hoe het in elkaar zit

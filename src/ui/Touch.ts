@@ -1,17 +1,20 @@
 import type { Input } from '../core/Input';
 
-const AUTO_GAS_KEY = 'a35-autogas';
+// v2: auto-gas became the default; the old key stored '0' for everyone who played before.
+const AUTO_GAS_KEY = 'a35-autogas2';
 
 /**
- * On-screen controls for phones and tablets: steering pads on the left, pedals on the right,
- * nitro/handbrake/ram buttons in between and a pause button. Multi-touch via pointer events;
- * a finger can slide from one steering pad to the other without lifting.
+ * On-screen controls for phones and tablets: steering pads on the left, a controller-style
+ * diamond of action buttons on the right (nitro, brake, ram, drift; slow-mo in the corner) and
+ * pause/reset/auto-gas at the edge. Auto-gas is on by default; turned off, a GAS pedal appears
+ * beside the diamond. Multi-touch via pointer events; a finger can slide from one steering pad
+ * to the other, or across the diamond, without lifting.
  */
 export class TouchControls {
   readonly root = document.createElement('div');
   private held = new Map<number, string>();
   /** Auto-gas: throttle stays on unless you brake (no thumb pinned to GAS the whole race). */
-  private autoGas = false;
+  private autoGas = true;
   private autoBtn: HTMLButtonElement;
 
   constructor(private input: Input) {
@@ -24,22 +27,20 @@ export class TouchControls {
         <button type="button" data-k="left" aria-label="Links">◀</button>
         <button type="button" data-k="right" aria-label="Rechts">▶</button>
       </div>
-      <div class="t-mid">
-        <button type="button" data-k="ram" aria-label="Rammen">RAM</button>
-        <button type="button" data-k="drift" aria-label="Handrem">DRIFT</button>
-        <button type="button" data-k="nitro" aria-label="Nitro">NITRO</button>
-        <button type="button" data-k="slow" aria-label="Bullet time">SLOW</button>
-      </div>
-      <div class="t-right">
-        <button type="button" data-k="brake" aria-label="Rem">REM</button>
-        <button type="button" data-k="gas" aria-label="Gas">GAS</button>
+      <button type="button" class="t-gas" data-k="gas" aria-label="Gas">GAS</button>
+      <div class="t-pad">
+        <button type="button" class="t-slow" data-k="slow" aria-label="Bullet time">SLOW</button>
+        <button type="button" class="t-n" data-k="drift" aria-label="Handrem">DRIFT</button>
+        <button type="button" class="t-w" data-k="brake" aria-label="Rem">REM</button>
+        <button type="button" class="t-e" data-k="ram" aria-label="Rammen">RAM</button>
+        <button type="button" class="t-s" data-k="nitro" aria-label="Nitro">NITRO</button>
       </div>`;
     document.body.appendChild(this.root);
     this.autoBtn = this.root.querySelector('[data-k="auto"]') as HTMLButtonElement;
     try {
-      this.setAutoGas(localStorage.getItem(AUTO_GAS_KEY) === '1');
+      this.setAutoGas(localStorage.getItem(AUTO_GAS_KEY) !== '0');
     } catch {
-      // Storage blocked: auto-gas starts off.
+      // Storage blocked: auto-gas stays on.
     }
 
     const keyAt = (x: number, y: number): HTMLElement | null => {
@@ -61,13 +62,15 @@ export class TouchControls {
       if (k === 'auto') this.setAutoGas(!this.autoGas);
       this.sync();
     };
-    // Steering: sliding the thumb across to the other pad switches direction.
+    // Sliding the thumb switches between the steering pads, or between the held diamond buttons
+    // (e.g. from REM onto NITRO). Taps like RAM and SLOW only fire on a fresh press.
+    const SLIDE = [['left', 'right'], ['brake', 'nitro', 'drift', 'gas']];
     const move = (e: PointerEvent) => {
       const k = this.held.get(e.pointerId);
-      if (k !== 'left' && k !== 'right') return;
-      const b = keyAt(e.clientX, e.clientY);
-      const nk = b?.dataset.k;
-      if ((nk === 'left' || nk === 'right') && nk !== k) {
+      const group = SLIDE.find((g) => g.includes(k!));
+      if (!group) return;
+      const nk = keyAt(e.clientX, e.clientY)?.dataset.k;
+      if (nk && nk !== k && group.includes(nk)) {
         this.held.set(e.pointerId, nk);
         this.sync();
       }
@@ -97,6 +100,7 @@ export class TouchControls {
     this.autoGas = on;
     this.autoBtn.classList.toggle('on', on);
     this.autoBtn.setAttribute('aria-pressed', String(on));
+    this.root.classList.toggle('autogas', on);
     try {
       localStorage.setItem(AUTO_GAS_KEY, on ? '1' : '0');
     } catch {

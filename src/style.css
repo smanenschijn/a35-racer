@@ -264,7 +264,7 @@ html, body {
 }
 
 /* ---------- Touch controls ---------- */
-.touch { position: fixed; inset: 0; pointer-events: none; z-index: 4; user-select: none; -webkit-user-select: none; touch-action: none; }
+.touch { --pad-btn: 76px; --pad-cell: calc(var(--pad-btn) * 0.78); position: fixed; inset: 0; pointer-events: none; z-index: 4; user-select: none; -webkit-user-select: none; touch-action: none; }
 .touch button {
   pointer-events: auto; font: inherit; color: #fff; background: rgba(10, 12, 22, 0.45); border: 2px solid rgba(255, 255, 255, 0.35);
   border-radius: 50%; touch-action: none; -webkit-tap-highlight-color: transparent; letter-spacing: 1px;
@@ -272,22 +272,29 @@ html, body {
 .touch button.on { background: rgba(255, 138, 0, 0.55); border-color: var(--yellow); }
 .touch .t-left { position: absolute; left: 18px; bottom: 24px; display: flex; gap: 14px; }
 .touch .t-left button { width: 84px; height: 84px; font-size: 30px; }
-.touch .t-right { position: absolute; right: 18px; bottom: 24px; display: flex; gap: 14px; align-items: flex-end; }
-.touch .t-right button { width: 78px; height: 78px; font-size: 15px; }
-.touch .t-right [data-k="gas"] { width: 96px; height: 120px; border-radius: 22px; font-size: 20px; }
-.touch .t-mid { position: absolute; right: 230px; bottom: 30px; display: grid; grid-template-columns: repeat(2, 64px); gap: 10px; }
-.touch .t-mid button { width: 64px; height: 50px; border-radius: 12px; font-size: 11px; }
+.touch .t-gas { position: absolute; bottom: 24px; right: calc(18px + 3 * var(--pad-cell) + 14px); width: 92px; height: 116px; border-radius: 22px; font-size: 19px; }
+.touch.autogas .t-gas { display: none; }
+/* Action diamond, like a controller's face buttons: NITRO under the thumb, REM left, RAM right, DRIFT on top. */
+.touch .t-pad {
+  position: absolute; right: 18px; bottom: 24px; display: grid;
+  grid-template: repeat(3, var(--pad-cell)) / repeat(3, var(--pad-cell)); place-items: center; pointer-events: none;
+}
+.touch .t-pad button { width: var(--pad-btn); height: var(--pad-btn); font-size: 13px; letter-spacing: 0; }
+.touch .t-pad .t-n { grid-area: 1 / 2; }
+.touch .t-pad .t-w { grid-area: 2 / 1; }
+.touch .t-pad .t-e { grid-area: 2 / 3; }
+.touch .t-pad .t-s { grid-area: 3 / 2; font-size: 14px; border-color: rgba(255, 216, 0, 0.6); }
+.touch .t-pad .t-slow { grid-area: 1 / 1; width: calc(var(--pad-btn) * 0.62); height: calc(var(--pad-btn) * 0.62); font-size: 9px; place-self: start; }
 .touch .t-pause { position: absolute; top: 50%; right: 14px; transform: translateY(-50%); width: 46px; height: 46px; font-size: 14px; }
 .touch .t-reset { position: absolute; top: calc(50% + 38px); right: 14px; width: 46px; height: 46px; font-size: 22px; }
 .touch .t-auto { position: absolute; top: calc(50% - 96px); right: 14px; width: 46px; height: 46px; font-size: 9px; line-height: 1.1; letter-spacing: 0; }
 @media (max-width: 720px) {
   .touch .t-left button { width: 70px; height: 70px; }
-  .touch .t-mid { right: 50%; transform: translateX(50%); bottom: 110px; }
 }
 /* Touch HUD tweaks: make room for the buttons. */
 body:has(.touch:not([hidden])) .hud-help { display: none; }
 body:has(.touch:not([hidden])) .hud-bl { bottom: 130px; }
-body:has(.touch:not([hidden])) .hud-br { bottom: 150px; }
+body:has(.touch:not([hidden])) .hud-br { bottom: 220px; }
 
 /* ---------- Short screens (phones in landscape) ---------- */
 @media (max-height: 520px) {
@@ -320,17 +327,21 @@ body:has(.touch:not([hidden])) .hud-br { bottom: 150px; }
   .hud-help { display: none; }
   .now-playing { bottom: 70px; font-size: 13px; }
   .hud-reset { bottom: 64px; font-size: 14px; padding: 6px 14px; }
-  .touch .t-reset { top: calc(50% + 32px); width: 40px; height: 40px; font-size: 18px; }
-  .touch .t-auto { top: calc(50% - 82px); width: 40px; height: 40px; font-size: 8px; }
+  /* Edge column a bit higher so the reset button stays clear of the action diamond. */
+  .touch .t-pause { top: calc(50% - 30px); }
+  .touch .t-reset { top: calc(50% + 2px); width: 40px; height: 40px; font-size: 18px; }
+  .touch .t-auto { top: calc(50% - 112px); width: 40px; height: 40px; font-size: 8px; }
   /* With touch buttons: gauges go up beside the stage info, damage under the position. */
   body:has(.touch:not([hidden])) .hud-bl { bottom: auto; top: 64px; flex-direction: row; }
-  body:has(.touch:not([hidden])) .hud-br { bottom: auto; top: 58px; }
+  body:has(.touch:not([hidden])) .hud-br { bottom: auto; top: 58px; right: 64px; }
   body:has(.touch:not([hidden])) .gauge { display: none; }
   .touch .t-left button { width: 64px; height: 64px; font-size: 24px; }
-  .touch .t-right button { width: 62px; height: 62px; }
-  .touch .t-right [data-k="gas"] { width: 78px; height: 96px; }
-  .touch .t-mid { right: 50%; transform: translateX(50%); bottom: 14px; grid-template-columns: repeat(4, 52px); }
-  .touch .t-mid button { width: 56px; height: 44px; }
+  .touch { --pad-btn: 60px; }
+  .touch .t-pad { bottom: 14px; }
+  .touch .t-pad button { font-size: 11px; }
+  .touch .t-pad .t-s { font-size: 12px; }
+  .touch .t-pad .t-slow { font-size: 8px; }
+  .touch .t-gas { bottom: 14px; width: 74px; height: 92px; font-size: 16px; }
   .menu.title .logo .a35, .menu.main .logo .a35 { font-size: 64px; }
   .menu.title .logo .racer, .menu.main .logo .racer { font-size: 42px; }
   .menu-items button { font-size: 16px; padding: 6px 12px; }
