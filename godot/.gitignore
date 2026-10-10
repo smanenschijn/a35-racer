@@ -1,0 +1,7 @@
+.godot/
+/build/
+export_credentials.cfg
+# synced copies (scripts/sync-godot-assets.sh)
+/assets/models/*.glb
+/assets/music/*.mp3
+/assets/route/*.json
