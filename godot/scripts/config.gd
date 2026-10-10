@@ -58,9 +58,11 @@ static var T := {
 	"aiCornerLatAccel": 13.0,
 	"aiAggression": 1.0,
 	"rubberBandBehind": 1.07, # power factor for a rival far behind the player
-	"rubberBandAhead": 0.82, # power factor for a rival far ahead of the player (eases in over rubberBandRange)
-	"rubberBandRange": 420.0, # metres ahead over which a rival backs off to rubberBandAhead
-	"playerCatchUp": 0.1, # extra power for the player when far behind the leader
+	"rubberBandAhead": 0.76, # power factor for a rival far ahead of the player (eases in over rubberBandRange)
+	"rubberBandRange": 260.0, # metres ahead over which a rival backs off to rubberBandAhead
+	"aiNitroLead": 120.0, # rivals this far ahead of the player save their nitro
+	"playerCatchUp": 0.16, # extra power for the player when far behind the leader
+	"playerCatchUpRange": 220.0, # metres behind the leader (after the first 40) over which it builds up
 	"draftBonus": 0.07, # extra power while tucked in behind another car (slipstream)
 	"draftCharge": 1.2, # seconds in the slipstream before the slingshot is ready
 	"slingshotBonus": 0.16, # extra power when you pull out of a charged slipstream
@@ -77,6 +79,10 @@ static var T := {
 	"speedCameraKmh": 140.0,
 	"bustSeconds": 1.4, # how long the police must pin you down
 	"bustPenalty": 3, # seconds per wanted star
+	"policeRamDamage": 0.45, # a police PIT is about shoving you off line, not wrecking you: fraction of ramDamage
+	"policePitInterval": 1.6, # seconds between PITs from any unit (they take turns)
+	"policeWreckHeatDrop": 2.0, # stars the police drop after they wrecked you (and leave you alone for a while)
+	"policeWreckGrace": 10.0, # seconds after such a wreck before units may PIT again
 
 	# Camera
 	"camDistance": 7.2,

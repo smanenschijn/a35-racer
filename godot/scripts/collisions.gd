@@ -317,6 +317,7 @@ static func _land_ram(r: Vehicle, v: Vehicle, px: float, pz: float, time: float,
 
 	var lv := to_local(v, px, pz)
 	var lr := to_local(r, px, pz)
-	v.add_damage(v.zone_at(lv.x, lv.y), T.ramDamage, lv.x, lv.y, r, time, events)
+	var dmg: float = T.ramDamage * (T.policeRamDamage if r.role == "police" else 1.0)
+	v.add_damage(v.zone_at(lv.x, lv.y), dmg, lv.x, lv.y, r, time, events)
 	r.add_damage(r.zone_at(lr.x, lr.y), 1.5, lr.x, lr.y, null, time, events)
 	events.emit("impact", {"x": px, "y": (r.y + v.y) / 2 + 0.6, "z": pz, "strength": 14.0, "kind": "car", "a": r, "b": v})

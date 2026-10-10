@@ -212,7 +212,7 @@ export class AIDriver {
     }
     inp.handbrake = false;
     // (No nitro while waiting for a player who fell behind.)
-    inp.nitro = gap < -200 ? false : v.nitro > 0.6 && Math.abs(inp.steer) < 0.3 && speed > 25 && !blocked && Math.random() < 0.02 * (1 + p.skill) ? true : inp.nitro && v.nitro > 0.1 && !blocked;
+    inp.nitro = gap < -tuning.aiNitroLead ? false : v.nitro > 0.6 && Math.abs(inp.steer) < 0.3 && speed > 25 && !blocked && Math.random() < 0.02 * (1 + p.skill) ? true : inp.nitro && v.nitro > 0.1 && !blocked;
 
     // --- Stuck recovery ---
     const facingBack = Math.abs(wrap(v.heading - track.frame(v.s).heading)) > 1.8;

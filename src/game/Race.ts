@@ -355,6 +355,8 @@ export class Race {
         this.respawnT = 2.6;
         cam.addShake(1);
         this.d.rumble(1, 1, 600);
+        // Wrecked by the police: they've made their point and back off, instead of finishing you off again.
+        if (attacker?.role === 'police' && this.state === 'racing') this.police.backOff();
         return;
       }
       const byPlayer = attacker === this.player;
@@ -672,7 +674,7 @@ export class Race {
     const p = this.player;
     let leader = -Infinity;
     for (const v of this.racers) if (v !== p && !v.wrecked && !v.finished) leader = Math.max(leader, v.s);
-    const behind = this.state === 'racing' ? Math.max(0, Math.min(1, (leader - p.s - 60) / 300)) : 0;
+    const behind = this.state === 'racing' ? Math.max(0, Math.min(1, (leader - p.s - 40) / tuning.playerCatchUpRange)) : 0;
     p.powerFactor = (1 + tuning.playerCatchUp * behind) * (1 + this.slipstream(p, dt));
 
     // Stuck? Then offer the reset button.

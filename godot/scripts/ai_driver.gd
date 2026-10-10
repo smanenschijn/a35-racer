@@ -219,7 +219,7 @@ func update(dt: float, track: Track, others: Array, player: Vehicle) -> void:
 		inp.brake = 0.7
 	inp.handbrake = false
 	# (No nitro while waiting for a player who fell behind.)
-	if gap < -200:
+	if gap < -Config.T.aiNitroLead:
 		inp.nitro = false
 	elif v.nitro > 0.6 and absf(inp.steer) < 0.3 and spd > 25 and not blocked and randf() < 0.02 * (1 + p.skill):
 		inp.nitro = true

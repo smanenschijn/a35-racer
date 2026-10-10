@@ -43,6 +43,8 @@ export class PoliceManager {
   private roadblockCooldown = 0;
   private bustTimer = 0;
   private spawnCooldown = 0;
+  /** Shared between units: they take turns at a PIT instead of piling on. */
+  private pitCooldown = 0;
   readonly cameras: { s: number; flash: THREE.MeshStandardMaterial; flashT: number }[] = [];
   private prevPlayerS = 0;
   private d: PoliceDeps;
@@ -112,6 +114,7 @@ export class PoliceManager {
     this.calm = 0;
     this.bustTimer = 0;
     this.spawnCooldown = 0;
+    this.pitCooldown = 0;
     this.roadblockCooldown = 10;
     for (const u of this.units) {
       u.state = 'parked';
@@ -134,8 +137,19 @@ export class PoliceManager {
     return [0, 1, 1, 2, 2, 3][this.stars];
   }
 
+  /** The police wrecked the player: fewer stars, the chase is called off and no PITs for a while. */
+  backOff(): void {
+    this.heat = Math.max(0, this.heat - tuning.policeWreckHeatDrop);
+    this.calm = 0;
+    this.bustTimer = 0;
+    this.pitCooldown = tuning.policeWreckGrace;
+    this.spawnCooldown = Math.max(this.spawnCooldown, tuning.policeWreckGrace * 0.5);
+    for (const u of this.units) if (u.state === 'chase') this.release(u);
+  }
+
   update(dt: number, player: Vehicle, all: Vehicle[], racing: boolean, time: number): void {
     const t = this.d.track;
+    this.pitCooldown -= dt;
 
     // --- Speed cameras ---
     const kmh = player.speed * 3.6;
@@ -301,10 +315,11 @@ export class PoliceManager {
 
     // PIT: shove the player when alongside.
     const lateral = player.d - v.d;
-    if (Math.abs(ds) < 4 && Math.abs(lateral) > 1.2 && Math.abs(lateral) < 4 && u.attackTimer <= 0 && v.ramCooldown <= 0) {
+    if (Math.abs(ds) < 4 && Math.abs(lateral) > 1.2 && Math.abs(lateral) < 4 && u.attackTimer <= 0 && this.pitCooldown <= 0 && v.ramCooldown <= 0 && !player.wrecked) {
       if (lateral > 0) inp.ramRight = true;
       else inp.ramLeft = true;
-      u.attackTimer = 3 - this.stars * 0.3;
+      u.attackTimer = 3.4 - this.stars * 0.2;
+      this.pitCooldown = tuning.policePitInterval;
     }
   }
 

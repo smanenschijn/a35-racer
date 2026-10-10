@@ -11,6 +11,8 @@ var _roadblock := {} # {s, cars}
 var _roadblock_cooldown := 0.0
 var _bust_timer := 0.0
 var _spawn_cooldown := 0.0
+## Shared between units: they take turns at a PIT instead of piling on.
+var _pit_cooldown := 0.0
 var cameras: Array = [] # {s, flash: StandardMaterial3D, flash_t}
 var _prev_player_s := 0.0
 var _track: Track
@@ -94,6 +96,7 @@ func reset() -> void:
 	_calm = 0.0
 	_bust_timer = 0.0
 	_spawn_cooldown = 0.0
+	_pit_cooldown = 0.0
 	_roadblock_cooldown = 10.0
 	for u in _units:
 		u.state = "parked"
@@ -114,9 +117,23 @@ func _desired_units() -> int:
 	return [0, 1, 1, 2, 2, 3][stars]
 
 
+## The police wrecked the player: fewer stars, the chase is called off and no PITs for a while.
+func back_off() -> void:
+	var T := Config.T
+	heat = maxf(0.0, heat - T.policeWreckHeatDrop)
+	_calm = 0.0
+	_bust_timer = 0.0
+	_pit_cooldown = T.policeWreckGrace
+	_spawn_cooldown = maxf(_spawn_cooldown, T.policeWreckGrace * 0.5)
+	for u in _units:
+		if u.state == "chase":
+			_release(u)
+
+
 func update(dt: float, player: Vehicle, all: Array, racing: bool) -> void:
 	var T := Config.T
 	var t := _track
+	_pit_cooldown -= dt
 
 	# --- Speed cameras ---
 	var kmh := player.speed * 3.6
@@ -327,12 +344,13 @@ func _chase(u: Dictionary, player: Vehicle, all: Array, dt: float) -> void:
 
 	# PIT: shove the player when alongside.
 	var lateral := player.d - v.d
-	if absf(ds) < 4 and absf(lateral) > 1.2 and absf(lateral) < 4 and u.attack_timer <= 0 and v.ram_cooldown <= 0:
+	if absf(ds) < 4 and absf(lateral) > 1.2 and absf(lateral) < 4 and u.attack_timer <= 0 and _pit_cooldown <= 0 and v.ram_cooldown <= 0 and not player.wrecked:
 		if lateral > 0:
 			inp.ram_right = true
 		else:
 			inp.ram_left = true
-		u.attack_timer = 3 - stars * 0.3
+		u.attack_timer = 3.4 - stars * 0.2
+		_pit_cooldown = Config.T.policePitInterval
 
 
 func _cruise(u: Dictionary) -> void:
