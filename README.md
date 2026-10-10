@@ -3,7 +3,7 @@
 Arcade-racegame in de browser: *Destruction Derby* meets *A2 Racer*, over de N35/A35 van Raalte naar Enschede.
 Zie [docs/GDD.md](docs/GDD.md) voor het volledige game design.
 
-**Speel:** https://smanenschijn.github.io/a35-racer/
+**Speel:** https://smanenschijn.github.io/a35-racer/ · **iPhone, iPad en Mac:** de Godot-versie in [godot/](godot/README.md)
 
 ## Status: mijlpaal 5 (de volledige race)
 
