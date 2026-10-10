@@ -41,6 +41,14 @@ var _warmup := 3.0
 
 
 func _ready() -> void:
+	# Phones: the 900-high canvas would shrink the UI to less than half size; scale it up so it
+	# matches the web version's short-screen layout: one canvas unit per point, like a CSS pixel.
+	var pts := DisplayServer.window_get_size().y / maxf(1.0, DisplayServer.screen_get_scale())
+	if pts < 600:
+		get_tree().root.content_scale_factor = clampf(900.0 / maxf(pts, 300.0), 1.0, 2.4)
+	if OS.has_feature("mobile"):
+		_scale_max = 1.0
+		get_viewport().scaling_3d_scale = 0.8
 	_show_loading()
 	# Two frames so the loading screen is on before the heavy lifting.
 	await get_tree().process_frame
@@ -154,12 +162,12 @@ func _setup_world() -> void:
 	env = Environment.new()
 	# Golden hour: deep blue overhead, warm orange haze at the horizon, the sun just above it.
 	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color("3d6db0")
-	sky_mat.sky_horizon_color = Color("f0a46a")
-	sky_mat.sky_curve = 0.12
-	sky_mat.sky_energy_multiplier = 1.1
+	sky_mat.sky_top_color = Color("2c5f78")
+	sky_mat.sky_horizon_color = Color("e2a674")
+	sky_mat.sky_curve = 0.1
+	sky_mat.sky_energy_multiplier = 1.0
 	sky_mat.ground_horizon_color = Color("e8a070")
-	sky_mat.ground_bottom_color = Color("6a5a48")
+	sky_mat.ground_bottom_color = Color("5a4c3e")
 	sky_mat.ground_curve = 0.05
 	sky_mat.sun_angle_max = 8.0
 	sky_mat.sun_curve = 0.08
@@ -169,12 +177,12 @@ func _setup_world() -> void:
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_sky_contribution = 0.6
+	env.ambient_light_sky_contribution = 0.5
 	env.ambient_light_color = Color("ffd2a8")
-	env.ambient_light_energy = 1.0
+	env.ambient_light_energy = 0.8
 	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
 	env.tonemap_mode = Environment.TONE_MAPPER_ACES
-	env.tonemap_exposure = 1.05
+	env.tonemap_exposure = 0.95
 	env.tonemap_white = 6.0
 	env.fog_enabled = true
 	env.fog_mode = Environment.FOG_MODE_DEPTH
@@ -229,7 +237,6 @@ func _on_finished(r: Dictionary) -> void:
 		_campaign.total += r.time
 	if _auto.has("play"):
 		print("[auto] finished position=%d time=%.1f qualified=%s" % [r.position, r.time, r.qualified])
-		return
 	menu.show_result(r, {"campaign": campaign, "campaignTotal": _campaign.get("total", 0.0), "unlocked": unlocked})
 	if campaign and not r.qualified:
 		_campaign = {} # failed: campaign over, the stage can be retried
@@ -364,6 +371,8 @@ func _parse_auto_args() -> void:
 			_auto.wait = float(a.substr(7))
 		elif a.begins_with("--stage="):
 			_auto.stage = int(a.substr(8))
+		elif a.begins_with("--heat="):
+			_auto.heat = float(a.substr(7))
 		elif a.begins_with("--at="):
 			_auto.at = float(a.substr(5))
 		elif a.begins_with("--menu="):
@@ -393,6 +402,12 @@ func _auto_step(dt: float) -> void:
 		return
 	_auto.t += dt
 	_auto.frames += 1
+	if _auto.has("heat") and race.state == "racing":
+		# Screenshots: start with a wanted level and a full nitro tank.
+		race.police.add_heat(_auto.heat)
+		race.player.nitro = 1.0
+		race.player.input.nitro = true
+		_auto.erase("heat")
 	if _auto.t >= _auto.wait:
 		if DisplayServer.get_name() != "headless":
 			get_viewport().get_texture().get_image().save_png(_auto.shot)

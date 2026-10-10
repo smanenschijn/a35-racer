@@ -60,8 +60,12 @@ Godot --path godot -- --autoshot=/tmp/menu.png --menu=cars --wait=3            #
 Godot --headless --fixed-fps 30 --path godot -- --autoshot=/tmp/x.png --autoplay --stage=0 --wait=400
 ```
 
-`--at=<meter>` zet de grid ergens op de route, `--touch` toont de touchknoppen op een desktop. De run print
-hoeveel milliseconden physics en beeld per frame kosten.
+`--at=<meter>` zet de grid ergens op de route, `--heat=3` start met drie sterren en een volle nitrotank,
+`--touch` toont de touchknoppen op een desktop. De run print hoeveel milliseconden physics en beeld per frame kosten.
+
+```bash
+Godot --path godot -s res://tests/input_test.gd    # toetsen en touch door menu's en race heen, print ok/FAIL
+```
 
 Lettertypen: Bangers en Russo One (SIL Open Font License), Liberation Sans (SIL Open Font License).
 Kaartdata © OpenStreetMap-bijdragers (ODbL).

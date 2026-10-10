@@ -34,6 +34,7 @@ var _opened_at := 0
 ## Rebinding: the action waiting for a key press.
 var _capturing := ""
 var _font_ui: Font
+var _font_italic: Font
 var _font_big: Font
 var _font_text: Font
 var _bg: Control
@@ -44,6 +45,7 @@ var _scroll: ScrollContainer
 func _ready() -> void:
 	layer = 5
 	_font_ui = load("res://assets/fonts/RussoOne-Regular.ttf")
+	_font_italic = Hud.italic(_font_ui, 0.14)
 	_font_big = load("res://assets/fonts/Bangers-Regular.ttf")
 	_font_text = load("res://assets/fonts/LiberationSans-Bold.ttf")
 	touch = Config.is_touch()
@@ -287,16 +289,26 @@ func _rich(text: String, size: int, col := Color.WHITE) -> RichTextLabel:
 
 
 func _logo(parent: Control) -> void:
-	var s := 0.55 if compact else 1.0
+	var s := 0.45 if compact else 1.0
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", int(-40 * s))
 	box.rotation = deg_to_rad(-5)
-	var a35 := _label("A35", _font_big, int(150 * s), Color("ffb000"), 0)
-	a35.add_theme_color_override("font_shadow_color", Color("1d3cff"))
-	a35.add_theme_constant_override("shadow_offset_x", int(6 * s))
-	a35.add_theme_constant_override("shadow_offset_y", int(6 * s))
-	a35.add_theme_color_override("font_outline_color", Color("ff2a00"))
-	a35.add_theme_constant_override("outline_size", int(4 * s))
+	# "A35": yellow → orange → red, with a blue drop shadow (a shader on its own label, so the
+	# shadow label underneath keeps its colour).
+	var a35 := MarginContainer.new()
+	var shadow_box := MarginContainer.new()
+	shadow_box.add_theme_constant_override("margin_left", int(6 * s))
+	shadow_box.add_theme_constant_override("margin_top", int(6 * s))
+	shadow_box.add_child(_label("A35", _font_big, int(150 * s), Color("1d3cff"), 0))
+	a35.add_child(shadow_box)
+	var grad := _label("A35", _font_big, int(150 * s), Color.WHITE, 0)
+	var mat := ShaderMaterial.new()
+	mat.shader = _gradient_shader()
+	grad.material = mat
+	grad.resized.connect(func(): mat.set_shader_parameter("height", grad.size.y))
+	grad.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	grad.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	a35.add_child(grad)
 	box.add_child(a35)
 	var racer := _label("RACER", _font_big, int(96 * s), Color("e8e8f0"), 0)
 	racer.add_theme_color_override("font_shadow_color", Color("c4161c"))
@@ -304,6 +316,29 @@ func _logo(parent: Control) -> void:
 	racer.add_theme_constant_override("shadow_offset_y", int(5 * s))
 	box.add_child(racer)
 	parent.add_child(box)
+
+
+static var _grad_shader: Shader
+
+
+static func _gradient_shader() -> Shader:
+	if _grad_shader == null:
+		_grad_shader = Shader.new()
+		_grad_shader.code = """shader_type canvas_item;
+// Vertical gradient over the label (the web logo's linear-gradient(#fff36b, #ff8a00 55%, #ff2a00)).
+uniform float height = 100.0;
+varying float y;
+void vertex() { y = VERTEX.y; }
+void fragment() {
+	float t = clamp(y / height, 0.0, 1.0);
+	vec3 top = vec3(1.0, 0.953, 0.42);
+	vec3 mid = vec3(1.0, 0.541, 0.0);
+	vec3 bot = vec3(1.0, 0.165, 0.0);
+	vec3 c = t < 0.55 ? mix(top, mid, t / 0.55) : mix(mid, bot, (t - 0.55) / 0.45);
+	COLOR = vec4(c, COLOR.a);
+}
+"""
+	return _grad_shader
 
 
 func _title(text: String) -> Label:
@@ -334,7 +369,7 @@ func _list(items: Array) -> VBoxContainer:
 		b.text = it.label
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.focus_mode = Control.FOCUS_NONE
-		b.add_theme_font_override("font", _font_ui)
+		b.add_theme_font_override("font", _font_italic)
 		b.add_theme_font_size_override("font_size", (16 if compact else 22) if screen != "keys" else (14 if compact else 16))
 		var col := Color(1, 1, 1, 0.45) if it.get("disabled", false) else Color.WHITE
 		for st in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:

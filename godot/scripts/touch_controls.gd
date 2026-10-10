@@ -27,28 +27,30 @@ func _ready() -> void:
 	add_child(_root)
 	var pts := DisplayServer.window_get_size().y / maxf(1.0, DisplayServer.screen_get_scale())
 	var phone := pts < 600
-	# Sizes in web-CSS pixels; a phone shows the 900-high canvas at less than half size.
-	var k := 2.0 if phone else 1.15
+	# Sizes in web-CSS pixels (the short-screen set on phones, where main.gd scales the canvas up).
+	var k := 1.0 if phone else 1.15
 	var circle := 999
 	# Left: steering
-	var steer := 84 * k
-	_add("left", "◀", Control.PRESET_BOTTOM_LEFT, Vector2(18 * k, -24 * k - steer), Vector2(steer, steer), circle, 30 * k)
-	_add("right", "▶", Control.PRESET_BOTTOM_LEFT, Vector2(18 * k + steer + 14 * k, -24 * k - steer), Vector2(steer, steer), circle, 30 * k)
+	var steer := (64.0 if phone else 84.0) * k
+	_add("left", "◀", Control.PRESET_BOTTOM_LEFT, Vector2(18 * k, -24 * k - steer), Vector2(steer, steer), circle, 26 * k)
+	_add("right", "▶", Control.PRESET_BOTTOM_LEFT, Vector2(18 * k + steer + 14 * k, -24 * k - steer), Vector2(steer, steer), circle, 26 * k)
 	# Right: pedals
-	var gas := Vector2(96, 120) * k
-	var brake := 78 * k
-	_add("gas", "GAS", Control.PRESET_BOTTOM_RIGHT, Vector2(-18 * k - gas.x, -24 * k - gas.y), gas, int(22 * k), 20 * k)
-	_add("brake", "REM", Control.PRESET_BOTTOM_RIGHT, Vector2(-18 * k - gas.x - 14 * k - brake, -24 * k - brake), Vector2(brake, brake), circle, 15 * k)
+	var gas := (Vector2(78, 96) if phone else Vector2(96, 120)) * k
+	var brake := (62.0 if phone else 78.0) * k
+	_add("gas", "GAS", Control.PRESET_BOTTOM_RIGHT, Vector2(-18 * k - gas.x, -24 * k - gas.y), gas, int(20 * k), 18 * k)
+	_add("brake", "REM", Control.PRESET_BOTTOM_RIGHT, Vector2(-18 * k - gas.x - 14 * k - brake, -24 * k - brake), Vector2(brake, brake), circle, 14 * k)
 	# Middle: ram, drift, nitro, slow
 	var mid := ["ram", "drift", "nitro", "slow"]
 	var labels := {"ram": "RAM", "drift": "DRIFT", "nitro": "NITRO", "slow": "SLOW"}
-	var bs := Vector2(64, 50) * k
 	if phone:
 		# One row centred at the bottom, between the thumbs.
-		var w := 4 * bs.x + 3 * 10 * k
+		var bs := Vector2(56, 44)
+		var gap := 8.0
+		var w := 4 * bs.x + 3 * gap
 		for i in 4:
-			_add(mid[i], labels[mid[i]], Control.PRESET_CENTER_BOTTOM, Vector2(-w / 2 + i * (bs.x + 10 * k), -14 * k - bs.y), bs, int(12 * k), 11 * k)
+			_add(mid[i], labels[mid[i]], Control.PRESET_CENTER_BOTTOM, Vector2(-w / 2 + i * (bs.x + gap), -14 - bs.y), bs, 12, 11)
 	else:
+		var bs := Vector2(64, 50) * k
 		var right := 18 * k + gas.x + 14 * k + brake + 40 * k
 		for i in 4:
 			var col := i % 2
@@ -56,10 +58,10 @@ func _ready() -> void:
 			_add(mid[i], labels[mid[i]], Control.PRESET_BOTTOM_RIGHT,
 				Vector2(-right - (2 - col) * (bs.x + 10 * k), -30 * k - (2 - row) * (bs.y + 10 * k)), bs, int(12 * k), 11 * k)
 	# Edge: pause, reset, auto-gas
-	var e := 46 * k
-	_add("auto", "AUTO\nGAS", Control.PRESET_CENTER_RIGHT, Vector2(-14 * k - e, -e / 2 - 96 * k), Vector2(e, e), circle, 9 * k)
-	_add("pause", "II", Control.PRESET_CENTER_RIGHT, Vector2(-14 * k - e, -e / 2), Vector2(e, e), circle, 14 * k)
-	_add("reset", "↺", Control.PRESET_CENTER_RIGHT, Vector2(-14 * k - e, -e / 2 + 38 * k + e / 2), Vector2(e, e), circle, 22 * k)
+	var e := (40.0 if phone else 46.0) * k
+	_add("auto", "AUTO\nGAS", Control.PRESET_CENTER_RIGHT, Vector2(-14 * k - e, -e / 2 - (82 if phone else 96) * k), Vector2(e, e), circle, 8 * k)
+	_add("pause", "II", Control.PRESET_CENTER_RIGHT, Vector2(-14 * k - e, -e / 2), Vector2(e, e), circle, 13 * k)
+	_add("reset", "↺", Control.PRESET_CENTER_RIGHT, Vector2(-14 * k - e, e / 2 + (32 if phone else 38) * k - e / 2), Vector2(e, e), circle, 20 * k)
 	var cfg := ConfigFile.new()
 	if cfg.load(SETTINGS) == OK:
 		_set_auto_gas(cfg.get_value("touch", "auto_gas", false))

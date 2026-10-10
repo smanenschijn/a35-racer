@@ -12,6 +12,8 @@ const INK := Color("0b0d14")
 const PANEL := Color(8 / 255.0, 10 / 255.0, 20 / 255.0, 0.55)
 
 var font_ui: Font
+## Russo One slanted, like `font-style: italic` in the web version's CSS.
+var font_italic: Font
 var font_big: Font
 var font_text: Font
 ## Phone in landscape: smaller screen, bigger thumbs.
@@ -162,6 +164,7 @@ class PoliceGlow:
 func _ready() -> void:
 	layer = 2
 	font_ui = load("res://assets/fonts/RussoOne-Regular.ttf")
+	font_italic = italic(font_ui)
 	font_big = load("res://assets/fonts/Bangers-Regular.ttf")
 	font_text = load("res://assets/fonts/LiberationSans-Bold.ttf")
 	touch = Config.is_touch()
@@ -169,6 +172,18 @@ func _ready() -> void:
 	compact = touch and pts < 600
 	root = _full(self)
 	_build()
+
+
+static func italic(f: Font, slant := 0.2) -> FontVariation:
+	var v := FontVariation.new()
+	v.base_font = f
+	v.variation_transform = Transform2D(Vector2(1, 0), Vector2(slant, 1), Vector2.ZERO)
+	return v
+
+
+## Size for desktop/tablet or for a phone (short screen).
+func _z(desk: int, phone: int) -> int:
+	return phone if compact else desk
 
 
 static func make_label(text: String, f: Font, size: int, col := Color.WHITE, shadow := 3) -> Label:
@@ -263,18 +278,19 @@ func _build() -> void:
 	_flash.modulate.a = 0
 	_game.add_child(_flash)
 
-	var s := 0.8 if compact else 1.0
+	# Phones get the web version's short-screen sizes (the canvas is scaled up there, see main.gd).
+	var s := 0.55 if compact else 1.0
 	# --- Top left: position and standings ---
 	var tl := VBoxContainer.new()
 	tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tl.add_theme_constant_override("separation", 0)
-	_anchor(tl, Control.PRESET_TOP_LEFT, Vector2(22, 14))
+	_anchor(tl, Control.PRESET_TOP_LEFT, Vector2(12, 6) if compact else Vector2(22, 14))
 	_game.add_child(tl)
-	tl.add_child(make_label("POSITIE", font_ui, 16, YELLOW, 2))
+	tl.add_child(make_label("POSITIE", font_italic, 16, YELLOW, 2))
 	var pos_row := HBoxContainer.new()
 	pos_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_pos_num = make_label("8", font_ui, int(72 * s), Color.WHITE, 4)
-	_pos_total = make_label("/8", font_ui, int(30 * s), Color(1, 1, 1, 0.85), 3)
+	_pos_num = make_label("8", font_italic, _z(72, 40), Color.WHITE, 4)
+	_pos_total = make_label("/8", font_italic, _z(30, 18), Color(1, 1, 1, 0.85), 3)
 	_pos_total.size_flags_vertical = Control.SIZE_SHRINK_END
 	pos_row.add_child(_pos_num)
 	pos_row.add_child(_pos_total)
@@ -295,14 +311,14 @@ func _build() -> void:
 	var tr := VBoxContainer.new()
 	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tr.alignment = BoxContainer.ALIGNMENT_BEGIN
-	_anchor(tr, Control.PRESET_TOP_RIGHT, Vector2(-22, 18), true)
+	_anchor(tr, Control.PRESET_TOP_RIGHT, Vector2(-12, 8) if compact else Vector2(-22, 18), true)
 	_game.add_child(tr)
-	var stage_panel := panel_box(BLUE, Vector4(12, 6, 12, 6))
+	var stage_panel := panel_box(BLUE, Vector4(8, 4, 8, 4) if compact else Vector4(12, 6, 12, 6))
 	stage_panel.size_flags_horizontal = Control.SIZE_SHRINK_END
-	_stage_name = make_label("", font_ui, int(15 * s), Color.WHITE, 0)
+	_stage_name = make_label("", font_italic, _z(15, 10), Color.WHITE, 0)
 	stage_panel.add_child(_stage_name)
 	tr.add_child(stage_panel)
-	_stage_info = make_label("", font_ui, int(26 * s), Color.WHITE, 2)
+	_stage_info = make_label("", font_italic, _z(26, 16), Color.WHITE, 2)
 	_stage_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_stage_info.size_flags_horizontal = Control.SIZE_SHRINK_END
 	tr.add_child(_stage_info)
@@ -315,19 +331,19 @@ func _build() -> void:
 	top.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	top.offset_left = -160
 	top.offset_right = 160
-	top.offset_top = 8
+	top.offset_top = 4 if compact else 8
 	_game.add_child(top)
 	_clock_box = VBoxContainer.new()
 	_clock_box.add_theme_constant_override("separation", -8)
 	_clock_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var tl_lab := make_label("TIJD", font_ui, 13, YELLOW, 2)
+	var tl_lab := make_label("TIJD", font_ui, _z(13, 10), YELLOW, 2)
 	tl_lab.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_clock_box.add_child(tl_lab)
-	_clock = make_label("0", font_ui, int(64 * s), Color.WHITE, 4)
+	_clock = make_label("0", font_italic, _z(64, 38), Color.WHITE, 4)
 	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_clock_box.add_child(_clock)
 	top.add_child(_clock_box)
-	_wanted = make_label("★★★★★", font_text, int(30 * s), Color(1, 1, 1, 0.35), 2)
+	_wanted = make_label("★★★★★", font_text, _z(30, 18), Color(1, 1, 1, 0.35), 2)
 	_wanted.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	top.add_child(_wanted)
 	_bust = Bar.new()
@@ -354,12 +370,12 @@ func _build() -> void:
 	_gauge.position = Vector2(0, 0)
 	_gauge.size = Vector2(230, 130) * s
 	_br.add_child(_gauge)
-	_speed = make_label("0", font_ui, int(76 * s), Color.WHITE, 4)
+	_speed = make_label("0", font_italic, _z(76, 40), Color.WHITE, 4)
 	_speed.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_speed.position = Vector2(0, 30 * s)
 	_speed.size = Vector2(222 * s, 90 * s)
 	_br.add_child(_speed)
-	var unit := make_label("KM/U", font_ui, int(16 * s), YELLOW, 2)
+	var unit := make_label("KM/U", font_ui, _z(16, 11), YELLOW, 2)
 	unit.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	unit.position = Vector2(0, 118 * s)
 	unit.size = Vector2(220 * s, 24)
@@ -372,7 +388,7 @@ func _build() -> void:
 	_bl.alignment = BoxContainer.ALIGNMENT_END
 	_game.add_child(_bl)
 	_dmg = DamageCar.new()
-	_dmg.custom_minimum_size = Vector2(62, 114) * s
+	_dmg.custom_minimum_size = Vector2(36, 66) if compact else Vector2(62, 114)
 	_dmg.size_flags_vertical = Control.SIZE_SHRINK_END
 	_dmg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bl.add_child(_dmg)
@@ -381,16 +397,16 @@ func _build() -> void:
 	side.add_theme_constant_override("separation", 6)
 	side.size_flags_vertical = Control.SIZE_SHRINK_END
 	_bl.add_child(side)
-	side.add_child(make_label("SCHADE", font_ui, 12, YELLOW, 2))
-	_dmg_pct = make_label("0%", font_ui, int(28 * s), Color.WHITE, 3)
+	side.add_child(make_label("SCHADE", font_ui, _z(12, 9), YELLOW, 2))
+	_dmg_pct = make_label("0%", font_italic, _z(28, 18), Color.WHITE, 3)
 	side.add_child(_dmg_pct)
 	_nitro = Bar.new()
-	_nitro.custom_minimum_size = Vector2(210, 18) * s
+	_nitro.custom_minimum_size = Vector2(110, 12) if compact else Vector2(210, 18)
 	_nitro.text = "NITRO"
 	_nitro.font = font_ui
 	side.add_child(_nitro)
 	_bullet = Bar.new()
-	_bullet.custom_minimum_size = Vector2(210, 18) * s
+	_bullet.custom_minimum_size = Vector2(110, 12) if compact else Vector2(210, 18)
 	_bullet.fill_a = Color("7a2cff")
 	_bullet.fill_b = Color("d6a8ff")
 	_bullet.text = "SLOWMO"
@@ -417,8 +433,8 @@ func _build() -> void:
 	_countdown_box = _full(root)
 
 	# --- Edges: rivals alongside, look-back, restart hold ---
-	_side_l = make_label("◀◀", font_text, int(34 * s), YELLOW, 2)
-	_side_r = make_label("▶▶", font_text, int(34 * s), YELLOW, 2)
+	_side_l = make_label("◀◀", font_text, _z(34, 24), YELLOW, 2)
+	_side_r = make_label("▶▶", font_text, _z(34, 24), YELLOW, 2)
 	_side_l.set_anchors_preset(Control.PRESET_LEFT_WIDE)
 	_side_l.anchor_top = 0.6
 	_side_l.offset_left = 18
@@ -493,7 +509,7 @@ func _build() -> void:
 	_reset_btn = Button.new()
 	_reset_btn.text = "↺ Terug op de weg"
 	_reset_btn.add_theme_font_override("font", font_ui)
-	_reset_btn.add_theme_font_size_override("font_size", 24 if compact else 18)
+	_reset_btn.add_theme_font_size_override("font_size", _z(18, 14))
 	for st in ["normal", "hover", "pressed", "focus"]:
 		var sb := StyleBoxFlat.new()
 		sb.bg_color = Color(1, 0.54, 0, 0.85)
@@ -529,9 +545,9 @@ func _ram_box(text: String) -> Label:
 	sb.content_margin_left = 4
 	sb.content_margin_right = 4
 	p.add_theme_stylebox_override("panel", sb)
-	p.custom_minimum_size = Vector2(26, 26) * (0.8 if compact else 1.0)
+	p.custom_minimum_size = Vector2(20, 20) if compact else Vector2(26, 26)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var lb := make_label(text, font_ui, 12, Color.WHITE, 0)
+	var lb := make_label(text, font_ui, _z(12, 10), Color.WHITE, 0)
 	lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lb.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	p.add_child(lb)
@@ -540,25 +556,34 @@ func _ram_box(text: String) -> Label:
 
 ## Bottom corners; with touch buttons the gauges move up out of the thumbs' way.
 func _layout_corners() -> void:
-	var lift := 0.0
-	if touch:
-		lift = 150.0 if not compact else 0.0
-	_bl.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	_bl.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_bl.offset_left = 22
-	_bl.offset_bottom = -20 - lift
-	_bl.offset_top = -20 - lift
+	var bl_size := _bl.get_combined_minimum_size()
 	if touch and compact:
-		# Phone: damage and meters under the position, speed beside the stage info.
+		# Phone: damage and meters under the position, the speed under the stage info.
 		_bl.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		_bl.grow_vertical = Control.GROW_DIRECTION_END
-		_bl.offset_left = 22
-		_bl.offset_top = 150
-		_br.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-		_br.position = Vector2(-_br.size.x - 20, 100)
+		_bl.offset_left = 12
+		_bl.offset_top = 82
+		_bl.offset_right = 12 + bl_size.x
+		_bl.offset_bottom = 82 + bl_size.y
 		_gauge.visible = false
-	elif touch:
-		_br.position.y -= lift
+		_br.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		# (Left of the pause/reset/auto-gas column at the right edge.)
+		_br.offset_left = -64 - _br.size.x
+		_br.offset_right = -64
+		_br.offset_top = 58 - 30 * 0.55
+		_br.offset_bottom = _br.offset_top + _br.size.y
+		return
+	var lift := 150.0 if touch else 0.0
+	var left := 12.0 if compact else 22.0
+	_bl.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_bl.offset_left = left
+	_bl.offset_right = left + bl_size.x
+	_bl.offset_bottom = -20 - lift
+	_bl.offset_top = -20 - lift - bl_size.y
+	_br.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_br.offset_right = -24
+	_br.offset_left = -24 - _br.size.x
+	_br.offset_bottom = -16 - lift
+	_br.offset_top = -16 - lift - _br.size.y
 
 
 # ------------------------------------------------------------------ updates
@@ -697,7 +722,7 @@ func set_keys(k: Dictionary) -> void:
 
 func message(text: String, color: Variant = "#ffd400", big := false, duration := 1.4) -> void:
 	var col := Color(color) if color is String else color as Color
-	var lb := make_label(text, font_big, (84 if big else 44) if not compact else (60 if big else 34), col, 4)
+	var lb := make_label(text, font_big, _z(84, 46) if big else _z(44, 26), col, 4)
 	lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lb.add_theme_constant_override("outline_size", 6)
 	var holder := Control.new()
@@ -737,7 +762,7 @@ func taunt(who: String, text: String) -> void:
 	rt.fit_content = true
 	rt.autowrap_mode = TextServer.AUTOWRAP_OFF
 	rt.add_theme_font_override("normal_font", font_ui)
-	rt.add_theme_font_size_override("normal_font_size", 22 if not compact else 18)
+	rt.add_theme_font_size_override("normal_font_size", _z(22, 14))
 	rt.text = "[color=#ffd400]%s[/color]  “%s”" % [who, text]
 	rt.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	p.add_child(rt)
@@ -768,7 +793,7 @@ func show_now_playing(title: String) -> void:
 
 
 func countdown(text: String, go := false) -> void:
-	var lb := make_label(text, font_big, (130 if go else 160) if not compact else (90 if go else 110), Color("4dff6a") if go else YELLOW, 6)
+	var lb := make_label(text, font_big, _z(130, 70) if go else _z(160, 90), Color("4dff6a") if go else YELLOW, 6)
 	lb.add_theme_constant_override("outline_size", 8)
 	lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lb.set_anchors_preset(Control.PRESET_CENTER_TOP)
