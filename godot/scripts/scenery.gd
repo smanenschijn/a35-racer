@@ -19,6 +19,10 @@ var root := Node3D.new()
 var lights: Array = []
 ## Level crossings: {s, booms: [Node3D], lamps: Material, train: Node3D, dir: Vector3, origin: Vector3, t, phase}
 var crossings: Array = []
+## Chimney tops that steam (Twence): world positions, Race puffs smoke out of them near the player.
+var plumes: Array = []
+## Railways alongside the road: {s0, s1, d, train, s, dir, active, cooldown}
+var parallels: Array = []
 ## Slip road arrow trailers (flashing).
 var _arrows: Array = []
 ## Things that turn: [Node3D, axis, speed]
@@ -141,6 +145,17 @@ func build() -> void:
 	for r in f.railways:
 		if r.kind == "level":
 			_level_crossing(r)
+	for ic in f.interchanges:
+		_interchange(ic)
+	for r in f.railParallel:
+		_parallel_rail(r)
+	# Water names at the bridges, brown signs for the sights.
+	for w in f.waters:
+		_roadside_sign(w.s - 120.0, Tex.water_sign(String(w.name).replace(" (zijtak Almelo)", "")), Vector2(3.2, 1.0))
+	var sights := {"pretpark": "attractiepark", "berg": "Sallandse Heuvelrug", "heide": "natuurgebied", "kristalbad": "waterberging"}
+	for p in f.pois:
+		if sights.has(p.kind):
+			_roadside_sign(p.s - 400.0, Tex.tourist_sign(p.name, sights[p.kind]), Vector2(3.4, 1.33))
 	for p in f.pois:
 		match p.kind:
 			"kerk": _church(p)
@@ -151,6 +166,14 @@ func build() -> void:
 			"mast": _mast(p)
 			"schoorsteen": _chimney(p)
 			"pretpark": _theme_park(p)
+			"berg": b._hills(p.s, p.d)
+			"heide": _heath(p)
+			"xlpark": _business_park(p)
+			"urenco": _urenco(p)
+			"thales": _thales(p)
+			"stork": _stork(p)
+			"twence": _twence(p)
+			"kristalbad": _kristalbad(p)
 	b.root.add_child(root)
 
 
@@ -487,6 +510,79 @@ func _train() -> Node3D:
 	return n
 
 
+# ------------------------------------------------------------------ interchanges
+
+## Motorway interchange (Knooppunt Azelo, Buren): two big flyovers swinging over the A35, and the blue
+## gantry announcing the A1.
+func _interchange(ic: Dictionary) -> void:
+	var s: float = ic.s
+	var concrete := _m("a8a49c", 0.9)
+	var asphalt := _m("3a3b3e", 0.85)
+	var wall := _m("c9c5bc", 0.8)
+	for e in [[-90.0, 0.55, 8.0], [110.0, -0.45, 14.5]]:
+		var cs: float = s + e[0]
+		var skew: float = e[1]
+		var clear: float = e[2] # height above our road
+		var fr := t.frame(cs)
+		var right := Vector3(fr.rx, 0, fr.rz)
+		var fwd := Vector3(fr.fx, 0, fr.fz)
+		var dir := (right * cos(skew) + fwd * sin(skew)).normalized()
+		var centre := Vector3(fr.x, 0, fr.z) + right * Config.MEDIAN_C
+		var h0 := t.height_at(cs)
+		var pts := []
+		var k := -260.0
+		while k <= 260.0:
+			var y := (h0 + clear) * (1.0 - smoothstep(70.0, 250.0, absf(k)))
+			var p := centre + dir * k
+			pts.append(Vector3(p.x, maxf(0.05, y + 0.05), p.z))
+			k += 8.0
+		strip(pts, 5.0, asphalt)
+		# Deck underside and parapets.
+		var under := []
+		for p: Vector3 in pts:
+			under.append(p - Vector3(0, 1.1, 0))
+		strip(under, 5.6, concrete)
+		var across := Vector3(dir.z, 0, -dir.x)
+		for i in range(0, pts.size() - 1):
+			var a: Vector3 = pts[i]
+			var c: Vector3 = pts[i + 1]
+			var mid := (a + c) / 2.0
+			var seg := (c - a).length()
+			var yaw := atan2(c.x - a.x, c.z - a.z)
+			var pitch := -atan2(c.y - a.y, Vector2(c.x - a.x, c.z - a.z).length())
+			for side in [-1.0, 1.0]:
+				var pos: Vector3 = mid + across * side * 5.2 + Vector3(0, 0.45, 0)
+				b.add_mesh(_box(0.3, 0.9, seg + 0.05), Transform3D(Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, pitch), pos), wall)
+			# Piers, but not on the carriageways.
+			var lp := t.project(mid.x, mid.z)
+			var on_road := absf(lp.d) < Config.PAVED + 1.5 or (lp.d < -Config.PAVED and lp.d > Config.OPP_OUT - 1.5)
+			if i % 3 == 0 and mid.y > 1.5 and not on_road:
+				b.add_mesh(_box(1.4, mid.y - 1.1, 1.4), Transform3D(Basis(Vector3.UP, yaw), Vector3(mid.x, (mid.y - 1.1) / 2.0, mid.z)), concrete)
+	# Overhead sign: the A1 joins here.
+	var name := String(ic.name).replace("Knooppunt ", "")
+	b._gantry(s - 650, ["Oldenzaal (D)  A1", "Knp. %s" % name], "A1", _m("b8bcc0", 0.35, 0.85))
+
+
+## A railway running alongside the road, with a train now and then.
+func _parallel_rail(r: Dictionary) -> void:
+	var d: float = r.d
+	var y := func(_s: float) -> float: return 0.12
+	var yb := func(_s: float) -> float: return 0.06
+	b.ribbon({"s0": r.s0, "s1": r.s1, "dL": d - 2.4, "dR": d + 2.4, "yL": yb, "yR": yb, "step": 6.0}, _m("6b6258", 1.0))
+	for off in [-0.72, 0.72]:
+		b.ribbon({"s0": r.s0, "s1": r.s1, "dL": d + off - 0.04, "dR": d + off + 0.04, "yL": y, "yR": y, "step": 6.0}, _m("9aa0a6", 0.35, 0.9))
+	# Catenary masts.
+	var ss: float = r.s0
+	while ss < r.s1:
+		b.add_mesh(_box(0.25, 7.0, 0.25), _xf(ss, d + signf(d) * 3.0, 3.5), _m("6f7378", 0.5, 0.6))
+		b.add_mesh(_box(3.4, 0.12, 0.12), _xf(ss, d + signf(d) * 1.4, 6.8), _m("6f7378", 0.5, 0.6))
+		ss += 60.0
+	var train := _train()
+	train.visible = false
+	root.add_child(train)
+	parallels.append({"s0": r.s0, "s1": r.s1, "d": d, "train": train, "s": 0.0, "dir": 1.0, "active": false, "cooldown": 0.0})
+
+
 # ------------------------------------------------------------------ points of interest
 
 ## Village church: brick nave, tall tower with a slate spire, clock faces and a weathercock.
@@ -691,6 +787,154 @@ func _theme_park(p: Dictionary) -> void:
 		b.add_mesh(_box(0.6, 12, 0.6), g * Transform3D(Basis(), Vector3(x, 6, 29.7)), _m("444444", 0.6, 0.4))
 
 
+## A sign on two posts on the right verge, facing the traffic.
+func _roadside_sign(s: float, tex: Texture2D, size: Vector2) -> void:
+	if s < 50.0 or t.in_tunnel(s, 20):
+		return
+	var g := _xf(s, Config.PAVED + 2.0)
+	b.add_mesh(_quad(size.x, size.y), g * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 1.6 + size.y / 2.0, 0)), _tex_m(tex, 0.25))
+	for x in [-size.x * 0.38, size.x * 0.38]:
+		b.add_mesh(_cyl(0.05, 0.05, 1.6 + size.y / 2.0, 6), g * Transform3D(Basis(), Vector3(x, (1.6 + size.y / 2.0) / 2.0, 0.03)), _m("8a8d90", 0.5, 0.6))
+
+
+# ------------------------------------------------------------------ named places (Twente)
+
+## A big company sign on two posts, facing the road.
+func _company_sign(g: Transform3D, text: String, bg: Color, fg: Color, at: Vector3, w := 18.0) -> void:
+	var board := _tex_m(Tex.brand(text, bg, fg), 0.7)
+	b.add_mesh(_quad(w, w * 0.5), g * Transform3D(Basis(), at), board, false)
+	for x in [-w * 0.35, w * 0.35]:
+		b.add_mesh(_box(0.5, at.y, 0.5), g * Transform3D(Basis(), Vector3(at.x + x, at.y / 2.0, at.z - 0.3)), _m("5c6066", 0.5, 0.6))
+
+
+## Wierdense Veld: purple heather, junipers and the sheep flock with its shepherd.
+func _heath(p: Dictionary) -> void:
+	var heather := _m("6b4a6e", 1.0)
+	var heather2 := _m("8a5a7a", 1.0)
+	var sand := _m("b8a074", 1.0)
+	var bush := _cyl(0.0, 0.9, 2.6, 6)
+	for k in 220:
+		var ss: float = p.s + randf_range(-450, 450)
+		var dd: float = p.d + randf_range(-60, 140) * signf(p.d)
+		if absf(dd) < Config.VERGE_OUT + 12:
+			continue
+		var g := _ground_xf(ss, dd)
+		var r := randf_range(3, 9)
+		var patch := _cyl(r, r * 1.1, 0.25, 8)
+		b.add_mesh(patch, g * Transform3D(Basis(), Vector3(0, 0.08, 0)), heather if randf() < 0.6 else (heather2 if randf() < 0.7 else sand), false)
+		if randf() < 0.25:
+			b.add_instance(bush, _m("2f4a2a", 0.95), g * Transform3D(Basis(), Vector3(randf() * 3, 1.3, 0)), null, false)
+	# The flock: woolly white blobs, grazing together.
+	var wool := Props.bale("e8e4d8")
+	var centre_s: float = p.s + 120
+	var centre_d: float = p.d + signf(p.d) * 50
+	for k in 40:
+		var g := _ground_xf(centre_s + randf_range(-25, 25), centre_d + randf_range(-18, 18))
+		b.add_instance(wool, Props.foliage_material(), g * Transform3D(Basis(Vector3.UP, randf() * TAU).scaled(Vector3(0.55, 0.7, 0.75)), Vector3.ZERO), null, false)
+
+
+## XL Businesspark Twente: huge distribution centres with dock doors and logos.
+func _business_park(p: Dictionary) -> void:
+	var names := [["Twentse Pakketten", "e36a00"], ["Almelo XL", "1d4fd8"], ["Thuisbesteld.nl", "ff7a00"], ["Saksen Koel", "2a7ab8"]]
+	for k in names.size():
+		var g := _ground_xf(p.s - 300 + k * 200, p.d + signf(p.d) * (k % 2) * 60)
+		var c: Array = names[k]
+		var hall := Props.hall(c[0], Color(c[1]))
+		b.add_instance(hall, null, g * Transform3D(Basis().scaled(Vector3(2.2, 1.2, 2.0)), Vector3.ZERO))
+		# Lorries backed up to the docks.
+		for t2 in 5:
+			b.add_mesh(_box(2.5, 3.6, 13.5), g * Transform3D(Basis(), Vector3(-40 + t2 * 18, 1.9, 40)), _m(["e6e6e6", "1d4fd8", "c4161c"][t2 % 3], 0.6))
+
+
+## Urenco Almelo (here "Uranco"): long white cascade halls behind a fence, one with the logo.
+func _urenco(p: Dictionary) -> void:
+	var g := _ground_xf(p.s, p.d)
+	var white := _m("e8e8e4", 0.6)
+	var blue := _m("1f4a8a", 0.5)
+	for k in 4:
+		b.add_mesh(_box(110, 13, 34), g * Transform3D(Basis(), Vector3(-60 + k * 10, 6.5, -20 - k * 42)), white)
+		b.add_mesh(_box(110.2, 2.0, 34.2), g * Transform3D(Basis(), Vector3(-60 + k * 10, 12.0, -20 - k * 42)), blue)
+	b.add_mesh(_cyl(1.6, 2.0, 48, 12), g * Transform3D(Basis(), Vector3(30, 24, -110)), _m("c9c5bc", 0.8))
+	_company_sign(g, "URANCO", Color("1f4a8a"), Color.WHITE, Vector3(0, 7, 20), 16)
+	# Security fence.
+	for k in 40:
+		b.add_mesh(_box(0.12, 3.2, 0.12), g * Transform3D(Basis(), Vector3(-120 + k * 6, 1.6, 12)), _m("8a8d90", 0.5, 0.6))
+	b.add_mesh(_box(240, 2.6, 0.05), g * Transform3D(Basis(), Vector3(0, 1.6, 12)), _m("9aa0a6", 0.6, 0.5))
+
+
+## Thales in Hengelo ("Thalus"): radar works with the test tower and a turning radar on top.
+func _thales(p: Dictionary) -> void:
+	var g := _ground_xf(p.s, p.d)
+	b.add_instance(Props.hall("THALUS", Color("0a2a6b")), null, g * Transform3D(Basis().scaled(Vector3(1.8, 1.3, 1.6)), Vector3(-40, 0, -30)))
+	b.add_instance(Props.hall("Radar & Sensoren", Color("0a2a6b")), null, g * Transform3D(Basis().scaled(Vector3(1.2, 1.0, 1.2)), Vector3(50, 0, -50)))
+	var steel := _m("d9dcdf", 0.4, 0.6)
+	b.add_mesh(_box(8, 42, 8), g * Transform3D(Basis(), Vector3(10, 21, 10)), _m("c9c5bc", 0.85))
+	b.add_mesh(_box(12, 3, 12), g * Transform3D(Basis(), Vector3(10, 43.5, 10)), steel)
+	var radar := Node3D.new()
+	radar.transform = g * Transform3D(Basis(), Vector3(10, 46.5, 10))
+	var dish := MeshInstance3D.new()
+	dish.mesh = _box(9, 3.2, 0.5)
+	dish.material_override = _m("eef0f2", 0.35, 0.5)
+	dish.position = Vector3(0, 1.4, 0)
+	dish.rotation.x = -0.25
+	radar.add_child(dish)
+	var mast := MeshInstance3D.new()
+	mast.mesh = _box(0.8, 2.0, 0.8)
+	mast.material_override = steel
+	radar.add_child(mast)
+	root.add_child(radar)
+	_spinners.append([radar, Vector3.UP, 1.4])
+	var beacon := _lamp_m(Color(1, 0.05, 0.05))
+	b.add_mesh(SphereMesh.new(), g * Transform3D(Basis().scaled(Vector3(0.6, 0.6, 0.6)), Vector3(14, 45.5, 14)), beacon, false)
+	_blinkers.append([beacon, 1.2, 0.3])
+
+
+## Stork in Hengelo ("Storq"): old brick machine works with saw-tooth roofs and a chimney.
+func _stork(p: Dictionary) -> void:
+	var g := _ground_xf(p.s, p.d)
+	var brick := _m("7a3b2a", 0.95)
+	for k in 6:
+		b.add_mesh(_box(18, 12, 70), g * Transform3D(Basis(), Vector3(-50 + k * 18, 6, -30)), brick)
+		var saw := PrismMesh.new()
+		saw.left_to_right = 0.0
+		saw.size = Vector3(18, 5, 70)
+		b.add_mesh(saw, g * Transform3D(Basis(), Vector3(-50 + k * 18, 14.5, -30)), _m("3a3b3e", 0.8))
+	b.add_mesh(_cyl(1.8, 3.0, 60, 12), g * Transform3D(Basis(), Vector3(70, 30, -10)), brick)
+	b.add_mesh(_cyl(2.0, 2.0, 2.0, 12), g * Transform3D(Basis(), Vector3(70, 60, -10)), _m("2b2b2b", 0.9))
+	_company_sign(g, "STORQ", Color("0b6b2e"), Color.WHITE, Vector3(-10, 22, 6), 22)
+
+
+## Twence waste-to-energy plant: big boxy halls, a tall chimney with a plume.
+func _twence(p: Dictionary) -> void:
+	var g := _ground_xf(p.s, p.d)
+	var grey := _m("9aa3ab", 0.6, 0.3)
+	var green := _m("2a7a3a", 0.6)
+	b.add_mesh(_box(60, 32, 40), g * Transform3D(Basis(), Vector3(-20, 16, -30)), grey)
+	b.add_mesh(_box(60.2, 4, 40.2), g * Transform3D(Basis(), Vector3(-20, 30, -30)), green)
+	b.add_mesh(_box(40, 18, 30), g * Transform3D(Basis(), Vector3(35, 9, -20)), grey)
+	b.add_mesh(_cyl(2.2, 3.2, 90, 14), g * Transform3D(Basis(), Vector3(10, 45, -60)), _m("dcdcdc", 0.6))
+	b.add_mesh(_cyl(2.4, 2.4, 3, 14), g * Transform3D(Basis(), Vector3(10, 89, -60)), _m("c4161c", 0.6))
+	_company_sign(g, "TWENSE ENERGIE", Color("2a7a3a"), Color.WHITE, Vector3(-20, 22, -9.5), 26)
+	plumes.append(g * Vector3(10, 92, -60))
+
+
+## Kristalbad: the water retention basin between Hengelo and Enschede, with reed beds and a footbridge.
+func _kristalbad(p: Dictionary) -> void:
+	var g := _ground_xf(p.s, p.d)
+	var water := TrackBuilder.mat(Color("2c4a58"), 0.05, 0.4)
+	b.add_mesh(_box(420, 0.1, 160), g * Transform3D(Basis(), Vector3(0, 0.05, -80)), water, false)
+	var reed := _cyl(0.0, 0.25, 2.2, 4)
+	for k in 500:
+		var x := randf_range(-210, 210)
+		var z := randf_range(-160, 0) if randf() < 0.5 else (randf_range(-6, 0) if randf() < 0.5 else randf_range(-160, -154))
+		b.add_instance(reed, _m("9a8a4a", 1.0), g * Transform3D(Basis(), Vector3(x, 1.0, z)), null, false)
+	# The footbridge across.
+	b.add_mesh(_box(2.5, 0.3, 160), g * Transform3D(Basis(), Vector3(40, 1.6, -80)), _m("6b4a30", 0.9))
+	for k in 16:
+		b.add_mesh(_box(0.3, 1.6, 0.3), g * Transform3D(Basis(), Vector3(40, 0.8, -k * 10 - 2)), _m("4a3424", 0.9))
+	_company_sign(g, "KRISTALBAD", Color("2a7ab8"), Color.WHITE, Vector3(-150, 3.2, 4), 6)
+
+
 # ------------------------------------------------------------------ runtime
 
 ## Light cycle for our direction: green, amber, red (the side roads get the rest).
@@ -750,6 +994,30 @@ func update(dt: float, player_s: float, player_speed := 40.0) -> void:
 		(bl[0] as StandardMaterial3D).emission_energy_multiplier = 6.0 if on else 0.0
 	for c in crossings:
 		_update_crossing(c, dt, player_s, player_speed)
+	for r in parallels:
+		_update_parallel(r, dt, player_s)
+
+
+## A train along the parallel line: sometimes coming the other way, sometimes one you overtake.
+func _update_parallel(r: Dictionary, dt: float, player_s: float) -> void:
+	r.cooldown = maxf(0.0, r.cooldown - dt)
+	var train: Node3D = r.train
+	if not r.active:
+		if r.cooldown <= 0 and player_s > r.s0 - 400 and player_s < r.s1 - 200:
+			r.active = true
+			r.dir = 1.0 if randf() < 0.5 else -1.0
+			r.s = clampf(player_s + (60.0 if r.dir > 0 else 700.0), r.s0, r.s1)
+			train.visible = true
+		return
+	r.s += r.dir * (31.0 if r.dir > 0 else 36.0) * dt
+	if r.s < r.s0 or r.s > r.s1 or absf(r.s - player_s) > 900:
+		r.active = false
+		r.cooldown = 30.0
+		train.visible = false
+		return
+	var fr := t.frame(r.s, _fr)
+	var p := Vector3(fr.x + fr.rx * r.d, 0.18, fr.z + fr.rz * r.d)
+	train.transform = Transform3D(Basis(Vector3.UP, fr.heading + (0.0 if r.dir > 0 else PI)), p)
 
 
 ## Level crossing: when the player gets close (and not too often), the lights flash, the booms come

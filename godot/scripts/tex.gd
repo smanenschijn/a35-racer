@@ -490,12 +490,14 @@ static func villa_facade() -> Array:
 ## Maize field seen from the side and above: rows of tall green stalks.
 static func maize() -> ImageTexture:
 	return cached("maize", 256, 256, func(c: Control) -> void:
-		c.draw_rect(Rect2(0, 0, 256, 256), Color("2f4a1a"))
-		for i in 900:
+		c.draw_rect(Rect2(0, 0, 256, 256), Color("4d7a26"))
+		for i in 1400:
 			var x := randf() * 256
 			var y := randf() * 256
-			var v := randf() * 0.2
-			c.draw_line(Vector2(x, y), Vector2(x + (randf() - 0.5) * 14, y + 10 + randf() * 18), Color(0.3 + v, 0.48 + v, 0.16 + v * 0.5), 2.0)
+			var v := randf() * 0.25
+			c.draw_line(Vector2(x, y), Vector2(x + (randf() - 0.5) * 16, y + 10 + randf() * 18), Color(0.38 + v, 0.6 + v, 0.2 + v * 0.5), 2.0)
+		for i in 300:
+			c.draw_line(Vector2(randf() * 256, randf() * 256), Vector2(randf() * 256, randf() * 256).lerp(Vector2(128, 128), 0.97), Color(0.2, 0.32, 0.1, 0.5), 1.5)
 		for i in 60:
 			c.draw_circle(Vector2(randf() * 256, randf() * 256), 2, Color(0.85, 0.75, 0.4, 0.7))
 	)
@@ -526,6 +528,42 @@ static func direction_sign(left: String, right: String) -> ImageTexture:
 			var dir := float(rows[i][1])
 			c.draw_colored_polygon(PackedVector2Array([Vector2(ax + dir * 34, y - 18), Vector2(ax, y - 44), Vector2(ax, y - 30),
 				Vector2(ax - dir * 34, y - 30), Vector2(ax - dir * 34, y - 6), Vector2(ax, y - 6), Vector2(ax, y + 8)]), Color.WHITE)
+	)
+
+
+## Blue water-name sign at a bridge: wavy lines and the name (Twentekanaal, Regge…).
+static func water_sign(name: String) -> ImageTexture:
+	_fonts()
+	return cached("water|" + name, 512, 160, func(c: Control) -> void:
+		c.draw_rect(Rect2(0, 0, 512, 160), Color("123f8c"))
+		c.draw_rect(Rect2(6, 6, 500, 148), Color("f2f2f2"), false, 4)
+		for k in 3:
+			var pts := PackedVector2Array()
+			for x in range(20, 110, 4):
+				pts.append(Vector2(x, 60 + k * 20 + sin(x * 0.18) * 6))
+			c.draw_polyline(pts, Color.WHITE, 5)
+		var size := 54
+		while size > 26 and font_sign.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x * 0.86 > 370:
+			size -= 2
+		c.draw_set_transform(Vector2(130, 100), 0, Vector2(0.86, 1))
+		_text(c, font_sign, name, 0, 0, size, Color.WHITE)
+		c.draw_set_transform(Vector2.ZERO)
+	)
+
+
+## Brown tourist sign (ANWB): attraction name with a little pictogram.
+static func tourist_sign(name: String, sub: String) -> ImageTexture:
+	_fonts()
+	return cached("tour|" + name, 512, 200, func(c: Control) -> void:
+		c.draw_rect(Rect2(0, 0, 512, 200), Color("6b3a1e"))
+		c.draw_rect(Rect2(6, 6, 500, 188), Color("f2f2f2"), false, 4)
+		var size := 50
+		while size > 24 and font_sign.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x * 0.86 > 460:
+			size -= 2
+		c.draw_set_transform(Vector2(256, 92), 0, Vector2(0.86, 1))
+		_text(c, font_sign, name, 0, 0, size, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+		c.draw_set_transform(Vector2.ZERO)
+		_text(c, font_sign, sub, 256, 160, 34, Color("f2d9b0"), HORIZONTAL_ALIGNMENT_CENTER)
 	)
 
 

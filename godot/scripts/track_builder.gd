@@ -676,9 +676,19 @@ func _tunnel(s0: float, s1: float, concrete: StandardMaterial3D, grass: Material
 		var b := Basis(Vector3.UP, t.frame(s).heading)
 		for d in [-3.4, 0.8, 5.0]:
 			add_instance(light, light_mat, Transform3D(b, t.point_at(s, d, 6.3)), null, false)
-	# Portal headers.
+	# Portal headers, with the tunnel's name over the entrance.
+	var name_m := mat(Color.WHITE, 0.5, 0.0, Tex.text("SALLAND-TWENTETUNNEL", Color("1d2a3a"), Color("f2f2f2"), 1024, 96, 64))
+	name_m.emission_enabled = true
+	name_m.emission = Color.WHITE
+	name_m.emission_texture = name_m.albedo_texture
+	name_m.emission_operator = BaseMaterial3D.EMISSION_OP_MULTIPLY
+	name_m.emission_energy_multiplier = 0.6
 	for sy in [[s0, 0.0], [s1, PI]]:
 		add_mesh(_box(outer[1] - outer[0] + 1, 1.6, 0.8), _place_xf(sy[0], (outer[0] + outer[1]) / 2, 7.0, sy[1]), wall)
+		var q := QuadMesh.new()
+		q.size = Vector2(14, 1.3)
+		var face := -0.42 if sy[1] == 0.0 else 0.42
+		add_mesh(q, _place_xf(sy[0], 0.0, 7.0, sy[1]) * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0, face)), name_m)
 
 
 ## Sallandse Heuvelrug: soft heather-and-pine hills beside the road.
@@ -1027,9 +1037,9 @@ func _farmland() -> void:
 		var w := 30 + randf() * 50
 		var l := 40 + randf() * 80
 		var near := (VERGE + 9.0 + t.height_at(s) * 1.8) if side > 0 else ((LEFT_SINGLE if t.is_single(s) else LEFT_DUAL) - 9.0 - t.height_at(s) * 1.8)
-		var p := t.point_at(s, near + side * (w / 2 + randf() * 40))
+		var p := t.point_at(s, near + side * (w / 2 + 25 + randf() * 50))
 		var fr := t.frame(s)
-		add_instance(unit, maize, Transform3D(Basis(Vector3.UP, fr.heading).scaled(Vector3(w, 2.4, l)), Vector3(p.x, 1.2, p.z)))
+		add_instance(unit, maize, Transform3D(Basis(Vector3.UP, fr.heading).scaled(Vector3(w, 2.1, l)), Vector3(p.x, 1.05, p.z)))
 
 
 ## Built-up areas near the start and finish of every stage.

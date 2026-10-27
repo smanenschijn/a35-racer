@@ -95,6 +95,8 @@ func _init(route: Dictionary) -> void:
 		"ramps": route.get("ramps", []),
 		"railways": route.get("railways", []),
 		"pois": route.get("pois", []),
+		"interchanges": route.get("interchanges", []),
+		"railParallel": route.get("railParallel", []),
 	}
 	var rl := int(route.length)
 	_single_mask.resize(rl + 2)

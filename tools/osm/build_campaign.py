@@ -315,6 +315,10 @@ for e in features:
         i, d = project(xy(e['lat'], e['lon']))
         if -8 < d < 25 and 50 < i < real_len - 50:
             junctions.append((round(gs(i)), t.get('name') or '', t.get('ref') or ''))
+interchanges = []
+for s_, n, r in sorted(set(junctions)):
+    if n.startswith('Knooppunt') and not any(abs(s_ - i['s']) < 400 for i in interchanges):
+        interchanges.append({'s': s_, 'name': n})
 exits = []
 for s, n, r in sorted(set(junctions)):
     if n and not n.startswith('Knooppunt') and not any(abs(s - e['s']) < 250 for e in exits):
@@ -557,6 +561,35 @@ for b in bridges:
     if not b['canal'] and any(r['kind'] == 'under' and b['s0'] - 60 <= r['s'] <= b['s1'] + 60 for r in railways):
         b['rail'] = True
 
+# Railways running alongside the road (a train to race): stretches where a line keeps within ~40..300 m.
+rail_lines = load('railways_raw.json')['elements']
+side_hits = {}
+for e in rail_lines:
+    if e['tags'].get('usage') not in (None, 'main', 'branch'):
+        continue
+    for p in e['geometry']:
+        loc = near_index(xy(p['lat'], p['lon']), 320)
+        if loc and 35 < abs(loc[1]) < 320:
+            b = loc[0] // 40
+            side_hits.setdefault(b, []).append(loc[1])
+parallel = []
+for b in sorted(side_hits):
+    ds = side_hits[b]
+    dd = sum(ds) / len(ds)
+    s_ = round(gs(b * 40))
+    if parallel and s_ - parallel[-1]['s1'] < 120 and (parallel[-1]['d'] > 0) == (dd > 0):
+        run = parallel[-1]
+        run['s1'] = s_
+        run['ds'].append(dd)
+    else:
+        parallel.append({'s0': s_, 's1': s_, 'ds': [dd], 'd': dd})
+rail_parallel = []
+for r in parallel:
+    if r['s1'] - r['s0'] >= 500:
+        dd = sum(r['ds']) / len(r['ds'])
+        side = 1 if dd > 0 else -1
+        rail_parallel.append({'s0': r['s0'], 's1': r['s1'], 'd': round(side * (45 + min(abs(dd), 300) * 0.15), 1)})
+
 FUEL = {'Shell': 'Shall', 'BP': 'BV', 'Esso': 'Esse', 'TotalEnergies': 'TotaalEnergie', 'Total': 'TotaalEnergie',
         'Tinq': 'Tanq', 'Tango': 'Tanga', 'Texaco': 'Texako', 'Avia': 'Avio', 'Gulf': 'Golf', 'Argos': 'Argus',
         'Firezone': 'Vuurzone', 'Q8': 'K8'}
@@ -600,13 +633,30 @@ for e in pois_raw:
     else:
         gd = side * (70 + min(abs(d), 3000) * 0.06)
     pois.append({'kind': kind, 's': round(gs(i)), 'd': round(gd, 1), 'name': name, 'real': round(abs(d))})
+# Named places looked up with Nominatim (OpenStreetMap), modelled as their own scenery.
+NAMED = [
+    ('urenco', 'Uranco', 52.3353691, 6.692066), ('thales', 'Thalus', 52.2467791, 6.7723814),
+    ('kristalbad', 'Kristalbad', 52.2452993, 6.8244459), ('twence', 'Twentse Verbranding', 52.2337945, 6.7862405),
+    ('xlpark', 'XL Businesspark', 52.3201896, 6.6532061), ('bolletje', 'Bolleke', 52.3661229, 6.6453619),
+    ('stork', 'Storq', 52.2489832, 6.791015),
+    ('berg', 'Hellendoornse Berg', 52.3895752, 6.429859), ('heide', 'Wierdense Veld', 52.3752751, 6.5155081),
+]
+for kind, name, lat, lon in NAMED:
+    i, d = far_index(xy(lat, lon))
+    if abs(d) > 4000 or not (150 < i < real_len - 150):
+        continue
+    side = 1 if d > 0 else -1
+    near = {'kristalbad': 40, 'heide': 30, 'berg': 300}.get(kind, 90)
+    pois.append({'kind': kind, 's': round(gs(i)), 'd': round(side * (near + min(abs(d), 4000) * 0.05), 1), 'name': name,
+                 'real': round(abs(d)), 'named': True})
+
 # Keep it readable: one of each kind per 600 m (the closest wins), and not on top of a landmark.
 pois.sort(key=lambda p: p['real'])
 kept = []
 for p in pois:
     if any(k['kind'] == p['kind'] and abs(k['s'] - p['s']) < 600 for k in kept):
         continue
-    if any(abs(l['s'] - p['s']) < 220 and (l['d'] > 0) == (p['d'] > 0) for l in landmarks):
+    if not p.get('named') and any(abs(l['s'] - p['s']) < 220 and (l['d'] > 0) == (p['d'] > 0) for l in landmarks):
         continue
     if p['kind'] == 'watertoren' and any(l['id'] == 'watertoren' and abs(l['s'] - p['s']) < 900 for l in landmarks):
         continue
@@ -631,6 +681,8 @@ route = {
     'ramps': ramps,
     'railways': railways,
     'pois': pois,
+    'interchanges': interchanges,
+    'railParallel': rail_parallel,
 }
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 with open(OUT, 'w') as f:
@@ -648,6 +700,8 @@ for l in landmarks:
     print('landmark', l)
 print('junctions', len(junctions), [(j['s'], j['kind'], 'L' if j['left'] else '', 'R' if j['right'] else '', 'lights' if j['lights'] else '', j['names']) for j in junctions])
 print('ramps', ramps)
+print('interchanges', interchanges)
+print('rail parallel', rail_parallel)
 print('railways', railways)
 from collections import Counter
 print('pois', Counter(p['kind'] for p in pois))

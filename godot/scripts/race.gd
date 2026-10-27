@@ -1002,6 +1002,11 @@ func render(dt: float, time: float) -> void:
 				var w := _local_to_world(v, side, -v.half_l + 0.7, 0.2)
 				_fx.tyre_smoke(w.x, w.y, w.z)
 	traffic.render_oncoming(sim_dt, p.s)
+	# Steam from the big chimneys.
+	if _track.scenery != null and sim_dt > 0:
+		for pl: Vector3 in _track.scenery.plumes:
+			if Vector2(pl.x - p.x, pl.z - p.z).length_squared() < 900.0 * 900.0 and randf() < 0.3:
+				_fx.smoke.spawn(pl, Vector3(2.0 + randf(), 2.5 + randf(), randf() - 0.5), 6.0, 5.0, Color(0.9, 0.9, 0.92), 4.0, 0.35, -0.2, 0.3)
 	_fx.update(sim_dt)
 	debris.update(sim_dt, racers, p)
 	if state != "menu":
