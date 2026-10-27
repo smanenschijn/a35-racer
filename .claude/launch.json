@@ -4,7 +4,7 @@
     {
       "name": "a35-web",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "5235", "--directory", "godot/build/web"],
+      "runtimeArgs": ["scripts/serve-web.py", "5235"],
       "port": 5235
     }
   ]

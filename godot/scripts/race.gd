@@ -1035,7 +1035,7 @@ func _junction_play(dt: float) -> void:
 	var sc = _track.scenery
 	if sc == null:
 		return
-	sc.update(dt, player.s)
+	sc.update(dt, player.s, maxf(0.0, player.forward_speed))
 	var p := player
 	for l in sc.lights:
 		if state == "racing" and not p.wrecked and _prev_player_s < l.stop and p.s >= l.stop and l.state == "red":

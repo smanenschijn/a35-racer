@@ -4,7 +4,6 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 GODOT=${GODOT:-/Applications/Godot.app/Contents/MacOS/Godot}
-scripts/sync-godot-assets.sh
 rm -rf "godot/build/macos" && mkdir -p godot/build/macos
 "$GODOT" --headless --path godot --import >/dev/null 2>&1 || true
 "$GODOT" --headless --path godot --export-release "macOS" "build/macos/A35 Racer.app" 2>&1 | grep -E "ERROR|error" || true

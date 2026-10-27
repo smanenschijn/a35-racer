@@ -437,7 +437,7 @@ func _level_crossing(r: Dictionary) -> void:
 	train.visible = false
 	crossings.append({"s": s, "booms": booms, "lamps": lamp_m, "train": train, "dir": dir,
 		"origin": Vector3(centre.x, maxf(0.05, h0) + 0.15, centre.z), "t": 0.0, "phase": "idle", "x": 0.0,
-		"cooldown": 0.0, "sign": 1.0})
+		"cooldown": 0.0, "sign": 1.0, "start_x": 260.0})
 
 
 ## A three-car regional train in Twente blue and yellow.
@@ -716,7 +716,17 @@ func red_ahead(s: float, reach: float) -> float:
 	return INF
 
 
-func update(dt: float, player_s: float) -> void:
+## A level crossing that's closed (booms coming down or a train on it) between s and s + reach:
+## where to stop (INF if open).
+func crossing_closed(s: float, reach: float) -> float:
+	for c in crossings:
+		var stop: float = c.s - 12.0
+		if stop > s and stop < s + reach and (c.phase == "train" or (c.phase == "warn" and c.t > 1.5)):
+			return stop
+	return INF
+
+
+func update(dt: float, player_s: float, player_speed := 40.0) -> void:
 	_time += dt
 	for l in lights:
 		l.t += dt
@@ -739,20 +749,24 @@ func update(dt: float, player_s: float) -> void:
 		var on := fmod(_time / bl[1] + bl[2], 1.0) < 0.5
 		(bl[0] as StandardMaterial3D).emission_energy_multiplier = 6.0 if on else 0.0
 	for c in crossings:
-		_update_crossing(c, dt, player_s)
+		_update_crossing(c, dt, player_s, player_speed)
 
 
 ## Level crossing: when the player gets close (and not too often), the lights flash, the booms come
 ## down and a train rolls through.
-func _update_crossing(c: Dictionary, dt: float, player_s: float) -> void:
+func _update_crossing(c: Dictionary, dt: float, player_s: float, player_speed: float) -> void:
 	c.cooldown = maxf(0.0, c.cooldown - dt)
 	var ahead: float = c.s - player_s
 	match c.phase:
 		"idle":
-			if ahead > 150 and ahead < 420 and c.cooldown <= 0:
+			if ahead > 450 and ahead < 900 and c.cooldown <= 0:
 				c.phase = "warn"
 				c.t = 0.0
 				c.sign = 1.0 if randf() < 0.5 else -1.0
+				# Time it so the train reaches the road when the player is ~150 m short of it: plenty of
+				# warning (lights, booms), but you'll have to brake.
+				var eta := (ahead - 150.0) / maxf(25.0, player_speed)
+				c.start_x = clampf(TRAIN_SPEED * (eta - 4.0), 60.0, 420.0)
 		"warn", "train", "clear":
 			c.t += dt
 	var down := 0.0
@@ -762,12 +776,12 @@ func _update_crossing(c: Dictionary, dt: float, player_s: float) -> void:
 		if c.t > 4.0:
 			c.phase = "train"
 			c.t = 0.0
-			c.x = -c.sign * 260.0
+			c.x = -c.sign * c.start_x
 			(c.train as Node3D).visible = true
 	elif c.phase == "train":
 		down = 1.0
 		c.x += c.sign * TRAIN_SPEED * dt
-		if absf(c.x) > 260.0 and c.t > 2.0:
+		if c.x * c.sign > TRAIN_CARS * TRAIN_CAR_LEN + 60.0:
 			c.phase = "clear"
 			c.t = 0.0
 			(c.train as Node3D).visible = false

@@ -207,6 +207,11 @@ func update(dt: float, track: Track, others: Array, player: Vehicle) -> void:
 		var av := maxf(0.0, ahead.along_speed)
 		var safe := sqrt(maxf(0.0, av * av + 2 * 9 * maxf(0.0, ahead_ds - room)))
 		wanted = minf(wanted, safe)
+	# Level crossing closed: even racers stop for a train.
+	if track.scenery != null:
+		var cross: float = track.scenery.crossing_closed(vs, 220.0)
+		if cross < INF:
+			wanted = minf(wanted, sqrt(maxf(0.0, 2.0 * 10.0 * (cross - vs - v.half_l - 2.0))))
 	if head_on and _target_d < -1.3:
 		# Can't get back in yet: drop back behind the car we were passing.
 		wanted = minf(wanted, spd - 6)

@@ -50,6 +50,12 @@ func _ready() -> void:
 	if OS.has_feature("mobile"):
 		_scale_max = 1.0
 		get_viewport().scaling_3d_scale = 0.8
+	# Arrows and controller symbols (→ ↺ ◀ ✕ △): in the browser there are no system fonts to fall back on.
+	var symbols: Font = load("res://assets/fonts/DejaVuSans-Bold.ttf")
+	for f in ["Bangers-Regular.ttf", "LiberationSans-Bold.ttf", "RussoOne-Regular.ttf"]:
+		var font: FontFile = load("res://assets/fonts/" + f)
+		font.allow_system_fallback = false # the same glyphs everywhere, so a missing one shows up here too
+		font.fallbacks = [symbols]
 	_show_loading()
 	# Two frames so the loading screen is on before the heavy lifting.
 	await get_tree().process_frame
@@ -437,6 +443,7 @@ func _auto_step(dt: float) -> void:
 		print("[auto] per frame: physics %.2f ms, visuals %.2f ms (sim %.1f s)" % [_auto.get("phys_us", 0) / 1000.0 / _auto.frames,
 			_auto.get("render_us", 0) / 1000.0 / _auto.frames, race.race_time])
 		var p := race.player
+		print("[auto] stats %s" % str(race.stats))
 		print("[auto] screenshot %s  t=%.1fs frames=%d state=%s pos=%d/8 s=%.0f speed=%d km/u dmg=%d stars=%d timeLeft=%.0f" % [
 			_auto.shot, _auto.t, _auto.frames, race.state, race.ranking().find(p) + 1, p.s - track.features.startS,
 			roundi(p.speed * 3.6), roundi(p.wreck_level), race.police.stars, race.time_left])

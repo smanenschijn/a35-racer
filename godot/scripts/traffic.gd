@@ -143,6 +143,11 @@ class TrafficDriver:
 		# Red light ahead on a dual carriageway (on the N35 traffic keeps rolling, there's no room to pass
 		# a queue): stop at the line, unless it's too late to stop comfortably.
 		var at_light := false
+		if track.scenery != null:
+			var cross: float = track.scenery.crossing_closed(vs, 120.0)
+			if cross < INF:
+				wanted = minf(wanted, sqrt(maxf(0.0, 2.0 * 6.0 * (cross - vs - v.half_l))))
+				at_light = true
 		if track.scenery != null and not track.is_single(vs):
 			var stop: float = track.scenery.red_ahead(vs + v.half_l, 75.0)
 			var room := stop - vs - v.half_l - 1.0
