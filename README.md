@@ -1,20 +1,21 @@
 # A35 Racer
 
-Arcade-racegame in de browser: *Destruction Derby* meets *A2 Racer*, over de N35/A35 van Raalte naar Enschede.
+Arcade-racegame: *Destruction Derby* meets *A2 Racer*, over de N35/A35 van Raalte naar Enschede.
+Gebouwd in Godot 4.7 voor de browser, iPhone, iPad en macOS (alles in [godot/](godot/README.md)).
 Zie [docs/GDD.md](docs/GDD.md) voor het volledige game design.
 
-**Speel:** https://smanenschijn.github.io/a35-racer/ · **iPhone, iPad en Mac:** de Godot-versie in [godot/](godot/README.md)
-
-## Status: mijlpaal 5 (de volledige race)
+## Status
 
 - De hele N35/A35 van Raalte naar Enschede uit OpenStreetMap, in vijf etappes: Raalte → Nijverdal → Wierden → Almelo → Hengelo → Enschede
-- De N35 als enkelbaansweg met tegenverkeer, de Combiwet-tunnel bij Nijverdal en de Sallandse Heuvelrug
-- Landmarks gebouwd in Blender: raadhuis Raalte, Tokko Locco, Bouwhaus, IKEO, Het Ravijn, gemeentehuis Nijverdal, Koninklijke Stoomweverij, watertoren Wierden, Heraklus-stadion, Metropool, Universiteit Twente, Grolsj Veste, Grolsj-brouwerij, Thuisbesteld-hoofdkantoor en een binnenvaartschip
-- 8 coureurs in gedetailleerde Blender-auto's, verkeer, politie met wanted level, flitspalen en wegblokkades
-- Etappes los of als "hele race", auto's vrijspelen, statistieken en highscores per etappe
-- Muziekspeler (zie [docs/muziek.md](docs/muziek.md))
+- Brede weg (rijstroken van 4,2 m, brede vluchtstrook en redresseerstrook): op de N35 wijken verkeer en tegenliggers uit, zodat je er tussendoor kunt
+- Echte kruisingen uit OSM met verkeerslichten (door rood = politie), kruisend verkeer, een fietsoversteek en een spoorwegovergang met slagbomen en trein
+- Op- en afritten, afgezet met hekken, pionnen, een pijlwagen en "AFGESLOTEN"-borden
+- Herkenningspunten: Blender-landmarks (raadhuis Raalte, Tokko Locco, Het Ravijn, Combiwet-tunnel, Stoomweverij, watertoren Wierden, Heraklus, Bouwhaus/IKEO, Metropool, UT, Grolsj Veste en brouwerij, Thuisbesteld) plus kerktorens, molens, een watertoren, tankstation, McDuck's, zendmast, schoorstenen, Avonturenpark Hellendoorn en De Waarbeek
+- 8 coureurs met eigen stickers en liveries; schade met deuken, krassen, gebarsten ruiten, vuil, onderdelen en zelfs een voorwiel die eraf vliegen, slijpvonken met rook en vuur, motorbrand en explosies
+- Verkeer, politie met wanted level, flitspalen en wegblokkades; etappes los of als "hele race", auto's vrijspelen, highscores, muziekspeler (zie [docs/muziek.md](docs/muziek.md))
 
-Kaartdata © [OpenStreetMap](https://www.openstreetmap.org/copyright)-bijdragers (ODbL). De route opnieuw opbouwen: `python3 tools/osm/build_campaign.py`.
+Kaartdata © [OpenStreetMap](https://www.openstreetmap.org/copyright)-bijdragers (ODbL). De route opnieuw opbouwen: `python3 tools/osm/build_campaign.py`
+(de OSM-snapshots en Overpass-queries staan in `tools/osm/`).
 
 ## Besturing
 
@@ -41,26 +42,20 @@ Op een telefoon kun je met je duim tussen ◀ en ▶ schuiven, kiest de RAM-knop
 ## Ontwikkelen
 
 ```bash
-npm install
-npm run dev
+/Applications/Godot.app/Contents/MacOS/Godot --path godot      # spelen op de Mac
 ```
 
-- `npm run build`: typecheck + productie-build naar `dist/`
-- `?autopilot` achter de URL laat een AI jouw auto besturen (handig om te testen)
-- In de console is `game` beschikbaar voor debuggen
-- Push naar `main` deployt automatisch naar GitHub Pages
-- Muziek: zet de mp3's in `public/music/` (namen in [docs/muziek.md](docs/muziek.md)); ontbrekende nummers worden overgeslagen
+Bouwen en uitrollen (details in [godot/README.md](godot/README.md)):
 
-## Techniek
-
-TypeScript, Vite, Three.js en `postprocessing` (bloom, tone mapping). Eigen arcade-physics: de weg is een spline,
-auto's zijn 2D rigid bodies met impuls-botsingen, vangrails zijn zijdelingse grenzen in weg-coördinaten.
-
-| Map | Inhoud |
+| Doel | Commando |
 |---|---|
-| `src/track` | Wegspline, projectie, wereldopbouw, procedurele texturen |
-| `src/vehicle` | Auto-physics, schade, AI, procedurele 3D-modellen met deuken |
-| `src/physics` | Botsingen tussen auto's |
-| `src/game` | Game loop, race-logica, camera, verkeer, politie |
-| `src/fx`, `src/ui`, `src/core` | Particles, HUD, tuning, invoer, audio, events |
-| `src/config.ts` | Alle tuningwaarden, auto's en AI-persoonlijkheden |
+| Mac-app | `scripts/macos-build.sh --open` |
+| iPhone / iPad | `scripts/ios-deploy.sh` (alle aangesloten, ontgrendelde toestellen) |
+| Web (lokaal testen) | Godot `--export-release Web build/web/index.html`, dan `python3 scripts/serve-web.py` |
+| Web (eigen domein) | Dokploy met de `Dockerfile` in de root (poort 80) |
+
+## Uitrollen via Dokploy
+
+De `Dockerfile` downloadt Godot en de web-template, exporteert het spel naar WebAssembly en serveert het met nginx
+(`deploy/nginx.conf`). In Dokploy: nieuwe *Application* → bron deze repository (branch `main`) → *Build Type: Dockerfile*
+→ poort 80 → domein koppelen. Elke push naar `main` kan zo automatisch opnieuw uitrollen.
