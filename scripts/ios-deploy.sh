@@ -8,7 +8,7 @@ TEAM=4JPRJ9VXZ4
 if [ -n "${1:-}" ]; then
   DEVICES="$1"
 else
-  DEVICES="$(xcrun devicectl list devices 2>/dev/null | awk '/physical/ && /available/ && /iPhone|iPad/ {for (i=1;i<=NF;i++) if ($i ~ /^[0-9A-F]{8}-[0-9A-F]{16}$/ || $i ~ /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/) print $i}')"
+  DEVICES="$(xcrun devicectl list devices 2>/dev/null | awk '/physical/ && / available/ && /iPhone|iPad/ {for (i=1;i<=NF;i++) if ($i ~ /^[0-9A-F]{8}-[0-9A-F]{16}$/ || $i ~ /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/) print $i}')"
 fi
 [ -n "$DEVICES" ] || { echo "Geen bereikbare iPhone of iPad gevonden: sluit hem aan en ontgrendel hem."; exit 1; }
 
