@@ -62,6 +62,11 @@ var _look_back := false
 var _restart_hold := 0.0
 var _rammed_once := false
 var _active: Array = []
+## Cross traffic at signalled junctions: {v, t, side, heading, s, spawn_time}
+var _cross: Array = []
+## Parts that came off cars, lying on (or flying over) the road.
+var debris: Debris
+var _prev_player_s := 0.0
 ## Last time each traffic car cost us heat.
 var _heat_hits := {}
 ## 0-based index of the stage being raced.
@@ -98,6 +103,12 @@ func _init(deps: Dictionary) -> void:
 	_cam = deps.cam
 	_rumble = deps.rumble
 	_key_label = deps.key_label
+	debris = Debris.new(_parent, _track)
+	debris.on_kick = func(at: Vector3, spd: float) -> void:
+		_fx.spark_burst(at.x, at.y, at.z, 8, 0, 0, 6)
+		var dist := Vector2(at.x - player.x, at.z - player.z).length()
+		if dist < 25:
+			_audio.crash(minf(4.0, spd * 0.06))
 	player = _add_vehicle(Config.CARS.rx, "racer", true)
 	racers.append(player)
 	for id in Config.RIVALS:
@@ -122,6 +133,10 @@ func _init(deps: Dictionary) -> void:
 		"repair": func(v): _full_repair(v),
 		"parent": _parent,
 	})
+	for i in 4:
+		var cv := _add_vehicle(TrafficManager.random_spec(Config.TRAFFIC[i % 2].spec), "traffic")
+		cv.active = false
+		_cross.append({"v": cv, "t": 0.0, "side": 1.0, "heading": 0.0, "s": 0.0, "spawn_time": -99.0})
 	_wire_events()
 	reset()
 
@@ -132,9 +147,31 @@ func _add_vehicle(spec: Dictionary, role: String, is_player := false) -> Vehicle
 	_models[v] = model
 	v.on_damage = func(amount: float, zone: String, lx: float, lz: float) -> void:
 		model.dent(amount, lx, lz)
-		if model.zone_damaged(zone, v.damage[zone]):
-			var p := _local_to_world(v, lx, lz, 0.6)
-			_fx.debris(p.x, p.y, p.z, 14, v.vx, v.vz)
+		model.set_wear(v.total_damage)
+		var near := Vector2(v.x - player.x, v.z - player.z).length_squared() < 260.0 * 260.0
+		var parts := model.zone_damaged(zone, v.damage[zone], amount)
+		if not near:
+			return
+		var p := _local_to_world(v, lx, lz, 0.6)
+		for i in parts:
+			debris.spawn_part(model, i, v, amount)
+		if not parts.is_empty():
+			_fx.debris(p.x, p.y, p.z, 12, v.vx, v.vz)
+			_fx.glass_burst(p.x, p.y, p.z, v.vx, v.vz, 18)
+		# Big hits tear off shards of bodywork in the car's colour.
+		if amount > 8:
+			debris.spawn_shards(p, Vector3(v.vx, 0, v.vz), model.paint_color(), mini(7, int(amount / 4.0)))
+		# A front wheel can come off when the front and that side are both smashed in.
+		if v.is_racer and v.wheel_lost == 0.0 and amount > 6 and v.damage.front > 70 and zone != "rear":
+			var side := -1.0 if zone == "left" else (1.0 if zone == "right" else (1.0 if lx >= 0 else -1.0))
+			if v.damage["left" if side < 0 else "right"] > 45 and randf() < 0.6:
+				var w := model.lose_wheel(side)
+				if not w.is_empty():
+					debris.spawn_wheel(w, v, side)
+					v.wheel_lost = side
+					if v == player:
+						_hud.message("WIEL ERAF!", "#ff9a3c", false, 1.4)
+						_announcer.say("Daar gaat je wiel!")
 	vehicles.append(v)
 	return v
 
@@ -178,6 +215,9 @@ func reset() -> void:
 		ai.reset(ai.vehicle.d)
 	_auto_driver.reset(Config.LANE_CENTERS[1])
 	traffic.reset(start, t.features.finishS)
+	for c in _cross:
+		(c.v as Vehicle).active = false
+	_prev_player_s = start
 	police.reset()
 	Collisions.reset()
 	_finish_order = []
@@ -204,6 +244,7 @@ func reset() -> void:
 	stats = {"topSpeed": 0.0, "nearMisses": 0, "biggestHit": 0.0, "busted": 0, "wrecks": 0, "distance": 0.0}
 	_cam.snap()
 	_fx.clear()
+	debris.clear()
 	if state != "menu":
 		start_countdown()
 
@@ -290,6 +331,12 @@ func _wire_events() -> void:
 		var bvx := b.vx if b != null else a.vx
 		var bvz := b.vz if b != null else a.vz
 		_fx.spark_burst(e.x, e.y, e.z, n, (a.vx + bvx) * 0.4, (a.vz + bvz) * 0.4)
+		# Two cars grinding along each other: metal on metal.
+		if e.kind == "car" and e.strength < 7 and b != null:
+			_fx.grind(e.x, e.y - 0.1, e.z, 0.55, (a.vx + bvx) * 0.5, (a.vz + bvz) * 0.5)
+		if e.strength > 12:
+			_fx.glass_burst(e.x, e.y, e.z, a.vx, a.vz, int(e.strength))
+			_fx.flash(e.x, e.y, e.z, minf(5.0, e.strength * 0.15))
 		if e.strength > 10:
 			_fx.debris(e.x, e.y, e.z, 8, a.vx, a.vz)
 		_models[a].kick(e.x - a.x, e.z - a.z, a, e.strength)
@@ -321,8 +368,8 @@ func _wire_events() -> void:
 
 	_events.on("scrape", func(e: Dictionary) -> void:
 		var v: Vehicle = e.vehicle
-		if randf() < e.intensity * 0.9:
-			_fx.spark_burst(e.x, e.y, e.z, 2, v.vx * 0.7 + e.nx * 2, v.vz * 0.7 + e.nz * 2, 5)
+		if randf() < 0.25 + e.intensity * 0.6:
+			_fx.grind(e.x, e.y, e.z, e.intensity, v.vx, v.vz, e.nx, e.nz)
 		if v == player:
 			_player_scrape = maxf(_player_scrape, e.intensity)
 	)
@@ -331,11 +378,16 @@ func _wire_events() -> void:
 		var victim: Vehicle = e.victim
 		var attacker: Vehicle = e.attacker
 		var p := _local_to_world(victim, 0, 0, 0.8)
-		_fx.spark_burst(p.x, p.y, p.z, 80, victim.vx * 0.5, victim.vz * 0.5, 14)
-		for i in 30:
-			_fx.flame(p.x, p.y + randf(), p.z)
-		_fx.debris(p.x, p.y, p.z, 30, victim.vx, victim.vz)
 		var dist := Vector2(victim.x - player.x, victim.z - player.z).length()
+		if dist < 300:
+			# Boom: fireball, and whatever was still hanging on comes off.
+			_fx.explosion(p.x, p.y, p.z, victim.vx, victim.vz)
+			_fx.debris(p.x, p.y, p.z, 30, victim.vx, victim.vz)
+			var model: CarModel = _models[victim]
+			for zn in Vehicle.ZONES:
+				for i in model.zone_damaged(zn, 100.0, 20.0):
+					debris.spawn_part(model, i, victim, 18.0)
+			debris.spawn_shards(p, Vector3(victim.vx, 0, victim.vz), model.paint_color(), 8)
 		if dist < 200:
 			_audio.crash(25 * maxf(0.3, 1 - dist / 200))
 		if victim == player:
@@ -587,6 +639,7 @@ func step(dt: float) -> void:
 		stats.topSpeed = maxf(stats.topSpeed, player.speed * 3.6)
 		stats.distance += maxf(0.0, player.along_speed) * dt
 
+	_junction_play(dt)
 	var tp := Time.get_ticks_usec() if profile else 0
 	_active = vehicles.filter(func(v): return v.active)
 	# Sorted along the road: the drivers look only at the cars around them.
@@ -634,6 +687,7 @@ func step(dt: float) -> void:
 			if b.proj.s - a.proj.s > reach:
 				break
 			Collisions.collide(a, b, _sim_time, _events)
+	_train_hits()
 	if profile:
 		prof.collisions = prof.get("collisions", 0) + Time.get_ticks_usec() - tp
 		tp = Time.get_ticks_usec()
@@ -905,16 +959,25 @@ func render(dt: float, time: float) -> void:
 		if absf(v.s - p.s) > 400:
 			continue
 		var dmg := maxf(v.damage.front, v.total_damage)
-		# Engine smoke grows with front damage; wrecks burn.
+		# Engine smoke grows with front damage; past 75 % the engine bay catches fire; wrecks burn.
 		if v.wrecked:
 			var w := _local_to_world(v, 0, v.half_l * 0.6, 1)
-			if randf() < 0.7:
-				_fx.flame(w.x, w.y, w.z)
-			if randf() < 0.5:
-				_fx.smoke_puff(w.x, w.y + 0.6, w.z, 1)
+			_fx.engine_fire(w.x, w.y, w.z, v.vx, v.vz, 1.0)
+			if randf() < 0.3:
+				var c := _local_to_world(v, (randf() - 0.5) * v.half_w * 2, (randf() - 0.5) * v.half_l * 1.6, 0.9)
+				_fx.flame(c.x, c.y, c.z)
+		elif v.damage.front > 75:
+			var w := _local_to_world(v, 0, v.half_l * 0.62, 0.95)
+			_fx.engine_fire(w.x, w.y, w.z, v.vx, v.vz, (v.damage.front - 75) / 25.0)
 		elif dmg > 35 and randf() < (dmg - 35) / 60:
 			var w := _local_to_world(v, 0, v.half_l * 0.65, 0.9)
 			_fx.smoke_puff(w.x, w.y, w.z, minf(1.0, (dmg - 35) / 50), v.vx, v.vz)
+		# Lost a front wheel: the hub grinds along the asphalt.
+		if v.wheel_lost != 0.0 and v.speed > 4 and not v.wrecked:
+			var hub := _local_to_world(v, v.wheel_lost * (v.half_w - 0.15), v.half_l - 0.85, 0.08)
+			_fx.grind(hub.x, hub.y, hub.z, minf(1.0, v.speed / 35.0), v.vx, v.vz)
+			if v == player:
+				_player_scrape = maxf(_player_scrape, minf(1.0, v.speed / 40.0))
 		if v.nitro_active:
 			for side in [-0.35, 0.35]:
 				var w := _local_to_world(v, side, -v.half_l - 0.15, 0.4)
@@ -925,6 +988,7 @@ func render(dt: float, time: float) -> void:
 				_fx.tyre_smoke(w.x, w.y, w.z)
 	traffic.render_oncoming(sim_dt, p.s)
 	_fx.update(sim_dt)
+	debris.update(sim_dt, racers, p)
 	if state != "menu":
 		_cam.update(p, maxf(sim_dt, 0.0001), time)
 
@@ -961,3 +1025,108 @@ func render(dt: float, time: float) -> void:
 		"lookBack": _look_back,
 		"restartHold": 0.0 if state == "menu" else _restart_hold,
 	})
+
+
+# ------------------------------------------------------------------ junctions and the level crossing
+
+## Traffic lights: running a red one draws the police; while we have red the side roads get green and
+## their traffic crosses the junction.
+func _junction_play(dt: float) -> void:
+	var sc = _track.scenery
+	if sc == null:
+		return
+	sc.update(dt, player.s)
+	var p := player
+	for l in sc.lights:
+		if state == "racing" and not p.wrecked and _prev_player_s < l.stop and p.s >= l.stop and l.state == "red":
+			police.add_heat(0.6)
+			_hud.message("DOOR ROOD!", "#ff2a2a", false, 1.2)
+			_audio.flash()
+		if l.state == "red":
+			if not l.get("spawned", false) and p.s > l.s - 420 and p.s < l.s - 40:
+				l.spawned = true
+				for side in [1.0, -1.0]:
+					if (side > 0 and l.right) or (side < 0 and l.left):
+						_spawn_cross(l, side)
+		else:
+			l.spawned = false
+	_prev_player_s = p.s
+	for c in _cross:
+		var v: Vehicle = c.v
+		if not v.active:
+			continue
+		c.t += dt
+		if c.t > 14.0 or v.d * c.side < -32.0 or absf(v.s - c.s) > 60.0:
+			v.active = false
+			continue
+		# Hit by someone: no more driving, just a wreck rolling to a stop.
+		if v.last_hit_time > c.spawn_time or v.wrecked:
+			v.input.throttle = 0.0
+			v.input.brake = 0.4
+			v.input.steer = 0.0
+			continue
+		var err := wrapf(c.heading - v.heading, -PI, PI)
+		v.input.steer = clampf(-err * 2.5, -1.0, 1.0)
+		v.input.throttle = 0.8 if v.forward_speed < 13.0 else 0.0
+		v.input.brake = 0.0
+
+
+func _spawn_cross(l: Dictionary, side: float) -> void:
+	for c in _cross:
+		var v: Vehicle = c.v
+		if v.active:
+			continue
+		# Keep right: coming from the right we drive on the far side of the junction centre.
+		var s: float = l.s + side * 2.0
+		var d: float = side * 30.0 if side > 0 or l.single else Config.OPP_OUT - 3.0
+		_full_repair(v)
+		_models[v].recolor(Config.TRAFFIC_COLORS[randi() % Config.TRAFFIC_COLORS.size()])
+		v.place(_track, s, d, 0.0)
+		var fr := _track.frame(s)
+		var dir := Vector3(-fr.rx, 0, -fr.rz) * side
+		v.heading = atan2(dir.x, dir.z)
+		v.vx = dir.x * 11.0
+		v.vz = dir.z * 11.0
+		v.active = true
+		v.frozen = false
+		c.side = side
+		c.t = 0.0
+		c.heading = v.heading
+		c.s = s
+		c.spawn_time = _sim_time
+		return
+
+
+## Anything on the rails when the train comes through gets swatted aside.
+func _train_hits() -> void:
+	var sc = _track.scenery
+	if sc == null:
+		return
+	for tb in sc.train_box():
+		var c: Vector3 = tb.centre
+		var dir: Vector3 = tb.dir
+		var perp := Vector3(dir.z, 0, -dir.x)
+		for v: Vehicle in _active:
+			var rel := Vector3(v.x - c.x, 0, v.z - c.z)
+			var along := rel.dot(dir)
+			var across := rel.dot(perp)
+			if absf(along) > tb.half_len + v.half_l or absf(across) > tb.half_w + v.half_w * 0.9:
+				continue
+			var push := perp * (1.0 if across >= 0 else -1.0)
+			var vel: Vector3 = tb.vel * 0.7 + push * 14.0
+			v.vx = vel.x
+			v.vz = vel.z
+			v.ang_vel += (randf() - 0.5) * 6.0
+			v.stun = maxf(v.stun, 1.2)
+			var out: float = tb.half_w + v.half_w - absf(across) + 0.4
+			v.x += push.x * out
+			v.z += push.z * out
+			var fx := sin(v.heading)
+			var fz := cos(v.heading)
+			var lx := -push.x * -fz + -push.z * fx
+			var lz := -push.x * fx + -push.z * fz
+			v.add_damage(v.zone_at(lx, lz), 60.0, lx, lz, null, _sim_time, _events)
+			_events.emit("impact", {"x": v.x - push.x, "y": v.y + 0.8, "z": v.z - push.z, "strength": 30.0, "kind": "car", "a": v, "b": null})
+			if v == player:
+				_hud.message("TREIN!!", "#ff2a2a", true, 2.0)
+				_announcer.say("Pas op, de trein!", true)

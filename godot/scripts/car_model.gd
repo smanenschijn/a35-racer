@@ -1,8 +1,9 @@
 class_name CarModel
 extends RefCounted
 ## A car on screen: the detailed Blender model (or a procedural truck), flattened once per model into
-## one batched mesh whose dents, lost parts, paint and lights are per-car shader parameters.
-## Port of src/vehicle/CarModel.ts.
+## one batched mesh whose dents, lost parts, paint, livery, wear and lights are parameters on a per-car
+## copy of its materials. Parts that break off (and a front wheel, when it gets really bad) are handed
+## to Debris as separate meshes. Port of src/vehicle/CarModel.ts.
 
 const MAX_LOOSE := 30
 const MODELS := ["rx7", "supremo", "golv", "civik", "corso", "calibro", "volvi", "spacewagen",
@@ -25,6 +26,9 @@ class Template:
 	var fixed: ArrayMesh # calipers that don't steer (on the root, they don't lean)
 	var wheel_r := 0.31
 	var car_offset := 0.0
+	## Painted body extent in body space: (z min, z max, y min, y max), and its half width (for the livery).
+	var paint_box := Vector4(-2.0, 2.0, 0.2, 1.3)
+	var half_w := 0.9
 
 
 static func preload_models() -> void:
@@ -47,6 +51,20 @@ static func _materials() -> void:
 	_mat_static.shader = load("res://shaders/car_static.gdshader")
 
 
+static var _blob: StandardMaterial3D
+
+
+static func _blob_material() -> StandardMaterial3D:
+	if _blob == null:
+		_blob = StandardMaterial3D.new()
+		_blob.albedo_texture = Tex.blob()
+		_blob.albedo_color = Color(0, 0, 0, 0.85)
+		_blob.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		_blob.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_blob.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
+	return _blob
+
+
 static func _tex_material(tex: Texture2D) -> ShaderMaterial:
 	if not _mat_tex.has(tex):
 		var m := ShaderMaterial.new()
@@ -61,6 +79,12 @@ var root := Node3D.new()
 ## Body: leans and pitches on top of the root transform.
 var body := Node3D.new()
 var _body_mi: MeshInstance3D
+## This car's copies of the template materials (template material → copy).
+var _mats := {}
+var _dirt := 0.1
+var _base_dirt := 0.1
+## Front wheel lost: -1 left, +1 right (0 = all four on).
+var wheel_lost := 0.0
 var _wheels: Array = [] # Node3D spinning about local X
 var _front_pivots: Array = []
 var _details: Array = []
@@ -99,6 +123,16 @@ func _init(spec: Dictionary, parent: Node3D) -> void:
 	_body_mi = MeshInstance3D.new()
 	_body_mi.mesh = _tpl.body
 	body.add_child(_body_mi)
+	# Soft contact shadow: grounds the car even where the real shadow map doesn't reach.
+	var shadow := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = Vector2(_tpl.half_w * 2.0 + 0.7, (_tpl.paint_box.y - _tpl.paint_box.x) + 0.9)
+	q.orientation = PlaneMesh.FACE_Y
+	shadow.mesh = q
+	shadow.material_override = _blob_material()
+	shadow.position = Vector3(0, 0.03, _tpl.car_offset + (_tpl.paint_box.x + _tpl.paint_box.y) / 2.0)
+	shadow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(shadow)
 	for h in _tpl.steer_hubs:
 		var pivot := Node3D.new()
 		pivot.position = h.pos + Vector3(0, 0, _tpl.car_offset)
@@ -124,9 +158,32 @@ func _init(spec: Dictionary, parent: Node3D) -> void:
 		f.position.z = _tpl.car_offset
 		root.add_child(f)
 		_details.append(f)
-	_body_mi.set_instance_shader_parameter("paint", _paint)
-	_body_mi.set_instance_shader_parameter("lights", _lights)
+	for si in _tpl.body.get_surface_count():
+		var src: Material = _tpl.body.surface_get_material(si)
+		var copy: ShaderMaterial = _mats.get(src)
+		if copy == null:
+			copy = src.duplicate()
+			_mats[src] = copy
+		_body_mi.set_surface_override_material(si, copy)
+	var racer: bool = Livery.DESIGNS.has(spec.id)
+	_base_dirt = 0.06 if racer else 0.12 + randf() * 0.4
+	_dirt = _base_dirt
+	_set_param("paint", _paint)
+	_set_param("lights", _lights)
+	_set_param("dirt", _dirt)
+	_set_param("livery_box", _tpl.paint_box)
+	_set_param("livery_half_w", _tpl.half_w)
+	_set_param("flake", 0.8 if racer else 0.35)
+	var lv := Livery.for_car(spec.id, _tpl.paint_box, _tpl.half_w)
+	if lv != null:
+		_set_param("livery", lv)
+		_set_param("use_livery", true)
 	parent.add_child(root)
+
+
+func _set_param(name: String, value) -> void:
+	for m: ShaderMaterial in _mats.values():
+		m.set_shader_parameter(name, value)
 
 
 func _mi(mesh: Mesh, shadow: bool) -> MeshInstance3D:
@@ -356,6 +413,26 @@ static func _flatten(car: Node3D, plate_tex: Texture2D, lite: bool) -> Template:
 			continue
 		_gather(c, Transform3D(), streams, plate_tex, false, loose_of.get(c, 0), func(_n): return false)
 	tpl.body = _commit(streams)
+	# Extent of the paint, for projecting the livery.
+	var lo := Vector3(INF, INF, INF)
+	var hi := Vector3(-INF, -INF, -INF)
+	for k in streams:
+		var st: Stream = streams[k].s
+		for i in st.v.size():
+			if st.c0[i * 4 + 2] > 0.5:
+				lo = lo.min(st.v[i])
+				hi = hi.max(st.v[i])
+	if lo.x < INF:
+		tpl.paint_box = Vector4(lo.z, hi.z, lo.y, hi.y)
+		tpl.half_w = maxf(absf(lo.x), absf(hi.x))
+	# Each loose group also as a mesh of its own, for when it flies off.
+	gi = 0
+	for k in groups:
+		var ls := {}
+		for n in groups[k].nodes:
+			_gather(n, Transform3D(), ls, plate_tex, false, 0, func(_n): return false)
+		tpl.loose[gi]["mesh"] = _commit(ls)
+		gi += 1
 
 	# Wheels: steered fronts keep their own pivots (racers), the rest merge per axle.
 	var axles := {}
@@ -540,9 +617,13 @@ func recolor(hex: int) -> void:
 	_set_paint(_color)
 
 
+func paint_color() -> Color:
+	return _paint
+
+
 func _set_paint(c: Color) -> void:
 	_paint = c
-	_body_mi.set_instance_shader_parameter("paint", c)
+	_set_param("paint", c)
 
 
 ## Jolt the suspension from an impact at world offset (wx, wz) from the car centre.
@@ -602,53 +683,107 @@ func _apply_dents() -> void:
 			_dents[best].z = minf(0.9, _dents[best].z + strength * 0.5)
 	_pending.clear()
 	for i in 8:
-		_body_mi.set_instance_shader_parameter("dent%d" % i, _dents[i])
+		_set_param("dent%d" % i, _dents[i])
 
 
-## Called by the game when a zone gets heavily damaged: drop a loose part.
-func zone_damaged(zone: String, level: float) -> bool:
-	if level < 60:
-		return false
+## Called by the game whenever a zone takes damage: parts break off from 22 % on (bumpers, lights,
+## mirrors, spoilers…), more of them the worse it gets and the harder the hit. Returns the indices of
+## the parts that just came off (see loose_part()).
+func zone_damaged(zone: String, level: float, amount := 0.0) -> Array:
+	var out := []
+	# One part per ~16 % of damage in a zone, and a big hit can rip two off at once.
+	var allowed := floori((level - 6.0) / 16.0)
+	var already := 0
+	for i in _tpl.loose.size():
+		if _loose_gone[i] and _zone_hit(_tpl.loose[i], zone):
+			already += 1
+	var count := mini(allowed - already, 2 if amount > 14 else 1)
+	if count <= 0:
+		return out
 	for i in _tpl.loose.size():
 		if _loose_gone[i]:
 			continue
-		var l: Dictionary = _tpl.loose[i]
-		var c: Vector3 = l.centre
-		var hit := false
-		if l.zone != "" and l.zone != "top":
-			hit = l.zone == zone
-		elif zone == "front":
-			hit = c.z > 1
-		elif zone == "rear":
-			hit = c.z < -1 or c.y > 1
-		elif zone == "left":
-			hit = c.x > 0.5
-		else:
-			hit = c.x < -0.5
-		if hit:
+		if _zone_hit(_tpl.loose[i], zone):
 			_loose_gone[i] = true
 			_gone |= 1 << i
-			_body_mi.set_instance_shader_parameter("gone", _gone)
-			return true
-	return false
+			_set_param("gone", _gone)
+			out.append(i)
+			if out.size() >= count:
+				break
+	return out
+
+
+static func _zone_hit(l: Dictionary, zone: String) -> bool:
+	var c: Vector3 = l.centre
+	if l.zone != "" and l.zone != "top":
+		return l.zone == zone
+	elif zone == "front":
+		return c.z > 1
+	elif zone == "rear":
+		return c.z < -1 or c.y > 1
+	elif zone == "left":
+		return c.x > 0.5
+	return c.x < -0.5
+
+
+## A part that just broke off: its mesh (in body space), where it sat, and this car's materials for it.
+func loose_part(i: int) -> Dictionary:
+	var l: Dictionary = _tpl.loose[i]
+	return {"mesh": l.mesh, "centre": l.centre, "mats": _mats}
+
+
+## Knock a front wheel off (side -1 left, +1 right as the driver sees it). Returns the wheel for Debris
+## ({mesh, xf: world transform}), or an empty dictionary when there's none to lose.
+func lose_wheel(side: float) -> Dictionary:
+	if wheel_lost != 0.0:
+		return {}
+	for i in _front_pivots.size():
+		var p: Node3D = _front_pivots[i]
+		# Model space: +x is the car's left.
+		if signf(p.position.x) != -side or not p.visible:
+			continue
+		var holder: Node3D = _wheels[i]
+		var mi: MeshInstance3D = holder.get_child(0)
+		var xf := holder.global_transform
+		p.visible = false
+		_details.erase(p)
+		wheel_lost = side
+		return {"mesh": mi.mesh, "xf": xf}
+	return {}
+
+
+## Wear follows the damage: a wrecked-looking car is a dirty one too.
+func set_wear(total_damage: float) -> void:
+	var d := minf(0.9, _base_dirt + total_damage / 120.0)
+	if absf(d - _dirt) > 0.03:
+		_dirt = d
+		_set_param("dirt", d)
 
 
 func repair() -> void:
 	for i in 8:
 		_dents[i] = Vector4.ZERO
-		_body_mi.set_instance_shader_parameter("dent%d" % i, Vector4.ZERO)
+		_set_param("dent%d" % i, Vector4.ZERO)
 	_loose_gone.fill(false)
 	_gone = 0
-	_body_mi.set_instance_shader_parameter("gone", 0)
+	_set_param("gone", 0)
 	_pending.clear()
 	_set_paint(_color)
+	_dirt = _base_dirt
+	_set_param("dirt", _dirt)
+	if wheel_lost != 0.0:
+		for p: Node3D in _front_pivots:
+			p.visible = _detail_on
+			if not _details.has(p):
+				_details.append(p)
+		wheel_lost = 0.0
 
 
 func _set_lights(l: Vector4) -> void:
 	if l.is_equal_approx(_lights):
 		return
 	_lights = l
-	_body_mi.set_instance_shader_parameter("lights", l)
+	_set_param("lights", l)
 
 
 func sync(v: Vehicle, dt: float, time: float) -> void:
@@ -668,7 +803,10 @@ func sync(v: Vehicle, dt: float, time: float) -> void:
 		_pitch_body += _pitch_vel * dt
 		_bounce_vel += (-_bounce * 90 - _bounce_vel * 9) * dt
 		_bounce += _bounce_vel * dt
-	body.rotation = Vector3(_pitch_body, 0, _roll) # positive pitch = nose down (braking)
+	# A missing front wheel: that corner drops onto the road.
+	var sag_roll := wheel_lost * -0.07
+	var sag_pitch := 0.05 if wheel_lost != 0.0 else 0.0
+	body.rotation = Vector3(_pitch_body + sag_pitch, 0, _roll + sag_roll) # positive pitch = nose down (braking)
 	body.position = Vector3(0, _bounce, _tpl.car_offset)
 
 	_wheel_spin += v.forward_speed / _tpl.wheel_r * dt

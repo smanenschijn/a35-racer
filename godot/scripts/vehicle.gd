@@ -132,6 +132,11 @@ var drifting := false
 ## Seconds the current drift has lasted (only sustained drifts fill nitro).
 var drift_time := 0.0
 var scraping := 0.0
+## Last rail contact: which side (+1 right, -1 left) and when (AI steers clear of it for a moment).
+var rail_side := 0.0
+## A front wheel came off (-1 left, +1 right): slower, pulls to that side, the corner grinds on the road.
+var wheel_lost := 0.0
+var rail_time := -99.0
 var braking := false
 var last_hit_by: Vehicle = null
 var last_hit_time := -99.0
@@ -227,6 +232,7 @@ func repair(level: float) -> void:
 		damage[zn] = minf(damage[zn], level)
 	wrecked = false
 	stun = 0.0
+	wheel_lost = 0.0
 
 
 func add_damage(zone: String, amount: float, lx: float, lz: float, attacker: Vehicle, time: float, events: EventBus) -> void:
@@ -288,7 +294,7 @@ func update(dt: float, time: float, track: Track, events: EventBus, others: Arra
 		nitro = maxf(0.0, nitro - _nitroDrain * dt)
 
 	# --- Longitudinal ---
-	var top: float = _top_speed * (1 - 0.3 * front) * (_nitroTopSpeedFactor if nitro_active else 1.0) * power_factor
+	var top: float = _top_speed * (1 - 0.3 * front) * (_nitroTopSpeedFactor if nitro_active else 1.0) * power_factor * (0.86 if wheel_lost != 0.0 else 1.0)
 	var accel: float = _engineAccel * _accel_factor * (1 - 0.35 * front) * power_factor
 	var a_f := 0.0
 	braking = false
@@ -324,7 +330,7 @@ func update(dt: float, time: float, track: Track, events: EventBus, others: Arra
 	max_yaw *= clampf(spd / 7.0, 0.0, 1.0) # no turning on the spot
 	var steer := inp.steer if act else 0.0
 	if act:
-		steer = clampf(steer + (damage.right - damage.left) / 100.0 * 0.2, -1.0, 1.0)
+		steer = clampf(steer + (damage.right - damage.left) / 100.0 * 0.2 + wheel_lost * 0.16, -1.0, 1.0)
 	if act and inp.handbrake:
 		max_yaw *= _handbrakeYawBoost
 	var target_yaw := -steer * max_yaw * (1.0 if v_f >= 0 else -1.0)
@@ -344,7 +350,7 @@ func update(dt: float, time: float, track: Track, events: EventBus, others: Arra
 	v_f = wx * fx + wz * fz
 	v_l = wx * -fz + wz * fx
 
-	var grip: float = _grip * _grip_factor * (1 - 0.45 * rear)
+	var grip: float = _grip * _grip_factor * (1 - 0.45 * rear) * (0.8 if wheel_lost != 0.0 else 1.0)
 	if act and inp.handbrake:
 		grip = _handbrakeGrip
 	elif absf(v_l) > 3.5:
@@ -481,10 +487,11 @@ func _collide_rails(track: Track, dt: float, time: float, events: EventBus) -> v
 	var fz := cos(heading)
 	var rx := -fz
 	var rz := fx
-	var limit := Config.ROAD_HALF_WIDTH
 	var scrape := 0.0
 
 	for side in SIGNS:
+		# Where a road joins at grade there's no rail: the car may run out onto the junction.
+		var limit := Config.ROAD_HALF_WIDTH if not track.rail_gap(proj.s, side) else 40.0
 		# Find the corner deepest past this side's rail.
 		var best := -INF
 		var cx := 0.0
@@ -532,6 +539,12 @@ func _collide_rails(track: Track, dt: float, time: float, events: EventBus) -> v
 			vx -= tx * loss
 			vz -= tz * loss
 
+			# Bounce off a little instead of sticking: never leave the rail at less than a walking pace.
+			var away := vx * nx + vz * nz
+			if not wrecked and away < 1.2:
+				vx += nx * (1.2 - away)
+				vz += nz * (1.2 - away)
+
 			var impact := -vn
 			var threshold := 3.5 if is_player else 2.0
 			if impact > threshold:
@@ -540,13 +553,16 @@ func _collide_rails(track: Track, dt: float, time: float, events: EventBus) -> v
 				if impact > 5:
 					stun = maxf(stun, _stunTime * 0.6)
 				events.emit("impact", {"x": x + cx, "y": y + 0.5, "z": z + cz, "strength": impact, "kind": "rail", "a": self, "b": null})
-		# Glide: turn the nose parallel to the rail instead of bouncing back into it.
+		# Glide: turn the nose a few degrees away from the rail instead of bouncing back into it
+		# (parallel would keep the car grinding along it).
 		if not wrecked:
-			var err := wrapf(heading - fr.heading, -PI, PI)
+			var err := wrapf(heading - fr.heading - side * 0.07, -PI, PI)
 			# (Not while already yawing away: on a bend the frame turns under us and would pin us to the rail.)
 			if -side * err > 0 and absf(err) < 1.2 and vt > 5 and side * ang_vel < 0.02:
 				heading -= err * minf(1.0, _railGlide * dt)
 				ang_vel *= exp(-8 * dt)
+		rail_side = side
+		rail_time = time
 		# Continuous scraping: damage, speed loss and sparks.
 		if spd > 4:
 			var bonus: float = _takedownRailBonus if recently_hit else 1.0

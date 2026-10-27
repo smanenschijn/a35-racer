@@ -6,9 +6,14 @@ extends RefCounted
 ## or past the far plane is skipped and the draw calls stay low on a phone.
 
 const CELL := 1000.0
-# Median between the carriageways.
-const OPP_IN := -8.5 # inner edge of the opposite carriageway surface
-const OPP_OUT := -20.5
+# Cross-section shorthands (see Config).
+const PAVED := Config.PAVED
+const OPP_IN := Config.OPP_IN
+const OPP_OUT := Config.OPP_OUT
+const VERGE := Config.VERGE_OUT
+const LEFT_DUAL := Config.LEFT_EDGE_DUAL
+const LEFT_SINGLE := Config.LEFT_EDGE_SINGLE
+const MEDIAN := Config.MEDIAN_C
 
 var root := Node3D.new()
 var track: Track
@@ -19,6 +24,9 @@ var _buckets := {}
 var _multi := {}
 var _mat_ids := {}
 var _fr := Track.Frame.new()
+var grass_mat: Material
+## Junctions, slip roads, railways and points of interest (built from the route's OSM extras).
+var scenery: Scenery
 
 
 class Bucket:
@@ -237,14 +245,17 @@ func build() -> Node3D:
 	# Open spans under each bridge (no embankment there: water or a road passes underneath).
 	for b in f.bridges:
 		var c: float = (b.s0 + b.s1) / 2.0
-		_spans.append({"c": c, "half": maxf(24.0, (b.s1 - b.s0) / 2.0 + 4.0), "canal": b.canal})
+		_spans.append({"c": c, "half": maxf(24.0, (b.s1 - b.s0) / 2.0 + 4.0), "canal": b.canal, "rail": b.get("rail", false)})
 
 	# --- Materials ---
 	var road := mat(Color.WHITE, 0.82, 0.05, Tex.road())
 	var grass := mat(Color.WHITE, 1.0, 0.0, Tex.grass())
+	grass_mat = grass
 	var concrete := mat(Color.WHITE, 0.9, 0.0, Tex.concrete())
 	var metal := mat(Color("b8bcc0"), 0.35, 0.85)
 	metal.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var rail_m := mat(Color.WHITE, 0.45, 0.7, Tex.rail())
+	rail_m.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var road_single := mat(Color.WHITE, 0.82, 0.05, Tex.single_road())
 
 	# Cross-section runs: dual (motorway-style, separate carriageways) and single
@@ -261,21 +272,21 @@ func build() -> Node3D:
 
 	# --- Road surfaces ---
 	for d in duals:
-		ribbon({"s0": d[0], "s1": d[1], "dL": -6.0, "dR": 6.0, "yL": h, "yR": h}, road)
+		ribbon({"s0": d[0], "s1": d[1], "dL": -PAVED, "dR": PAVED, "yL": h, "yR": h}, road)
 		# u runs 1→0 so the markings mirror for traffic in the other direction.
 		ribbon({"s0": d[0], "s1": d[1], "dL": OPP_OUT, "dR": OPP_IN, "yL": h, "yR": h, "uL": 1.0, "uR": 0.0}, road)
 	for r in singles:
-		ribbon({"s0": r.s0, "s1": r.s1, "dL": -6.0, "dR": 6.0, "yL": h, "yR": h}, road_single)
+		ribbon({"s0": r.s0, "s1": r.s1, "dL": -PAVED, "dR": PAVED, "yL": h, "yR": h}, road_single)
 
 	# --- Median and verges ---
 	var verge := func(s: float) -> float: return t.height_at(s) - 0.06
 	var zero := func(_s: float) -> float: return 0.0
-	ribbon({"dL": 6.0, "dR": 9.5, "yL": verge, "yR": verge, "vScale": 8.0, "uR": 0.4, "step": 4.0}, grass)
+	ribbon({"dL": PAVED, "dR": VERGE, "yL": verge, "yR": verge, "vScale": 8.0, "uR": 0.4, "step": 4.0}, grass)
 	for d in duals:
-		ribbon({"s0": d[0], "s1": d[1], "dL": -8.5, "dR": -6.0, "yL": verge, "yR": verge, "vScale": 8.0, "uR": 0.3, "step": 4.0}, grass)
-		ribbon({"s0": d[0], "s1": d[1], "dL": -24.0, "dR": OPP_OUT, "yL": verge, "yR": verge, "vScale": 8.0, "uR": 0.4, "step": 4.0}, grass)
+		ribbon({"s0": d[0], "s1": d[1], "dL": OPP_IN, "dR": -PAVED, "yL": verge, "yR": verge, "vScale": 8.0, "uR": 0.3, "step": 4.0}, grass)
+		ribbon({"s0": d[0], "s1": d[1], "dL": LEFT_DUAL, "dR": OPP_OUT, "yL": verge, "yR": verge, "vScale": 8.0, "uR": 0.4, "step": 4.0}, grass)
 	for r in singles:
-		ribbon({"s0": r.s0, "s1": r.s1, "dL": -9.5, "dR": -6.0, "yL": verge, "yR": verge, "vScale": 8.0, "uR": 0.4, "step": 4.0}, grass)
+		ribbon({"s0": r.s0, "s1": r.s1, "dL": LEFT_SINGLE, "dR": -PAVED, "yL": verge, "yR": verge, "vScale": 8.0, "uR": 0.4, "step": 4.0}, grass)
 
 	# --- Embankments down to the fields (with a gap for the canal) ---
 	var outside := []
@@ -298,27 +309,38 @@ func build() -> Node3D:
 	for r in singles:
 		single_runs.append([r.s0, r.s1])
 	for seg in outside:
-		ribbon({"s0": seg[0], "s1": seg[1], "dL": 9.5, "dR": func(s: float) -> float: return 12.0 + t.height_at(s) * 1.8,
+		ribbon({"s0": seg[0], "s1": seg[1], "dL": VERGE, "dR": func(s: float) -> float: return VERGE + 2.5 + t.height_at(s) * 1.8,
 			"yL": verge, "yR": zero, "vScale": 8.0, "uR": 1.0, "step": 4.0}, grass)
 		for ab in clip.call(seg[0], seg[1], duals):
-			ribbon({"s0": ab[0], "s1": ab[1], "dL": func(s: float) -> float: return -26.5 - t.height_at(s) * 1.8, "dR": -24.0,
+			ribbon({"s0": ab[0], "s1": ab[1], "dL": func(s: float) -> float: return LEFT_DUAL - 2.5 - t.height_at(s) * 1.8, "dR": LEFT_DUAL,
 				"yL": zero, "yR": verge, "vScale": 8.0, "uR": 1.0, "step": 4.0}, grass)
 		for ab in clip.call(seg[0], seg[1], single_runs):
-			ribbon({"s0": ab[0], "s1": ab[1], "dL": func(s: float) -> float: return -12.0 - t.height_at(s) * 1.8, "dR": -9.5,
+			ribbon({"s0": ab[0], "s1": ab[1], "dL": func(s: float) -> float: return LEFT_SINGLE - 2.5 - t.height_at(s) * 1.8, "dR": LEFT_SINGLE,
 				"yL": zero, "yR": verge, "vScale": 8.0, "uR": 1.0, "step": 4.0}, grass)
 
 	# --- Guard rails (vangrail) ---
 	var rail0 := func(s: float) -> float: return t.height_at(s) + 0.42
 	var rail1 := func(s: float) -> float: return t.height_at(s) + 0.78
-	for d in [5.6, -5.6]:
-		ribbon({"dL": d, "dR": d, "yL": rail0, "yR": rail1}, metal, true)
+	# Gaps where a road joins at grade (junctions, slip roads) or the rail is replaced by a barrier.
+	var rd := Config.RAIL_D
+	for run in _rail_runs(1):
+		ribbon({"s0": run[0], "s1": run[1], "dL": rd, "dR": rd, "yL": rail0, "yR": rail1, "vScale": 4.0}, rail_m, true)
+	for run in _rail_runs(-1):
+		ribbon({"s0": run[0], "s1": run[1], "dL": -rd, "dR": -rd, "yL": rail0, "yR": rail1, "vScale": 4.0}, rail_m, true)
+	var left_runs := _rail_runs(-1)
 	for dd in duals:
-		for d in [-9.0, -20.0]:
-			ribbon({"s0": dd[0], "s1": dd[1], "dL": d, "dR": d, "yL": rail0, "yR": rail1}, metal, true)
+		for run in left_runs:
+			var a := maxf(dd[0], run[0])
+			var c := minf(dd[1], run[1])
+			if c - a < 2:
+				continue
+			for d in Config.OPP_RAILS:
+				ribbon({"s0": a, "s1": c, "dL": d, "dR": d, "yL": rail0, "yR": rail1, "vScale": 4.0}, rail_m, true)
 	var post := BoxMesh.new()
 	post.size = Vector3(0.12, 0.8, 0.12)
-	_posts([5.6, -5.6], 4.0, post, metal, 0.4, func(_s): return true)
-	_posts([-9.0, -20.0], 4.0, post, metal, 0.4, func(s): return not t.is_single(s))
+	_posts([rd], 4.0, post, metal, 0.4, func(s): return t.rail_drawn(s, 1))
+	_posts([-rd], 4.0, post, metal, 0.4, func(s): return t.rail_drawn(s, -1))
+	_posts(Config.OPP_RAILS, 4.0, post, metal, 0.4, func(s): return not t.is_single(s) and t.rail_drawn(s, -1))
 
 	for sp in _spans:
 		_bridge(sp.c, sp.half, concrete)
@@ -330,9 +352,9 @@ func build() -> Node3D:
 	_hectometer_posts()
 	# Noise barriers where the road passes the towns.
 	for st in f.stages:
-		_noise_barrier(st.startS + 200, st.startS + 800, 11)
-		_noise_barrier(st.finishS - 800, st.finishS - 150, 11)
-		var left := func(s: float) -> float: return -12.0 if t.is_single(s) else -27.0
+		_noise_barrier(st.startS + 200, st.startS + 800, VERGE - 0.5)
+		_noise_barrier(st.finishS - 800, st.finishS - 150, VERGE - 0.5)
+		var left := func(s: float) -> float: return LEFT_SINGLE - 0.5 if t.is_single(s) else LEFT_DUAL - 0.5
 		_noise_barrier(st.startS + 300, st.startS + 700, left.call(st.startS + 500))
 		_noise_barrier(st.finishS - 650, st.finishS - 150, left.call(st.finishS - 400))
 	for tu in f.tunnels:
@@ -341,14 +363,35 @@ func build() -> Node3D:
 		if lm.id == "heuvelrug":
 			_hills(lm.s, lm.d)
 	_start_finish()
+	scenery = Scenery.new(self)
+	scenery.build()
+	track.scenery = scenery
 	_ground()
 	for sp in _spans:
-		_underpass(sp.c, sp.half, sp.canal)
+		_underpass(sp.c, sp.half, sp.canal, sp.rail)
 	_trees()
 	_farms()
 	_city_blocks()
 	_flush()
 	return root
+
+
+## [s0, s1] stretches with a rail on this side (+1 right, -1 left): everything but the junction gaps.
+func _rail_runs(side: float) -> Array:
+	var out := []
+	var s0 := -1.0
+	var s := 0.0
+	while s <= track.length:
+		var gap := not track.rail_drawn(s, side)
+		if not gap and s0 < 0:
+			s0 = s
+		elif gap and s0 >= 0:
+			out.append([s0, s])
+			s0 = -1.0
+		s += 1.0
+	if s0 >= 0:
+		out.append([s0, track.length])
+	return out
 
 
 func _place_xf(s: float, d: float, up := 0.0, yaw := 0.0) -> Transform3D:
@@ -382,6 +425,19 @@ func _blocked(s: float, d: float, margin := 45.0) -> bool:
 			return true
 	if track.in_tunnel(s, 30):
 		return true
+	for j in track.features.junctions:
+		if absf(s - j.s) < 30 and ((d > 0 and j.right) or (d < 0 and j.left) or j.kind == "cycle"):
+			return true
+	if d > 0:
+		for r in track.features.ramps:
+			if s > r.s - 220 and s < r.s + 300:
+				return true
+	for p in track.features.pois:
+		if absf(s - p.s) < 90 and signf(p.d) == signf(d):
+			return true
+	for r in track.features.railways:
+		if absf(s - r.s) < 40:
+			return true
 	for lm in track.features.landmarks:
 		if absf(s - lm.s) < (700.0 if lm.id == "heuvelrug" else 190.0) and signf(lm.d) == signf(d):
 			return true
@@ -396,15 +452,16 @@ func _bridge(c: float, half: float, concrete: StandardMaterial3D) -> void:
 	var s1 := c + half + 2
 	var m := concrete.duplicate() as StandardMaterial3D
 	m.cull_mode = BaseMaterial3D.CULL_DISABLED
-	ribbon({"s0": s0, "s1": s1, "dL": -24.0, "dR": 9.5, "yL": under, "yR": under}, m)
-	ribbon({"s0": s0, "s1": s1, "dL": 9.5, "dR": 9.5, "yL": under, "yR": top}, m)
-	ribbon({"s0": s0, "s1": s1, "dL": -24.0, "dR": -24.0, "yL": under, "yR": top}, m)
+	ribbon({"s0": s0, "s1": s1, "dL": LEFT_DUAL, "dR": VERGE, "yL": under, "yR": under}, m)
+	ribbon({"s0": s0, "s1": s1, "dL": VERGE, "dR": VERGE, "yL": under, "yR": top}, m)
+	ribbon({"s0": s0, "s1": s1, "dL": LEFT_DUAL, "dR": LEFT_DUAL, "yL": under, "yR": top}, m)
 	# Abutments at both ends.
+	var mid := (LEFT_DUAL + VERGE) / 2.0
 	for s in [c - half, c + half]:
 		var hh := t.height_at(s)
-		add_mesh(_box(38, hh, 3), _place_xf(s, -7.25, -hh / 2), concrete)
+		add_mesh(_box(VERGE - LEFT_DUAL, hh, 3), _place_xf(s, mid, -hh / 2), concrete)
 	# Middle piers
-	for d in [3.0, -7.25, -17.0]:
+	for d in [4.0, MEDIAN, -21.0]:
 		var hh := t.height_at(c)
 		var pier := CylinderMesh.new()
 		pier.top_radius = 0.8
@@ -419,16 +476,16 @@ func _overpass(s: float, concrete: Material, grass: Material, metal: Material) -
 	var base := fr.y
 	var clearance := 6.4
 	# Centre on the median, rotated so local X runs across the road.
-	var g := Transform3D(Basis(Vector3.UP, fr.heading), Vector3(fr.x + fr.rx * -7.25, base, fr.z + fr.rz * -7.25))
-	var deck_len := 64.0
+	var g := Transform3D(Basis(Vector3.UP, fr.heading), Vector3(fr.x + fr.rx * MEDIAN, base, fr.z + fr.rz * MEDIAN))
+	var deck_len := 76.0
 	add_mesh(_box(deck_len, 1.3, 12), g * Transform3D(Basis(), Vector3(0, clearance + 0.65, 0)), concrete)
 	add_mesh(_box(deck_len, 0.06, 10), g * Transform3D(Basis(), Vector3(0, clearance + 1.33, 0)), mat(Color("333438"), 0.85))
 	for side in [-1, 1]:
 		add_mesh(_box(deck_len, 0.9, 0.15), g * Transform3D(Basis(), Vector3(0, clearance + 1.8, side * 5.6)), metal)
 	# Piers: right verge, median, left verge (local x = -d because right = -X when yaw = heading).
-	for d in [10.5, -7.25, -25.0]:
+	for d in [VERGE - 1.0, MEDIAN, LEFT_DUAL + 2.0]:
 		for zz in [-3.5, 3.5]:
-			add_mesh(_box(1, clearance, 1), g * Transform3D(Basis(), Vector3(-(d + 7.25), clearance / 2, zz)), concrete)
+			add_mesh(_box(1, clearance, 1), g * Transform3D(Basis(), Vector3(-(d - MEDIAN), clearance / 2, zz)), concrete)
 	# Earth ramps at both ends (wedges sloping down to the fields).
 	for side in [-1, 1]:
 		var ramp_len := 70.0
@@ -452,11 +509,11 @@ func _overpass(s: float, concrete: Material, grass: Material, metal: Material) -
 func _gantry(s: float, text: Array, route: String, metal: Material) -> void:
 	var g := _place_xf(s, 0)
 	var height := 7.0
-	for d in [7.2, -7.0]:
+	for d in [Config.RAIL_D + 0.8, -Config.RAIL_D - 0.6]:
 		add_mesh(_box(0.35, height + 1.2, 0.35), g * Transform3D(Basis(), Vector3(-d, (height + 1.2) / 2, 0)), metal)
-	add_mesh(_box(15, 0.9, 0.6), g * Transform3D(Basis(), Vector3(-0.1, height + 0.6, 0)), metal)
-	# Two signs: through-route on the left lane, exit on the right.
-	for sg in [[[text[0]], -2.75], [[text[1]], 2.0]]:
+	add_mesh(_box(2 * Config.RAIL_D + 1.6, 0.9, 0.6), g * Transform3D(Basis(), Vector3(-0.1, height + 0.6, 0)), metal)
+	# Two signs: through-route over the left lane, exit over the right.
+	for sg in [[[text[0]], Config.LANE_CENTERS[0]], [[text[1]], Config.LANE_CENTERS[1] + 1.6]]:
 		var m := mat(Color.WHITE, 0.4, 0.0, Tex.sign(sg[0], route))
 		m.emission_enabled = true
 		m.emission = Color("0a1a3a")
@@ -486,10 +543,10 @@ func _lamps(metal: Material) -> void:
 			continue
 		var fr := t.frame(s)
 		var b := Basis(Vector3.UP, fr.heading)
-		add_instance(pole, metal, Transform3D(b, t.point_at(s, -7.25, 5.5)))
-		add_instance(arm, metal, Transform3D(b, t.point_at(s, -7.25, 10.9)))
-		add_instance(head, head_mat, Transform3D(b, t.point_at(s, -5.0, 10.8)), null, false)
-		add_instance(head, head_mat, Transform3D(b, t.point_at(s, -9.5, 10.8)), null, false)
+		add_instance(pole, metal, Transform3D(b, t.point_at(s, MEDIAN, 5.5)))
+		add_instance(arm, metal, Transform3D(b, t.point_at(s, MEDIAN, 10.9)))
+		add_instance(head, head_mat, Transform3D(b, t.point_at(s, MEDIAN + 2.5, 10.8)), null, false)
+		add_instance(head, head_mat, Transform3D(b, t.point_at(s, MEDIAN - 2.5, 10.8)), null, false)
 
 
 func _hectometer_posts() -> void:
@@ -497,7 +554,7 @@ func _hectometer_posts() -> void:
 	var m := mat(Color("1f7a3a"), 0.6)
 	var b := _box(0.14, 0.9, 0.14)
 	for i in int(t.length / 100):
-		add_instance(b, m, _place_xf(i * 100, 6.6, 0.45), null, false)
+		add_instance(b, m, _place_xf(i * 100, PAVED + 0.6, 0.45), null, false)
 
 
 func _noise_barrier(s0: float, s1: float, d: float) -> void:
@@ -533,7 +590,7 @@ func _start_finish() -> void:
 	var red := mat(Color("c4161c"), 0.6)
 	var gate := func(s: float, text: String) -> void:
 		var g := _place_xf(s, 0)
-		for d in [6.6, -6.4]:
+		for d in [PAVED + 0.6, -PAVED - 0.4]:
 			add_mesh(_box(0.5, 7.5, 0.5), g * Transform3D(Basis(), Vector3(-d, 3.75, 0)), post_mat)
 		var cloth := mat(Color.WHITE, 0.6, 0.0, Tex.banner(text))
 		cloth.emission_enabled = true
@@ -542,15 +599,15 @@ func _start_finish() -> void:
 		cloth.emission_operator = BaseMaterial3D.EMISSION_OP_MULTIPLY
 		cloth.cull_mode = BaseMaterial3D.CULL_DISABLED
 		var q := QuadMesh.new()
-		q.size = Vector2(13.5, 2.1)
+		q.size = Vector2(2 * PAVED + 1.5, 2.4)
 		add_mesh(q, g * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 6.6, 0)), cloth)
 	var line := func(s: float) -> void:
 		var q := QuadMesh.new()
-		q.size = Vector2(11, 1.4)
+		q.size = Vector2(2 * Config.ROAD_HALF_WIDTH, 1.4)
 		add_mesh(q, _place_xf(s, 0, 0.02) * Transform3D(Basis(Vector3.RIGHT, -PI / 2), Vector3.ZERO), checker, false)
 	# Place-name signs: leaving a town at the start, entering the next before the finish.
 	var place := func(s: float, place_name: String, sub: String, ended: bool) -> void:
-		var g := _place_xf(s, 7.6)
+		var g := _place_xf(s, PAVED + 1.6)
 		var board := QuadMesh.new()
 		board.size = Vector2(2.6, 1.15)
 		add_mesh(board, g * Transform3D(Basis(Vector3.UP, PI), Vector3(0, 2.6, 0)), mat(Color.WHITE, 0.4, 0.0, Tex.place_sign(place_name, sub)))
@@ -583,18 +640,20 @@ func _tunnel(s0: float, s1: float, concrete: StandardMaterial3D, grass: Material
 	wall.cull_mode = BaseMaterial3D.CULL_DISABLED
 	wall.albedo_color = Color("b8b4ac")
 	var dual := not t.is_single((s0 + s1) / 2)
-	var outer := [-22.0, 7.0] if dual else [-7.0, 7.0]
+	var outer := [OPP_OUT + 0.5, PAVED + 1.0] if dual else [-PAVED - 1.0, PAVED + 1.0]
 	var walls := outer.duplicate()
 	if dual:
-		walls.append(-7.3)
+		walls.append(MEDIAN)
 	for d in walls:
 		ribbon({"s0": s0, "s1": s1, "dL": d, "dR": d, "yL": func(s): return t.height_at(s) - 0.2, "yR": roof_y, "step": 4.0}, wall)
 	# Concrete kerbs over the grass verges inside the tube.
 	var kerb := concrete.duplicate() as StandardMaterial3D
 	kerb.albedo_color = Color("8f8b84")
 	var kerb_y := func(s: float) -> float: return t.height_at(s) - 0.03
-	ribbon({"s0": s0, "s1": s1, "dL": 6.0, "dR": outer[1], "yL": kerb_y, "yR": kerb_y, "vScale": 8.0, "step": 4.0}, kerb)
-	ribbon({"s0": s0, "s1": s1, "dL": -7.3 if dual else outer[0], "dR": -6.0, "yL": kerb_y, "yR": kerb_y, "vScale": 8.0, "step": 4.0}, kerb)
+	ribbon({"s0": s0, "s1": s1, "dL": PAVED, "dR": outer[1], "yL": kerb_y, "yR": kerb_y, "vScale": 8.0, "step": 4.0}, kerb)
+	ribbon({"s0": s0, "s1": s1, "dL": MEDIAN if dual else outer[0], "dR": -PAVED, "yL": kerb_y, "yR": kerb_y, "vScale": 8.0, "step": 4.0}, kerb)
+	if dual:
+		ribbon({"s0": s0, "s1": s1, "dL": OPP_IN, "dR": MEDIAN, "yL": kerb_y, "yR": kerb_y, "vScale": 8.0, "step": 4.0}, kerb)
 	ribbon({"s0": s0, "s1": s1, "dL": outer[0], "dR": outer[1], "yL": roof_y, "yR": roof_y, "step": 4.0}, wall, true)
 	var cover_y := func(s: float) -> float: return t.height_at(s) + 7.1
 	var zero := func(_s: float) -> float: return 0.0
@@ -612,7 +671,7 @@ func _tunnel(s0: float, s1: float, concrete: StandardMaterial3D, grass: Material
 	for i in int((s1 - s0) / 8):
 		var s := s0 + 4 + i * 8
 		var b := Basis(Vector3.UP, t.frame(s).heading)
-		for d in [-2.5, 2.5]:
+		for d in [-3.4, 0.8, 5.0]:
 			add_instance(light, light_mat, Transform3D(b, t.point_at(s, d, 6.3)), null, false)
 	# Portal headers.
 	for sy in [[s0, 0.0], [s1, PI]]:
@@ -722,7 +781,7 @@ func _ground() -> void:
 
 
 ## What passes under a bridge: the Twentekanaal, or a local road.
-func _underpass(c: float, half: float, canal: bool) -> void:
+func _underpass(c: float, half: float, canal: bool, rail := false) -> void:
 	var fr := track.frame(c)
 	var holder := Node3D.new()
 	holder.position = Vector3(fr.x, 0, fr.z)
@@ -745,6 +804,33 @@ func _underpass(c: float, half: float, canal: bool) -> void:
 			bank.position = Vector3(0, 0.1, side * (width / 2 + 0.5))
 			holder.add_child(bank)
 		canals.append({"s": c, "holder": holder, "width": width})
+	elif rail:
+		# Railway underneath: ballast, two tracks and catenary masts.
+		var bed := MeshInstance3D.new()
+		var bp := PlaneMesh.new()
+		bp.size = Vector2(1600, 9.0)
+		bed.mesh = bp
+		bed.material_override = mat(Color("6b6258"), 1.0)
+		bed.position.y = 0.06
+		holder.add_child(bed)
+		var steel := mat(Color("9aa0a6"), 0.35, 0.9)
+		for z in [-2.9, -1.5, 1.5, 2.9]:
+			var r := MeshInstance3D.new()
+			r.mesh = _box(1600, 0.16, 0.08)
+			r.material_override = steel
+			r.position = Vector3(0, 0.16, z)
+			holder.add_child(r)
+		for x in range(-780, 800, 60):
+			var m := MeshInstance3D.new()
+			m.mesh = _box(0.25, 7.0, 0.25)
+			m.material_override = mat(Color("6f7378"), 0.5, 0.6)
+			m.position = Vector3(x, 3.5, 5.2)
+			holder.add_child(m)
+			var arm := MeshInstance3D.new()
+			arm.mesh = _box(0.12, 0.12, 6.0)
+			arm.material_override = m.material_override
+			arm.position = Vector3(x, 6.8, 2.4)
+			holder.add_child(arm)
 	else:
 		var road := MeshInstance3D.new()
 		var plane := PlaneMesh.new()
@@ -788,8 +874,8 @@ func _trees() -> void:
 			var density := 0.5 + 0.5 * sin(s / 70 + side * 2.1) * sin(s / 23 + side)
 			if randf() > density * 0.55:
 				continue
-			var left_near := -16.0 if t.is_single(s) else -30.0
-			var near := 16 + t.height_at(s) * 1.8 if side > 0 else left_near - t.height_at(s) * 1.8
+			var left_near := LEFT_SINGLE - 5.0 if t.is_single(s) else LEFT_DUAL - 5.0
+			var near := VERGE + 5.0 + t.height_at(s) * 1.8 if side > 0 else left_near - t.height_at(s) * 1.8
 			var d: float = near + side * pow(randf(), 1.6) * 70
 			var p := t.point_at(s + randf() * 4, d)
 			var sc := 0.8 + randf() * 0.9
@@ -835,7 +921,7 @@ func _city_blocks() -> void:
 			var side := 1 if randf() < 0.5 else -1
 			if _blocked(s, side, 60):
 				continue
-			var d := 75 + randf() * 260 if side > 0 else -85 - randf() * 260
+			var d := 80 + randf() * 260 if side > 0 else -95 - randf() * 260
 			var p := t.point_at(s, d)
 			p.y = 0
 			var fr := t.frame(s)

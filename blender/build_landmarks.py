@@ -4,7 +4,7 @@ Build the landmarks in landmarks.py.
   /Applications/Blender.app/Contents/MacOS/Blender -b --factory-startup --python blender/build_landmarks.py -- veste
   (no names = build all)
 
-Per landmark: assets/blender/lm_<name>.blend, public/models/lm_<name>.glb, assets/renders/lm_<name>.png
+Per landmark: assets/blender/lm_<name>.blend, godot/assets/models/lm_<name>.glb, assets/renders/lm_<name>.png
 """
 
 import math
@@ -26,7 +26,7 @@ def build_one(name):
     root = BUILDERS[name]()
     objs = [root] + list(root.children_recursive)
     meshes = [o for o in objs if o.type == 'MESH']
-    ck.export_glb(os.path.join(ROOT, f'public/models/lm_{name}.glb'), objs)
+    ck.export_glb(os.path.join(ROOT, f'godot/assets/models/lm_{name}.glb'), objs)
 
     # Frame the whole site for the preview.
     bpy.context.view_layer.update()

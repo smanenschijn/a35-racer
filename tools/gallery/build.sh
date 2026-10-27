@@ -13,7 +13,7 @@ done
 # The artifact host serves .json but not .glb: wrap each model in base64.
 python3 - <<'PY'
 import base64, glob, json, os
-for f in glob.glob('public/models/*.glb'):
+for f in glob.glob('godot/assets/models/*.glb'):
     name = os.path.basename(f)[:-4]
     json.dump({'glb': base64.b64encode(open(f, 'rb').read()).decode()}, open(f'tools/gallery/out/models/{name}.json', 'w'))
 PY
