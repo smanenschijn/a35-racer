@@ -41,7 +41,12 @@ var _zs := PackedFloat64Array()
 var _ys := PackedFloat64Array()
 var _hs := PackedFloat64Array()
 var _ks := PackedFloat64Array()
+## Junction lights and level crossings (Scenery, set by the world builder); null in tests.
+var scenery: Object = null
 var _single_mask := PackedByteArray()
+## Bit 1: no rail on the right here, bit 2: none on the left (junctions); bit 4: the right-hand rail is
+## replaced by road works barriers (closed slip roads: still a wall to drive into, just not a rail).
+var _gap_mask := PackedByteArray()
 var _tmp := Frame.new()
 
 
@@ -61,7 +66,7 @@ func _init(route: Dictionary) -> void:
 	for b in route.bridges:
 		if b.s0 > stages[0].startS + 150:
 			bridges.append({"s0": float(b.s0), "s1": float(b.s1), "canal": b.canal,
-				"height": 7.5 if b.canal else 6.5, "ramp": 200.0 if b.canal else 170.0})
+				"height": 7.5 if b.canal else 6.5, "ramp": 200.0 if b.canal else 170.0, "rail": b.get("rail", false)})
 	var viaducts := []
 	for s in route.overpasses:
 		var in_tunnel := false
@@ -86,12 +91,28 @@ func _init(route: Dictionary) -> void:
 		"tunnels": route.tunnels,
 		"single": single,
 		"waters": route.waters,
+		"junctions": route.get("junctions", []),
+		"ramps": route.get("ramps", []),
+		"railways": route.get("railways", []),
+		"pois": route.get("pois", []),
+		"interchanges": route.get("interchanges", []),
+		"railParallel": route.get("railParallel", []),
 	}
 	var rl := int(route.length)
 	_single_mask.resize(rl + 2)
 	for p in single:
 		for i in range(maxi(0, int(p.s0)), mini(rl + 1, int(p.s1))):
 			_single_mask[i] = 1
+	_gap_mask.resize(rl + 2)
+	for j in features.junctions:
+		# The cross road needs an opening in the rail on each side it joins.
+		var half: float = j.get("width", 8.0) / 2.0 + 6.0
+		for i in range(maxi(0, int(j.s - half)), mini(rl + 1, int(j.s + half))):
+			_gap_mask[i] |= (1 if j.right else 0) | (2 if j.left else 0)
+	for r in features.ramps:
+		var a: float = r.s - 195.0 if r.kind == "off" else r.s - 10.0
+		for i in range(maxi(0, int(a)), mini(rl + 1, int(a + 210.0))):
+			_gap_mask[i] |= 4
 	set_stage(stages.size() - 1)
 
 	# Integrate the curvature profile into a centreline (x/z), with heading and height.
@@ -165,6 +186,17 @@ func set_stage(i: int) -> void:
 ## One carriageway with oncoming traffic in the left lane?
 func is_single(s: float) -> bool:
 	return _single_mask[clampi(roundi(s), 0, _single_mask.size() - 1)] == 1
+
+
+## No rail on this side (+1 right, -1 left) at s?
+func rail_gap(s: float, side: float) -> bool:
+	return (_gap_mask[clampi(roundi(s), 0, _gap_mask.size() - 1)] & (1 if side > 0 else 2)) != 0
+
+
+## Is a metal rail drawn here (not a junction, not a closed slip road)?
+func rail_drawn(s: float, side: float) -> bool:
+	var m := _gap_mask[clampi(roundi(s), 0, _gap_mask.size() - 1)]
+	return (m & (1 if side > 0 else 2)) == 0 and not (side > 0 and (m & 4) != 0)
 
 
 func in_tunnel(s: float, margin := 0.0) -> bool:

@@ -127,6 +127,24 @@ func horn(truck: bool, level: float) -> void:
 		_play("horn_truck" if truck else "horn_car", 0.45 * level)
 
 
+## Melody horns (Carbage Run style): semitone steps and note lengths, played on the car horn sample.
+const TUNES := {
+	"cucaracha": [[0, 0.12], [0, 0.12], [0, 0.12], [5, 0.3], [9, 0.32], [0, 0.12], [0, 0.12], [0, 0.12], [5, 0.3], [9, 0.45]],
+	"dixie": [[7, 0.18], [4, 0.18], [0, 0.3], [0, 0.12], [0, 0.12], [2, 0.12], [4, 0.12], [5, 0.12], [7, 0.4]],
+	"toettoet": [[0, 0.16], [-3, 0.32]],
+	"koe": [[-12, 0.7], [-14, 0.5]],
+}
+var _tune: Array = [] # [delay, pitch, gain]
+
+
+func melody(name: String, gain := 0.6) -> void:
+	_tune.clear()
+	var t := 0.0
+	for n in TUNES.get(name, TUNES.toettoet):
+		_tune.append([t, pow(2.0, n[0] / 12.0) * 1.3, gain])
+		t += n[1]
+
+
 ## Speed camera: a bright ping.
 func flash() -> void:
 	_play("flash", 0.9)
@@ -172,6 +190,12 @@ func beep(high: bool) -> void:
 
 
 func _process(delta: float) -> void:
+	if not _tune.is_empty():
+		for n in _tune:
+			n[0] -= delta
+		while not _tune.is_empty() and _tune[0][0] <= 0.0:
+			var n: Array = _tune.pop_front()
+			_play("horn_car", n[2], n[1])
 	var k := func(tc: float) -> float: return 1.0 - exp(-delta / tc)
 	_eng_freq = lerpf(_eng_freq, _targets.get("eng_freq", 60.0), k.call(0.04))
 	_eng_cut = lerpf(_eng_cut, _targets.get("eng_cut", 900.0), k.call(0.05))

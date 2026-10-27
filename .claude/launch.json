@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "a35-dev",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "5235", "--strictPort"],
+      "name": "a35-web",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["scripts/serve-web.py", "5235"],
       "port": 5235
     }
   ]

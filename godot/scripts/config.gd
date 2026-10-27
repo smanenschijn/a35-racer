@@ -40,7 +40,7 @@ static var T := {
 	# Collisions & damage
 	"carRestitution": 0.1,
 	"carFriction": 0.35,
-	"railRestitution": 0.06,
+	"railRestitution": 0.22, # a rail kicks you back onto the road a bit (sticking to it is no fun)
 	"railGlide": 8.0, # how fast the car straightens along a rail it touches (1/s)
 	"railFriction": 0.25, # fraction of tangential speed lost per hard hit
 	"damagePerImpulse": 0.0008, # damage points per N·s of impulse
@@ -221,11 +221,26 @@ const TRUCK_COLORS := [0x2255aa, 0xaa2222, 0xeeeeee, 0x226633, 0xf0b400]
 const TRAFFIC_COLORS := [0xc9c9c9, 0x2b2b2b, 0xf2f2f2, 0x7a1f1f, 0x1f3f7a, 0x3f5f3f, 0x9a8a6a, 0x5a5a66, 0xb5b5b5, 0x223344]
 
 ## Road cross-section (meters). d is the lateral offset, positive to the right of travel.
-const ROAD_HALF_WIDTH := 5.5 # our carriageway: railing at ±5.5
-const LANE_CENTERS := [-2.75, 0.75] # left lane, right lane (vluchtstrook ≈ 4.0)
-const SHOULDER := 4.0
+## Wider than the real road (4.2 m lanes, a 4.6 m hard shoulder) so there's room to overtake, also on the N35.
+const ROAD_HALF_WIDTH := 7.5 # our carriageway: railing at ±7.5
+const RAIL_D := 7.6 # where the railing is drawn
+const PAVED := 8.0 # edge of the asphalt (road textures span -PAVED..PAVED)
+const LANE_CENTERS := [-3.4, 0.8] # left lane, right lane
+const LANE_EDGES := [-5.5, -1.3, 2.9] # left edge line, lane divider, right edge line
+const SHOULDER := 5.0 # vluchtstrook (on the N35: the paved verge)
+## N35 (one carriageway): where traffic moves over to let a racer squeeze through the middle.
+const OPP_VERGE := -5.9 # oncoming traffic swerving onto its own verge
+const OWN_VERGE := 4.9 # traffic in our lane moving onto ours
+## Dual carriageway: grass median, then the opposite carriageway (mirrored, as wide as ours).
+const MEDIAN_C := -9.5
+const OPP_IN := -11.0 # inner edge of the opposite asphalt
+const OPP_OUT := -27.0
+const OPP_RAILS := [-11.4, -26.6]
 ## Lane centres of the opposite carriageway (traffic coming towards us).
-const ONCOMING_LANES := [-11.75, -15.25]
+const ONCOMING_LANES := [-15.6, -19.8]
+const VERGE_OUT := 11.5 # outer edge of the right-hand verge, where the embankment starts
+const LEFT_EDGE_DUAL := -30.5 # outer edge of the left-hand verge beyond the opposite carriageway
+const LEFT_EDGE_SINGLE := -11.5
 const SAMPLE_SPACING := 1.0 # meters between track samples
 
 

@@ -1,25 +1,20 @@
 # A35 Racer (Godot 4)
 
-Native versie van de webgame voor **iPhone, iPad en macOS**. Dezelfde route uit OpenStreetMap, dezelfde
-Blender-auto's en -landmarks, dezelfde physics, AI, politie, menu's en muziek; geport van TypeScript/Three.js
-naar GDScript (elk script noemt het bronbestand waar het van afstamt).
+Het spel voor **browser, iPhone, iPad en macOS**. Oorspronkelijk geport van een TypeScript/Three.js-versie
+(sommige scripts noemen nog het bronbestand waar ze van afstammen); die versie is opgeheven.
 
 ## Eenmalig
 
-1. Installeer [Godot 4.7](https://godotengine.org/download) in `/Applications` en daarin via
-   *Editor → Manage Export Templates* de export templates.
-2. Kopieer de modellen, muziek en route de Godot-map in (die kopieën staan niet in git):
-
-```bash
-scripts/sync-godot-assets.sh
-```
+Installeer [Godot 4.7](https://godotengine.org/download) in `/Applications` en daarin via
+*Editor → Manage Export Templates* de export templates. Modellen, muziek en route staan in `assets/`.
 
 ## Spelen en bouwen
 
 ```bash
 /Applications/Godot.app/Contents/MacOS/Godot --path godot      # direct spelen op de Mac
 scripts/macos-build.sh --open                                   # Mac-app bouwen: godot/build/macos/A35 Racer.app
-scripts/ios-deploy.sh                                           # op de aangesloten iPhone/iPad zetten
+scripts/ios-deploy.sh                                           # op alle aangesloten iPhones/iPads zetten
+Godot --headless --path godot --export-release Web build/web/index.html   # webversie (gl_compatibility, zonder threads)
 ```
 
 `ios-deploy.sh` exporteert een Xcode-project, bouwt het met je (gratis) Apple-team en installeert het op het
@@ -43,8 +38,11 @@ PlayStation/Xbox-controller werkt ook.
 | `vehicle.gd`, `collisions.gd` | `vehicle/Vehicle.ts`, `physics/Collisions.ts` | arcade-physics en botsingen |
 | `ai_driver.gd`, `traffic.gd`, `police.gd` | idem | rivalen, verkeer, tegenverkeer, politie en flitspalen |
 | `track.gd`, `track_builder.gd`, `landmarks.gd`, `tex.gd` | `track/*` | weg, wereld (samengevoegd per km-vak), landmarks, procedurele texturen |
-| `car_model.gd` + `shaders/car*.gdshader` | `vehicle/CarModel.ts` | auto's: één mesh per auto, deuken en losvliegende onderdelen in de shader |
-| `effects.gd` | `fx/Particles.ts` | vonken, rook, vuur, nitro (MultiMesh) |
+| `scenery.gd` | | kruisingen, verkeerslichten, op-/afritten, spoorwegovergang, kerken, molens, tankstation, pretparken |
+| `car_model.gd` + `shaders/car*.gdshader` | `vehicle/CarModel.ts` | auto's: één mesh per auto, deuken, krassen, vuil en stickers in de shader |
+| `livery.gd` | | stickers en liveries per coureur |
+| `debris.gd` | | losgeslagen onderdelen, wielen en scherven op de weg |
+| `effects.gd` | `fx/Particles.ts` | vonken, rook, vuur, explosies, nitro (MultiMesh) |
 | `hud.gd`, `menu.gd`, `touch_controls.gd` | `ui/*` | HUD, menu's, touchknoppen |
 | `input_ctl.gd`, `game_audio.gd`, `music.gd`, `announcer.gd`, `progress.gd` | `core/*` | invoer, geluid, muziek, omroeper (spraak van het systeem), voortgang en highscores |
 
@@ -62,11 +60,13 @@ Godot --headless --fixed-fps 30 --path godot -- --autoshot=/tmp/x.png --autoplay
 ```
 
 `--at=<meter>` zet de grid ergens op de route, `--heat=3` start met drie sterren en een volle nitrotank,
-`--touch` toont de touchknoppen op een desktop. De run print hoeveel milliseconden physics en beeld per frame kosten.
+`--touch` toont de touchknoppen op een desktop, `--damage=200` beukt alle coureurs bij de start in elkaar,
+`--showroom --car=golv` toont een auto van dichtbij zonder menu. De run print hoeveel milliseconden physics en beeld per frame kosten.
 
 ```bash
 Godot --path godot -s res://tests/input_test.gd    # toetsen en touch door menu's en race heen, print ok/FAIL
 ```
 
-Lettertypen: Bangers en Russo One (SIL Open Font License), Liberation Sans (SIL Open Font License).
+Lettertypen: Bangers en Russo One (SIL Open Font License), Liberation Sans (SIL Open Font License),
+DejaVu Sans (Bitstream Vera-licentie, `assets/fonts/DejaVu-LICENSE.txt`).
 Kaartdata © OpenStreetMap-bijdragers (ODbL).

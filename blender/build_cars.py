@@ -6,7 +6,7 @@ Build cars from designs.py.
 
 Per car:
   assets/blender/<name>.blend   parts as separate objects (editable)
-  public/models/<name>.glb      joined model for the game
+  godot/assets/models/<name>.glb      joined model for the game
   assets/renders/<name>_*.png   preview renders
 """
 
@@ -28,10 +28,10 @@ ROOT = os.path.abspath(os.path.join(HERE, '..'))
 def build_one(name, renders=True):
     d = DESIGNS[name]
     root, car = carbuilder.build(d)
-    for sub in ('public/models', 'assets/blender', 'assets/renders'):
+    for sub in ('godot/assets/models', 'assets/blender', 'assets/renders'):
         os.makedirs(os.path.join(ROOT, sub), exist_ok=True)
     objs = [root] + list(root.children_recursive)
-    ck.export_glb(os.path.join(ROOT, f'public/models/{name}.glb'), objs)
+    ck.export_glb(os.path.join(ROOT, f'godot/assets/models/{name}.glb'), objs)
 
     cam = ck.studio(target_height=0.6, cam_loc=(-4.4, -5.6, 1.7))
     bpy.ops.wm.save_as_mainfile(filepath=os.path.join(ROOT, f'assets/blender/{name}.blend'))

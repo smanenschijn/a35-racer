@@ -19,12 +19,12 @@ const DEFAULT_BINDINGS := {
 	"reset": [KEY_F], "lookBack": [KEY_V],
 }
 ## Keys with a fixed job (menus, pause, music, restart): not available for rebinding.
-const RESERVED_KEYS := [KEY_ESCAPE, KEY_P, KEY_M, KEY_N, KEY_T, KEY_R, KEY_ENTER, KEY_KP_ENTER, KEY_EQUAL, KEY_MINUS,
+const RESERVED_KEYS := [KEY_ESCAPE, KEY_P, KEY_M, KEY_N, KEY_T, KEY_R, KEY_H, KEY_ENTER, KEY_KP_ENTER, KEY_EQUAL, KEY_MINUS,
 	KEY_KP_ADD, KEY_KP_SUBTRACT, KEY_BACKSPACE, KEY_TAB]
 const NAV_KEYS := {KEY_UP: "navUp", KEY_W: "navUp", KEY_DOWN: "navDown", KEY_S: "navDown", KEY_LEFT: "navLeft",
 	KEY_A: "navLeft", KEY_RIGHT: "navRight", KEY_D: "navRight", KEY_ESCAPE: "back", KEY_BACKSPACE: "back"}
 ## Fixed one-shot keys (the rebindable ones are looked up in the bindings).
-const EDGE_KEYS := {KEY_ESCAPE: "pause", KEY_P: "pause", KEY_M: "mute", KEY_T: "debug", KEY_N: "nextTrack",
+const EDGE_KEYS := {KEY_ESCAPE: "pause", KEY_P: "pause", KEY_M: "mute", KEY_T: "debug", KEY_N: "nextTrack", KEY_H: "honk",
 	KEY_EQUAL: "volumeUp", KEY_KP_ADD: "volumeUp", KEY_MINUS: "volumeDown", KEY_KP_SUBTRACT: "volumeDown",
 	KEY_ENTER: "confirm", KEY_KP_ENTER: "confirm", KEY_SPACE: "confirm"}
 ## Rebindable actions that fire once per press.
@@ -54,6 +54,8 @@ class Controls:
 	var mute := false
 	var debug := false
 	var nextTrack := false
+	## The melody horn (H / d-pad up / TOET).
+	var honk := false
 	var volumeUp := false
 	var volumeDown := false
 	var confirm := false
@@ -269,6 +271,7 @@ func poll(dt: float) -> Controls:
 		c.pause = c.pause or pressed.call(JOY_BUTTON_START)
 		c.confirm = c.confirm or pressed.call(JOY_BUTTON_A) or pressed.call(JOY_BUTTON_START)
 		c.nextTrack = c.nextTrack or pressed.call(JOY_BUTTON_X)
+		c.honk = c.honk or pressed.call(JOY_BUTTON_DPAD_UP)
 		c.back = c.back or pressed.call(JOY_BUTTON_B)
 		c.navUp = c.navUp or pressed.call(JOY_BUTTON_DPAD_UP)
 		c.navDown = c.navDown or pressed.call(JOY_BUTTON_DPAD_DOWN)

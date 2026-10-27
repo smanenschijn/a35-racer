@@ -13,6 +13,7 @@ var _seen_hit_time := -99.0
 var _recover_timer := 0.0
 var _brake_tap_timer := 3 + randf() * 5
 var _brake_tap := 0.0
+var _rail_avoid := 0.0
 ## Set when the AI wants to be reset onto the road.
 var needs_reset := false
 
@@ -69,9 +70,9 @@ func update(dt: float, track: Track, others: Array, player: Vehicle) -> void:
 		if ds > scan + 30 or ds < -40:
 			continue
 		var dd := o.d - vd
-		if single and not o.is_racer and o.along_speed > 0 and o.d > 1.9 and ds > -o.half_l - v.half_l - 3 and ds < scan:
+		if single and not o.is_racer and o.along_speed > 0 and o.d > own_lane + 1.1 and ds > -o.half_l - v.half_l - 3 and ds < scan:
 			squeeze_d = minf(squeeze_d, o.d - o.half_w - v.half_w - 0.5)
-			if o.d > 2.4:
+			if o.d > own_lane + 2.4:
 				continue # far enough over: not in our way
 		# Check both our target lane and the lane we're physically in.
 		var in_lane := absf(o.d - _target_d) < o.half_w + v.half_w + 0.4 or absf(dd) < o.half_w + v.half_w + 0.2
@@ -98,7 +99,7 @@ func update(dt: float, track: Track, others: Array, player: Vehicle) -> void:
 		# Only to an adjacent lane: jumping two lanes cuts straight through the traffic in between.
 		var free := []
 		for l: float in lanes:
-			if absf(l - _target_d) <= 1.5 or absf(l - vd) >= 4.2:
+			if absf(l - _target_d) <= 1.5 or absf(l - vd) >= 5.6:
 				continue
 			# A lane is free if nobody is beside us there and nothing slow is coming up in it.
 			var taken := false
@@ -134,7 +135,7 @@ func update(dt: float, track: Track, others: Array, player: Vehicle) -> void:
 
 	# --- N35: back to the right lane after a pass, at once when something's coming ---
 	var head_on := false
-	if single and (_target_d < -1 or vd < -1):
+	if single and (_target_d < -1.3 or vd < -1.3):
 		var closing_on := spd + oncoming_speed
 		head_on = oncoming_ds < 30 + closing_on * 2.8
 		var right_free := true
@@ -175,7 +176,11 @@ func update(dt: float, track: Track, others: Array, player: Vehicle) -> void:
 		# Block the player behind us by drifting into their lane.
 		line_d += (player.d - line_d) * 0.35 * aggro
 	# On the N35 there's no hard shoulder: keep off the railings.
-	line_d = clampf(line_d, -Config.ROAD_HALF_WIDTH + (1.9 if single else 1.3), Config.ROAD_HALF_WIDTH - (2.6 if single else 1.3))
+	line_d = clampf(line_d, -Config.ROAD_HALF_WIDTH + (1.9 if single else 1.8), Config.ROAD_HALF_WIDTH - (2.6 if single else 1.8))
+	# Just scraped a rail: steer clear of it for a moment instead of grinding along.
+	_rail_avoid = 1.2 if v.scraping > 0 else maxf(0.0, _rail_avoid - dt)
+	if _rail_avoid > 0:
+		line_d = minf(line_d, Config.ROAD_HALF_WIDTH - 2.8) if v.rail_side > 0 else maxf(line_d, -Config.ROAD_HALF_WIDTH + 2.8)
 	if head_on:
 		line_d = _target_d # no fighting while dodging a head-on
 	if squeeze_d < line_d and not head_on:
@@ -202,7 +207,12 @@ func update(dt: float, track: Track, others: Array, player: Vehicle) -> void:
 		var av := maxf(0.0, ahead.along_speed)
 		var safe := sqrt(maxf(0.0, av * av + 2 * 9 * maxf(0.0, ahead_ds - room)))
 		wanted = minf(wanted, safe)
-	if head_on and _target_d < -1:
+	# Level crossing closed: even racers stop for a train.
+	if track.scenery != null:
+		var cross: float = track.scenery.crossing_closed(vs, 220.0)
+		if cross < INF:
+			wanted = minf(wanted, sqrt(maxf(0.0, 2.0 * 10.0 * (cross - vs - v.half_l - 2.0))))
+	if head_on and _target_d < -1.3:
 		# Can't get back in yet: drop back behind the car we were passing.
 		wanted = minf(wanted, spd - 6)
 	if p.erratic > 0:

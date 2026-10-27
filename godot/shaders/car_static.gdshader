@@ -12,9 +12,13 @@ uniform sampler2D tex : source_color, filter_linear_mipmap_anisotropic;
 void vertex() {
 	vec4 pbr;
 	vec4 emi;
-	car_vertex(VERTEX, NORMAL, CUSTOM0, CUSTOM1, pbr, emi);
+	vec3 rp;
+	vec3 rn;
+	car_vertex(VERTEX, NORMAL, CUSTOM0, CUSTOM1, pbr, emi, rp, rn);
 	v_pbr = pbr;
 	v_emi = emi;
+	v_obj = rp;
+	v_objn = rn;
 }
 
 void fragment() {

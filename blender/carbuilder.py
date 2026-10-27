@@ -361,6 +361,8 @@ def build(d):
     front(car, d, m, col, add)
     rear(car, d, m, col, add)
     spoiler(car, d, m, col, add)
+    details(car, d, m, col, add)
+    junk(car, d, m, col, add)
 
     # ---- Sides ----
     tm_ = sp['cowl'] + 0.035
@@ -718,6 +720,216 @@ def rear(car, d, m, col, add):
                         props=props))
         add(ck.cylinder(f'exhaust_inner{k}', r * 0.75, 0.205, (x, L / 2 - 0.02, ez), m['Trim'], col=col, axis='Y',
                         segments=20, props=props))
+
+
+BADGES = {'RX7': 'RX-ZEVEN', 'Supremo': 'SUPREMO', 'Golv': 'G60', 'Civik': 'CIVIK', 'Corso': 'CORSO',
+          'Calibro': 'CALIBRO', 'Volvi': '240 GL', 'SpaceWagen': 'SPACE WAGEN', 'TrSedan': 'GL', 'TrHatch': '1.4',
+          'TrEstate': 'KOMBI', 'TrVan': 'TRANSPORTER', 'Police': 'V70'}
+
+
+def details(car, d, m, col, add):
+    """The small things that make it read as a real car: badges, side repeaters, a third brake light,
+    roof drip rails, mud flaps, number plate lights, headlamp reflectors and a tow hook."""
+    L, sp, gl = car.L, car.sp, car.gl
+    y_of, WIDTH, TOP = car.y_of, car.WIDTH, car.TOP
+    hw, zb, zt = tail_box(car)
+    yt = L / 2 + 0.004
+    lod = car.lod
+    # Model name on the tail, chrome, slightly to the right like the real thing.
+    badge = BADGES.get(d['root'])
+    if badge:
+        tz = zb + (zt - zb) * (0.9 if d.get('rear') != 'tall' else 0.25)
+        o = text_mesh('badge_rear', badge, 0.055, (-hw * 0.55, yt + 0.006, tz), 1, m['Chrome'], col)
+        o.rotation_euler = (math.pi / 2, 0, math.pi)
+        o['zone'] = 'rear'
+        add(o)
+    # Maker's roundel on the nose.
+    nhw, nzb, nzt = nose_box(car)
+    add(ck.cylinder('badge_front', 0.035, 0.012, (0, -L / 2 - 0.016, nzb + (nzt - nzb) * 0.86), m['Chrome'], col=col,
+                    axis='Y', segments=20, props={'zone': 'front', 'detach': 1}))
+    for sx, s in ((1, 'L'), (-1, 'R')):
+        # Orange side repeater on the front wing, behind the wheel arch.
+        t = car.t_of(car.y_front_axle + car.arch_r + 0.12)
+        add(ck.box(f'repeater_{s}', (0.012, 0.06, 0.025), (sx * (WIDTH(t) + 0.004), y_of(t), car.SHOULDER(t) - 0.08),
+                   m['Indicator'], col=col, bevel_width=0.004, props={'zone': 'left' if sx > 0 else 'right'}))
+        # Mud flaps behind the wheels (estates, vans and the hot hatches).
+        if d['root'] in ('Volvi', 'SpaceWagen', 'Golv', 'TrVan', 'TrEstate', 'Civik'):
+            for axle, yc in (('F', car.y_front_axle), ('R', car.y_rear_axle)):
+                add(ck.box(f'mudflap_{axle}{s}', (car.ww + 0.02, 0.012, 0.2),
+                           (sx * car.track, yc + car.arch_r - 0.02, car.BOTTOM(car.t_of(yc)) - 0.04), m['Trim'],
+                           col=col, props={'zone': 'rear' if axle == 'R' else ('left' if sx > 0 else 'right'),
+                                           'detach': 1}))
+        # Drip rail along the roof edge.
+        if not lod:
+            ta, tb = gl['ws_end'] + 0.01, gl['roof_end'] - 0.01
+            tm = (ta + tb) / 2
+            x = sx * (car.ROOF_W(tm) - 0.005)
+            add(ck.box(f'drip_rail_{s}', (0.012, (tb - ta) * L, 0.012), (x, y_of(tm), car.roof_z(tm, abs(x)) - 0.01),
+                       m['Trim'], col=col, props={'zone': 'top'}))
+    # Third brake light at the top of the rear window.
+    tr = gl['rear_end'] - 0.012
+    if 'BrakeLight' in m:
+        add(ck.box('brake_high', (0.42, 0.03, 0.03), (0, y_of(tr) - 0.02, car.roof_z(tr, 0) - 0.02), m['BrakeLight'],
+                   col=col, props={'zone': 'rear', 'detach': 1}))
+    # Number plate lights and a tow hook under the rear bumper.
+    add(ck.box('plate_light', (0.16, 0.02, 0.012), (0, yt + 0.01, zb + (zt - zb) * 0.55), m['Chrome'], col=col,
+               props={'zone': 'rear'}))
+    if not lod:
+        add(ck.box('tow_hook', (0.035, 0.12, 0.035), (0.3, yt + 0.02, car.BOTTOM(1) + 0.03), m['Steel'], col=col,
+                   props={'zone': 'rear', 'detach': 1}))
+
+
+def junk(car, d, m, col, add):
+    """Carbage Run kit: every driver has bolted, strapped or glued something silly to their car.
+    Each item is one loose part (shared name prefix), so in a crash it comes off in one piece."""
+    root = d['root']
+    L, sp, gl = car.L, car.sp, car.gl
+    y_of = car.y_of
+    tr = (gl['ws_end'] + gl['roof_end']) / 2
+    yr = y_of(tr)
+    zr = car.roof_z(tr, 0)
+    rw = car.ROOF_W(tr)
+    roof_len = (gl['roof_end'] - gl['ws_end']) * L
+    top = {'zone': 'top', 'detach': 1}
+    front_p = {'zone': 'front', 'detach': 1}
+    rear_p = {'zone': 'rear', 'detach': 1}
+    mat = ck.material
+
+    def rack(name):
+        """Roof rack: two cross bars and side rails; returns the height of its top."""
+        for k, dy in enumerate((-roof_len * 0.3, roof_len * 0.3)):
+            add(ck.box(f'{name}_bar{k}', (2 * rw - 0.05, 0.04, 0.035), (0, yr + dy, zr + 0.07), m['Trim'], col=col,
+                       props=dict(top)))
+        for sx in (1, -1):
+            add(ck.box(f'{name}_rail{"L" if sx > 0 else "R"}', (0.03, roof_len * 0.75, 0.03),
+                       (sx * (rw - 0.06), yr, zr + 0.1), m['Trim'], col=col, props=dict(top)))
+        return zr + 0.1
+
+    if root == 'RX7':
+        # Spotlight bar on the roof (they light up with the headlights) and air horns.
+        z = zr + 0.06
+        add(ck.box('lightbar_bar', (1.1, 0.06, 0.05), (0, yr - roof_len * 0.25, z), m['Trim'], col=col, props=dict(top)))
+        for k, x in enumerate((-0.42, -0.14, 0.14, 0.42)):
+            add(ck.cylinder(f'lightbar_pot{k}', 0.075, 0.08, (x, yr - roof_len * 0.25 - 0.04, z + 0.07), m['Trim'],
+                            col=col, axis='Y', segments=16, props=dict(top)))
+            add(ck.cylinder(f'lightbar_lamp{k}', 0.065, 0.01, (x, yr - roof_len * 0.25 - 0.085, z + 0.07),
+                            m['HeadLight'], col=col, axis='Y', segments=16, props=dict(top)))
+        for k, x in enumerate((-0.15, 0.15)):
+            add(ck.cylinder(f'airhorn_{k}', 0.05, 0.42, (x, yr + roof_len * 0.15, zr + 0.06), m['Chrome'], col=col,
+                            axis='Y', segments=14, radius2=0.018, props=dict(top)))
+        # Twente flag on a whip aerial at the back.
+        add(ck.cylinder('flag_pole', 0.008, 1.1, (-0.6, L / 2 - 0.5, car.TOP(0.9) + 0.55), m['Trim'], col=col,
+                        axis='Z', segments=6, props=dict(rear_p)))
+        red = mat('FlagRed', (0.75, 0.02, 0.03), roughness=0.7)
+        white = mat('FlagWhite', (0.9, 0.9, 0.9), roughness=0.7)
+        add(ck.box('flag_top', (0.008, 0.4, 0.13), (-0.6, L / 2 - 0.3, car.TOP(0.9) + 1.0), red, col=col, props=dict(rear_p)))
+        add(ck.box('flag_bot', (0.008, 0.4, 0.13), (-0.6, L / 2 - 0.3, car.TOP(0.9) + 0.87), white, col=col,
+                   props=dict(rear_p)))
+    elif root == 'Supremo':
+        # Rally lamps on the bonnet and a bright red tow strap.
+        t = sp['nose'] + 0.04
+        for k, x in enumerate((-0.32, 0.32)):
+            add(ck.cylinder(f'rallylamp_{k}', 0.09, 0.07, (x, y_of(t) - 0.05, car.surface_z(t, abs(x)) + 0.1), m['Trim'],
+                            col=col, axis='Y', segments=18, props=dict(front_p)))
+            add(ck.cylinder(f'rallylamp_glass{k}', 0.08, 0.01, (x, y_of(t) - 0.09, car.surface_z(t, abs(x)) + 0.1),
+                            m['HeadLight'], col=col, axis='Y', segments=18, props=dict(front_p)))
+        add(ck.box('towstrap', (0.05, 0.12, 0.012), (0.35, -L / 2 - 0.04, car.BOTTOM(0) + 0.1),
+                   mat('StrapRed', (0.8, 0.02, 0.02), roughness=0.6), col=col, props=dict(front_p)))
+    elif root == 'Golv':
+        # The bazooka: one giant exhaust, a second wing on the roof and blue neon underneath.
+        add(ck.cylinder('bazooka', 0.11, 0.55, (0.32, L / 2 - 0.05, car.BOTTOM(1) + 0.02), m['Chrome'], col=col,
+                        axis='Y', segments=24, props=dict(rear_p)))
+        add(ck.cylinder('bazooka_inner', 0.085, 0.56, (0.32, L / 2 - 0.05, car.BOTTOM(1) + 0.02), m['Trim'], col=col,
+                        axis='Y', segments=24, props=dict(rear_p)))
+        add(ck.box('roofwing_blade', (1.25, 0.32, 0.03), (0, yr + roof_len * 0.38, zr + 0.25), m['Paint'], col=col,
+                   bevel_width=0.01, props=dict(top)))
+        for sx in (1, -1):
+            add(ck.box(f'roofwing_post{"L" if sx > 0 else "R"}', (0.03, 0.08, 0.22), (sx * 0.45, yr + roof_len * 0.38, zr + 0.13),
+                       m['Trim'], col=col, props=dict(top)))
+        neon = mat('Neon', (0.05, 0.2, 1.0), roughness=0.3, emission=(0.1, 0.4, 1.0), strength=4.0)
+        for sx in (1, -1):
+            add(ck.box(f'neon_{"L" if sx > 0 else "R"}', (0.03, L * 0.55, 0.02), (sx * (car.WIDTH(0.5) - 0.12), 0,
+                       car.BOTTOM(0.5) - 0.02), neon, col=col, props={'zone': 'bottom'}))
+    elif root == 'Civik':
+        # Student life: a bicycle on the roof and a traffic cone from last night.
+        z = rack('bikerack')
+        frame = mat('BikeFrame', (0.05, 0.6, 0.15), roughness=0.4, coat=0.6)
+        for k, dy in enumerate((-0.52, 0.52)):
+            w = ck.torus_x(f'bike_wheel{k}', 0.32, 0.025, (0.25, yr + dy, z + 0.34), m['Tyre'], col=col, props=dict(top))
+            add(w)
+        add(ck.box('bike_top', (0.03, 0.62, 0.03), (0.25, yr, z + 0.62), frame, col=col, props=dict(top)))
+        add(ck.box('bike_down', (0.03, 0.7, 0.03), (0.25, yr - 0.05, z + 0.48), frame, col=col,
+                   rotation=(math.radians(32), 0, 0), props=dict(top)))
+        add(ck.box('bike_seatpost', (0.03, 0.03, 0.42), (0.25, yr + 0.2, z + 0.5), frame, col=col, props=dict(top)))
+        add(ck.box('bike_saddle', (0.08, 0.2, 0.04), (0.25, yr + 0.22, z + 0.72), m['Trim'], col=col, props=dict(top)))
+        add(ck.box('bike_bars', (0.5, 0.03, 0.03), (0.25, yr - 0.42, z + 0.72), m['Chrome'], col=col, props=dict(top)))
+        cone_o = mat('ConeOrange', (1.0, 0.25, 0.0), roughness=0.6)
+        add(ck.cylinder('cone_body', 0.15, 0.5, (-0.4, yr - 0.15, z + 0.27), cone_o, col=col, axis='Z', segments=12,
+                        radius2=0.03, props=dict(top)))
+        add(ck.cylinder('cone_band', 0.11, 0.08, (-0.4, yr - 0.15, z + 0.3), mat('ConeWhite', (0.9, 0.9, 0.9), roughness=0.5),
+                        col=col, axis='Z', segments=12, radius2=0.09, props=dict(top)))
+    elif root == 'Corso':
+        # A tower of pizza boxes strapped to the delivery box and an orange beacon.
+        t = (gl['ws_end'] + gl['roof_end']) / 2 + 0.03
+        z = car.roof_z(t) + 0.5
+        card = mat('Cardboard', (0.55, 0.4, 0.22), roughness=0.9)
+        for k in range(5):
+            add(ck.box(f'pizza_{k}', (0.4, 0.4, 0.05), (0.05 * (k % 2), car.y_of(t) + 0.02 * k, z + 0.03 + k * 0.052),
+                       card, col=col, props=dict(top)))
+        add(ck.cylinder('beacon_orange', 0.07, 0.12, (0, car.y_of(t) - 0.2, z + 0.3), m['Indicator'], col=col, axis='Z',
+                        segments=14, props=dict(top)))
+    elif root == 'Calibro':
+        # Bull horns on the bonnet and a big Heraklus flag at the back.
+        t = sp['nose'] + 0.08
+        ivory = mat('Horn', (0.85, 0.8, 0.65), roughness=0.5)
+        for sx in (1, -1):
+            h = ck.cylinder(f'bullhorn_{"L" if sx > 0 else "R"}', 0.06, 0.6, (sx * 0.28, y_of(t), car.surface_z(t, 0.2) + 0.12),
+                            ivory, col=col, axis='X', segments=10, radius2=0.012, props=dict(front_p))
+            h.rotation_euler = (0, math.radians(-25 * sx), math.radians(10 * sx))
+            h.location.x = sx * 0.42
+            add(h)
+        add(ck.cylinder('heraklusflag_pole', 0.012, 1.5, (0.55, L / 2 - 0.4, car.TOP(0.9) + 0.75), m['Trim'], col=col,
+                        axis='Z', segments=6, props=dict(rear_p)))
+        black = mat('FlagBlack', (0.02, 0.02, 0.02), roughness=0.7)
+        white = mat('FlagWhite', (0.9, 0.9, 0.9), roughness=0.7)
+        for k in range(4):
+            add(ck.box(f'heraklusflag_{k}', (0.01, 0.15, 0.4), (0.55, L / 2 - 0.3 + k * 0.15, car.TOP(0.9) + 1.3),
+                       black if k % 2 == 0 else white, col=col, props=dict(rear_p)))
+    elif root == 'Volvi':
+        # Farmer's estate: a hay bale on the rack, a cow catcher and jerrycans.
+        z = rack('hayrack')
+        straw = mat('Straw', (0.78, 0.62, 0.25), roughness=0.95)
+        add(ck.box('hay_bale', (0.95, 1.1, 0.5), (0, yr, z + 0.27), straw, col=col, bevel_width=0.03, props=dict(top)))
+        add(ck.box('hay_strap', (1.0, 0.05, 0.53), (0, yr, z + 0.27), m['Trim'], col=col, props=dict(top)))
+        hw = car.WIDTH(0) - 0.05
+        yb = -L / 2 - 0.16
+        for k, x in enumerate((-hw * 0.8, -hw * 0.3, hw * 0.3, hw * 0.8)):
+            add(ck.cylinder(f'bullbar_up{k}', 0.025, 0.55, (x, yb, car.BOTTOM(0) + 0.33), m['Chrome'], col=col, axis='Z',
+                            segments=10, props=dict(front_p)))
+        for k, z2 in enumerate((0.2, 0.55)):
+            add(ck.cylinder(f'bullbar_cross{k}', 0.028, 2 * hw * 0.85, (0, yb, car.BOTTOM(0) + z2), m['Chrome'], col=col,
+                            axis='X', segments=10, props=dict(front_p)))
+        for k, x in enumerate((-0.35, 0.35)):
+            add(ck.box(f'jerrycan_{k}', (0.3, 0.12, 0.38), (x, L / 2 + 0.08, car.BOTTOM(1) + 0.3),
+                       mat('Jerry' + str(k), (0.6, 0.04, 0.03) if k == 0 else (0.1, 0.35, 0.1), roughness=0.5),
+                       col=col, bevel_width=0.015, props=dict(rear_p)))
+    elif root == 'SpaceWagen':
+        # Tante Riek is going on holiday: suitcases on the roof and a garden gnome riding along.
+        z = rack('luggage')
+        cols = [(0.35, 0.18, 0.08), (0.6, 0.08, 0.2), (0.15, 0.35, 0.55)]
+        for k, (dx, dy, sz) in enumerate(((-0.25, -0.35, (0.55, 0.7, 0.25)), (0.25, -0.3, (0.5, 0.6, 0.3)),
+                                          (0.0, 0.35, (0.7, 0.55, 0.22)))):
+            add(ck.box(f'suitcase_{k}', sz, (dx, yr + dy, z + sz[2] / 2 + 0.02), mat(f'Suitcase{k}', cols[k], roughness=0.6),
+                       col=col, bevel_width=0.03, props=dict(top)))
+        gz = z + 0.2
+        add(ck.cylinder('gnome_body', 0.11, 0.26, (0.0, yr + 0.35, gz + 0.13), mat('GnomeBlue', (0.08, 0.2, 0.6), roughness=0.6),
+                        col=col, axis='Z', segments=12, radius2=0.08, props=dict(top)))
+        add(ck.ellipsoid('gnome_beard', (0.08, 0.08, 0.1), (0.0, yr + 0.29, gz + 0.3), mat('GnomeWhite', (0.92, 0.92, 0.9)),
+                         col=col, props=dict(top)))
+        add(ck.ellipsoid('gnome_face', (0.06, 0.06, 0.06), (0.0, yr + 0.33, gz + 0.36), mat('GnomeSkin', (0.9, 0.65, 0.5)),
+                         col=col, props=dict(top)))
+        add(ck.cylinder('gnome_hat', 0.08, 0.26, (0.0, yr + 0.35, gz + 0.5), mat('GnomeRed', (0.8, 0.05, 0.05), roughness=0.6),
+                        col=col, axis='Z', segments=12, radius2=0.0, props=dict(top)))
 
 
 def spoiler(car, d, m, col, add):

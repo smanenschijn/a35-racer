@@ -9,7 +9,7 @@ Builds the whole route over the full road network:
     'single' (one carriageway, oncoming traffic in the left lane), plus tunnels and bridges,
   * straights are compressed, bends keep their real angle.
 
-  python3 tools/osm/build_campaign.py  -> src/track/routes/campaign.json
+  python3 tools/osm/build_campaign.py  -> godot/assets/route/campaign.json
 
 Inputs (OSM snapshots in this folder): n35_raw.json, n35_features_raw.json, a35_raw.json,
 features_raw.json. Map data (c) OpenStreetMap contributors, ODbL.
@@ -21,7 +21,7 @@ import math
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, '..', '..', 'src', 'track', 'routes', 'campaign.json')
+OUT = os.path.join(HERE, '..', '..', 'godot', 'assets', 'route', 'campaign.json')
 
 STRAIGHT_COMPRESS = 0.5
 STRAIGHT_RADIUS = 1400
@@ -315,6 +315,10 @@ for e in features:
         i, d = project(xy(e['lat'], e['lon']))
         if -8 < d < 25 and 50 < i < real_len - 50:
             junctions.append((round(gs(i)), t.get('name') or '', t.get('ref') or ''))
+interchanges = []
+for s_, n, r in sorted(set(junctions)):
+    if n.startswith('Knooppunt') and not any(abs(s_ - i['s']) < 400 for i in interchanges):
+        interchanges.append({'s': s_, 'name': n})
 exits = []
 for s, n, r in sorted(set(junctions)):
     if n and not n.startswith('Knooppunt') and not any(abs(s - e['s']) < 250 for e in exits):
@@ -397,6 +401,268 @@ for item in landmarks:
     if st:
         item['s'] = min(max(item['s'], st['startS'] + 150), st['finishS'] - 80)
 
+# ---- 7. Junctions, slip roads, railways and roadside points of interest ------------------
+# junctions_raw.json: Overpass (junctions_query.overpassql) for traffic lights, side roads, slip roads and
+# railways near the route; pois_raw.json: windmills, churches, towers, petrol stations... (pois_query).
+extra = load('junctions_raw.json')['elements']
+pois_raw = load('pois_raw.json')['elements']
+
+
+def near_index(p, reach=150.0):
+    """(i, d) of the closest centreline point, using the 50 m grid; None if further than reach."""
+    cx, cy = int(p[0] // CELL), int(p[1] // CELL)
+    r = int(reach // CELL) + 1
+    best, bi = reach * reach, None
+    for gx in range(cx - r, cx + r + 1):
+        for gy in range(cy - r, cy + r + 1):
+            for i in grid.get((gx, gy), ()):
+                dd = (dense[i][0] - p[0]) ** 2 + (dense[i][1] - p[1]) ** 2
+                if dd < best:
+                    best, bi = dd, i
+    if bi is None:
+        return None
+    h = psi[bi]
+    fx, fy = math.sin(h), math.cos(h)
+    dx, dy = p[0] - dense[bi][0], p[1] - dense[bi][1]
+    return bi + int(dx * fx + dy * fy), dx * fy + dy * (-fx)
+
+
+def far_index(p):
+    """(i, d) for points kilometres away (brute force over every 10th point)."""
+    best, bi = 1e18, 0
+    for i in range(0, real_len, 10):
+        dd = (dense[i][0] - p[0]) ** 2 + (dense[i][1] - p[1]) ** 2
+        if dd < best:
+            best, bi = dd, i
+    h = psi[bi]
+    fx, fy = math.sin(h), math.cos(h)
+    dx, dy = p[0] - dense[bi][0], p[1] - dense[bi][1]
+    return bi, dx * fy + dy * (-fx)
+
+
+signals = []
+for e in extra:
+    if e['type'] == 'node' and e.get('tags', {}).get('highway') == 'traffic_signals':
+        loc = near_index(xy(e['lat'], e['lon']), 60)
+        if loc and abs(loc[1]) < 45 and 60 < loc[0] < real_len - 60:
+            signals.append(loc[0])
+
+ROAD_W = {'primary': 8.0, 'secondary': 7.5, 'tertiary': 6.5, 'unclassified': 5.5}
+raw_j = []
+for e in extra:
+    t = e.get('tags', {})
+    hw = t.get('highway')
+    if e['type'] != 'way' or hw not in ROAD_W or e['id'] in route_way_ids:
+        continue
+    if t.get('bridge') or t.get('tunnel') or t.get('layer', '0') != '0':
+        continue
+    if 'N35' in t.get('ref', '') or 'A35' in t.get('ref', ''):
+        continue
+    loc = [near_index(xy(p['lat'], p['lon']), 220) for p in e['geometry']]
+    on = [l for l in loc if l and abs(l[1]) < 9 and 60 < l[0] < real_len - 60]
+    if not on:
+        continue
+    i0 = on[0][0]
+    tg = dense_tags[min(real_len - 1, i0)]
+    if tg.get('highway') == 'motorway' or tg.get('bridge') or tg.get('tunnel'):
+        continue
+    right = [l for l in loc if l and l[1] > 14 and abs(l[0] - i0) < 160]
+    left = [l for l in loc if l and l[1] < -14 and abs(l[0] - i0) < 160]
+    if not right and not left:
+        continue
+    # Skew of the side road: how far it runs along the route per metre away from it.
+    far = (right or left)[-1]
+    skew = math.atan2(far[0] - i0, abs(far[1]))
+    raw_j.append({'i': i0, 'right': bool(right), 'left': bool(left), 'w': ROAD_W[hw], 'name': t.get('name', ''),
+                  'skew': max(-0.6, min(0.6, skew))})
+
+raw_j.sort(key=lambda j: j['i'])
+junction_list = []
+for j in raw_j:
+    last = junction_list[-1] if junction_list else None
+    if last and j['i'] - last['i'] < 45:
+        last['right'] |= j['right']
+        last['left'] |= j['left']
+        last['w'] = max(last['w'], j['w'])
+        if j['name'] and j['name'] not in last['names']:
+            last['names'].append(j['name'])
+        continue
+    junction_list.append({**j, 'names': [j['name']] if j['name'] else []})
+
+junctions = []
+used_signals = set()
+for j in junction_list:
+    lit = [i for i in signals if abs(i - j['i']) < 70]
+    used_signals.update(lit)
+    junctions.append({'s': round(gs(j['i'])), 'right': j['right'], 'left': j['left'], 'width': j['w'],
+                      'lights': bool(lit), 'skew': round(j['skew'], 3), 'kind': 'road', 'names': j['names'][:2]})
+# Traffic lights with no side road: a signalled cycle/pedestrian crossing.
+for i in sorted(set(signals) - used_signals):
+    if dense_tags[i].get('highway') == 'motorway':
+        continue
+    s = round(gs(i))
+    if not any(abs(s - j['s']) < 60 for j in junctions):
+        junctions.append({'s': s, 'right': False, 'left': False, 'width': 4.0, 'lights': True, 'skew': 0.0,
+                          'kind': 'cycle', 'names': []})
+junctions.sort(key=lambda j: j['s'])
+
+# Slip roads: links that leave (off) or join (on) our carriageway.
+ramps = []
+for e in extra:
+    t = e.get('tags', {})
+    if e['type'] != 'way' or t.get('highway') not in ('motorway_link', 'trunk_link', 'primary_link'):
+        continue
+    loc = [near_index(xy(p['lat'], p['lon']), 300) for p in e['geometry']]
+    if not loc[0] or not loc[-1] or len(loc) < 2:
+        continue
+    kind = None
+    if abs(loc[0][1]) < 12 and loc[-1][1] > 15 and loc[1][0] >= loc[0][0]:
+        kind, at = 'off', loc[0][0]
+    elif abs(loc[-1][1]) < 12 and loc[0][1] > 15 and loc[-1][0] >= loc[-2][0]:
+        kind, at = 'on', loc[-1][0]
+    if not kind or not (100 < at < real_len - 100) or dense_tags[at].get('tunnel'):
+        continue
+    s = round(gs(at))
+    if not any(r['kind'] == kind and abs(r['s'] - s) < 150 for r in ramps):
+        ramps.append({'s': s, 'kind': kind, 'side': 1})
+# Not every slip road touches the route in the snapshot: every motorway exit has an off ramp where the
+# junction node is, and (for a diamond) an on ramp a few hundred metres on.
+for e in exits:
+    if not any(r['kind'] == 'off' and abs(r['s'] - e['s']) < 250 for r in ramps):
+        ramps.append({'s': e['s'], 'kind': 'off', 'side': 1})
+    on_s = e['s'] + 420
+    if on_s < n_game - 300 and not any(r['kind'] == 'on' and abs(r['s'] - on_s) < 350 for r in ramps):
+        ramps.append({'s': on_s, 'kind': 'on', 'side': 1})
+# Two exits close together (Enschede-West): no on ramp squeezed in between.
+ramps = [r for r in ramps if r['kind'] == 'off' or not any(o['kind'] == 'off' and abs(o['s'] - r['s']) < 260 for o in ramps)]
+ramps.sort(key=lambda r: r['s'])
+
+# Railways crossing the route: over it, under it (our bridge) or at grade.
+railways = []
+for e in extra:
+    t = e.get('tags', {})
+    if e['type'] != 'way' or t.get('railway') not in ('rail', 'light_rail'):
+        continue
+    for i in intersections(e['geometry']):
+        s = round(gs(i))
+        if any(abs(s - r['s']) < 40 for r in railways):
+            continue
+        if t.get('bridge') or t.get('layer', '0') not in ('0', '-1'):
+            kind = 'over'
+        elif dense_tags[i].get('bridge'):
+            kind = 'under'
+        elif t.get('tunnel'):
+            continue
+        else:
+            kind = 'level'
+        railways.append({'s': s, 'kind': kind, 'name': t.get('name', '')})
+railways.sort(key=lambda r: r['s'])
+for b in bridges:
+    if not b['canal'] and any(r['kind'] == 'under' and b['s0'] - 60 <= r['s'] <= b['s1'] + 60 for r in railways):
+        b['rail'] = True
+
+# Railways running alongside the road (a train to race): stretches where a line keeps within ~40..300 m.
+rail_lines = load('railways_raw.json')['elements']
+side_hits = {}
+for e in rail_lines:
+    if e['tags'].get('usage') not in (None, 'main', 'branch'):
+        continue
+    for p in e['geometry']:
+        loc = near_index(xy(p['lat'], p['lon']), 320)
+        if loc and 35 < abs(loc[1]) < 320:
+            b = loc[0] // 40
+            side_hits.setdefault(b, []).append(loc[1])
+parallel = []
+for b in sorted(side_hits):
+    ds = side_hits[b]
+    dd = sum(ds) / len(ds)
+    s_ = round(gs(b * 40))
+    if parallel and s_ - parallel[-1]['s1'] < 120 and (parallel[-1]['d'] > 0) == (dd > 0):
+        run = parallel[-1]
+        run['s1'] = s_
+        run['ds'].append(dd)
+    else:
+        parallel.append({'s0': s_, 's1': s_, 'ds': [dd], 'd': dd})
+rail_parallel = []
+for r in parallel:
+    if r['s1'] - r['s0'] >= 500:
+        dd = sum(r['ds']) / len(r['ds'])
+        side = 1 if dd > 0 else -1
+        rail_parallel.append({'s0': r['s0'], 's1': r['s1'], 'd': round(side * (45 + min(abs(dd), 300) * 0.15), 1)})
+
+FUEL = {'Shell': 'Shall', 'BP': 'BV', 'Esso': 'Esse', 'TotalEnergies': 'TotaalEnergie', 'Total': 'TotaalEnergie',
+        'Tinq': 'Tanq', 'Tango': 'Tanga', 'Texaco': 'Texako', 'Avia': 'Avio', 'Gulf': 'Golf', 'Argos': 'Argus',
+        'Firezone': 'Vuurzone', 'Q8': 'K8'}
+FOOD = {"McDonald's": "McDuck's", 'Burger King': 'Burger Koning', 'KFC': 'TFC', 'Subway': 'Subwee'}
+pois = []
+for e in pois_raw:
+    t = e.get('tags', {})
+    c = e.get('center') or ({'lat': e['lat'], 'lon': e['lon']} if 'lat' in e else None)
+    if not c:
+        continue
+    kind, reach, name = None, 0, t.get('name', '')
+    if t.get('man_made') == 'windmill' or t.get('historic') == 'windmill':
+        kind, reach = 'molen', 5000
+    elif (t.get('building') == 'church' or (t.get('amenity') == 'place_of_worship' and t.get('religion') == 'christian')) and name:
+        kind, reach = 'kerk', 1400
+    elif t.get('man_made') == 'water_tower':
+        kind, reach = 'watertoren', 2600
+    elif t.get('amenity') == 'fuel':
+        kind, reach, name = 'tank', 160, FUEL.get(t.get('brand', ''), 'Tankstation')
+    elif t.get('amenity') == 'fast_food' and t.get('brand') in FOOD:
+        kind, reach, name = 'snack', 450, FOOD[t['brand']]
+    elif t.get('man_made') in ('mast', 'tower') and float((t.get('height') or '0').split()[0].replace(',', '.') or 0) >= 60:
+        kind, reach = 'mast', 4000
+    elif t.get('man_made') == 'chimney':
+        kind, reach = 'schoorsteen', 2200
+    elif t.get('tourism') == 'theme_park' and name in ('Avonturenpark Hellendoorn', 'De Waarbeek'):
+        kind, reach = 'pretpark', 6000
+    if not kind:
+        continue
+    loc = near_index(xy(c['lat'], c['lon']), reach) if reach <= 500 else far_index(xy(c['lat'], c['lon']))
+    if not loc or abs(loc[1]) > reach or not (150 < loc[0] < real_len - 150):
+        continue
+    i, d = loc
+    side = 1 if d > 0 else -1
+    if kind in ('tank', 'snack'):
+        gd = side * (24 + min(abs(d), 400) * 0.08)
+    elif kind in ('mast', 'pretpark'):
+        gd = side * (220 + min(abs(d), 6000) * 0.04)
+    elif kind == 'molen':
+        gd = side * (90 + min(abs(d), 5000) * 0.04)
+    else:
+        gd = side * (70 + min(abs(d), 3000) * 0.06)
+    pois.append({'kind': kind, 's': round(gs(i)), 'd': round(gd, 1), 'name': name, 'real': round(abs(d))})
+# Named places looked up with Nominatim (OpenStreetMap), modelled as their own scenery.
+NAMED = [
+    ('urenco', 'Uranco', 52.3353691, 6.692066), ('thales', 'Thalus', 52.2467791, 6.7723814),
+    ('kristalbad', 'Kristalbad', 52.2452993, 6.8244459), ('twence', 'Twentse Verbranding', 52.2337945, 6.7862405),
+    ('xlpark', 'XL Businesspark', 52.3201896, 6.6532061), ('bolletje', 'Bolleke', 52.3661229, 6.6453619),
+    ('stork', 'Storq', 52.2489832, 6.791015),
+    ('berg', 'Hellendoornse Berg', 52.3895752, 6.429859), ('heide', 'Wierdense Veld', 52.3752751, 6.5155081),
+]
+for kind, name, lat, lon in NAMED:
+    i, d = far_index(xy(lat, lon))
+    if abs(d) > 4000 or not (150 < i < real_len - 150):
+        continue
+    side = 1 if d > 0 else -1
+    near = {'kristalbad': 40, 'heide': 30, 'berg': 300}.get(kind, 90)
+    pois.append({'kind': kind, 's': round(gs(i)), 'd': round(side * (near + min(abs(d), 4000) * 0.05), 1), 'name': name,
+                 'real': round(abs(d)), 'named': True})
+
+# Keep it readable: one of each kind per 600 m (the closest wins), and not on top of a landmark.
+pois.sort(key=lambda p: p['real'])
+kept = []
+for p in pois:
+    if any(k['kind'] == p['kind'] and abs(k['s'] - p['s']) < 600 for k in kept):
+        continue
+    if not p.get('named') and any(abs(l['s'] - p['s']) < 220 and (l['d'] > 0) == (p['d'] > 0) for l in landmarks):
+        continue
+    if p['kind'] == 'watertoren' and any(l['id'] == 'watertoren' and abs(l['s'] - p['s']) < 900 for l in landmarks):
+        continue
+    kept.append(p)
+pois = sorted(kept, key=lambda p: p['s'])
+
 route = {
     'name': 'N35 / A35 Raalte → Enschede',
     'source': 'OpenStreetMap contributors (ODbL), snapshot ' + snapshot,
@@ -411,6 +677,12 @@ route = {
     'exits': exits,
     'landmarks': landmarks,
     'stages': stages,
+    'junctions': junctions,
+    'ramps': ramps,
+    'railways': railways,
+    'pois': pois,
+    'interchanges': interchanges,
+    'railParallel': rail_parallel,
 }
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 with open(OUT, 'w') as f:
@@ -426,3 +698,12 @@ print('waters', route['waters'][:12])
 print('overpasses', len(merged), 'exits', [(e['s'], e['name']) for e in exits])
 for l in landmarks:
     print('landmark', l)
+print('junctions', len(junctions), [(j['s'], j['kind'], 'L' if j['left'] else '', 'R' if j['right'] else '', 'lights' if j['lights'] else '', j['names']) for j in junctions])
+print('ramps', ramps)
+print('interchanges', interchanges)
+print('rail parallel', rail_parallel)
+print('railways', railways)
+from collections import Counter
+print('pois', Counter(p['kind'] for p in pois))
+for p in pois:
+    print('  poi', p)

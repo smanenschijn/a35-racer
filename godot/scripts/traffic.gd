@@ -113,21 +113,30 @@ class TrafficDriver:
 			else:
 				_lane_timer = 1.5
 
-		# N35: a racer closing in from behind? Move over onto the verge so they can squeeze past.
+		# N35: a racer closing in from behind? Move well over onto the paved verge so they can
+		# squeeze through the middle, even with oncoming traffic alongside.
 		var yield_to := 0.0
 		if track.is_single(vs) and lane == right:
 			var racer_behind := false
 			var right_busy := false
 			for o: Vehicle in others:
 				var ds := o.s - vs
-				if o.is_racer and o.active and not o.wrecked and ds < 0 and ds > -90 and o.along_speed > spd + 3:
+				if o.is_racer and o.active and not o.wrecked and ds < 0 and ds > -160 and o.along_speed > spd + 3:
 					racer_behind = true
 				# ...unless someone is already down our right-hand side.
 				if o != v and o.active and o.d > v.d + 1 and absf(ds) < o.half_l + v.half_l + 3:
 					right_busy = true
 			if racer_behind and not right_busy:
-				yield_to = 2.3
-		_yield_off += (yield_to - _yield_off) * minf(1.0, dt * 1.2)
+				yield_to = Config.OWN_VERGE - right
+		# Honked at by the player close behind: move over (verge on the N35, right lane on the motorway).
+		var honked := Time.get_ticks_msec() < TrafficManager.honk_until and vs > TrafficManager.honk_s and vs - TrafficManager.honk_s < 90
+		if honked:
+			if track.is_single(vs):
+				yield_to = Config.OWN_VERGE - right
+			elif lane == left and _lane_free(others, right, 12, 30, spd):
+				lane = right
+				_lane_timer = 3.0
+		_yield_off += (yield_to - _yield_off) * minf(1.0, dt * 1.6)
 
 		# Steering: pure pursuit on our lane.
 		var look := 10 + maxf(0.0, spd) * 0.6
@@ -139,13 +148,27 @@ class TrafficDriver:
 		var wanted := desired
 		if ahead != null and gap < 90:
 			wanted = minf(wanted, maxf(0.0, ahead.along_speed + (gap - 8 - spd * 0.6) * 0.5))
+		# Red light ahead on a dual carriageway (on the N35 traffic keeps rolling, there's no room to pass
+		# a queue): stop at the line, unless it's too late to stop comfortably.
+		var at_light := false
+		if track.scenery != null:
+			var cross: float = track.scenery.crossing_closed(vs, 120.0)
+			if cross < INF:
+				wanted = minf(wanted, sqrt(maxf(0.0, 2.0 * 6.0 * (cross - vs - v.half_l))))
+				at_light = true
+		if track.scenery != null and not track.is_single(vs):
+			var stop: float = track.scenery.red_ahead(vs + v.half_l, 75.0)
+			var room := stop - vs - v.half_l - 1.0
+			if stop < INF and room > spd * 0.7:
+				wanted = minf(wanted, sqrt(maxf(0.0, 2.0 * 4.0 * room)))
+				at_light = room < 30.0
 		inp.throttle = 0.7 if spd < wanted - 0.5 else 0.0
 		inp.brake = minf(1.0, (spd - wanted) / 8 + 0.2) if spd > wanted + 2 else 0.0
 		inp.handbrake = false
 		inp.nitro = false
 
 		var facing_back := absf(wrapf(v.heading - track.frame(vs).heading, -PI, PI)) > 1.6
-		if (spd < 2 and not (ahead != null and gap < 15)) or facing_back:
+		if (spd < 2 and not (ahead != null and gap < 15) and not at_light) or facing_back:
 			stuck += dt
 		else:
 			stuck = 0.0
@@ -168,28 +191,38 @@ class OncomingDriver:
 		if v.wrecked:
 			return
 		var spd := v.forward_speed
-		others = Vehicle.near(others, v.s - 115, v.s + 10)
-		# Anything ahead of us (lower s) in our lane?
+		others = Vehicle.near(others, v.s - 200, v.s + 10)
+		# Anything ahead of us (lower s) in our lane? And is a racer coming our way at all?
 		var threat := INF
 		var threat_d := 0.0
+		var racer := INF
 		for o: Vehicle in others:
 			if o == v or not o.active:
 				continue
 			var ds := v.s - o.s
-			if ds <= 0 or ds > 110:
+			if ds <= 0 or ds > 190:
+				continue
+			if (o.is_racer or o.role == "police") and not o.wrecked:
+				racer = minf(racer, ds)
+			if ds > 110:
 				continue
 			if absf(o.d - _lane) < o.half_w + v.half_w + 0.6 and ds < threat:
 				threat = ds
 				threat_d = o.d
-		# Swerve away from it (usually onto our verge) and brake when threatened.
-		# (Something already on our verge: stay put and just brake.)
-		var target_lane: float = Config.LANE_CENTERS[0] if threat >= 70 or threat_d < -3.4 else -4.4
-		_lane += (target_lane - _lane) * minf(1.0, dt * 1.5)
+		# Make room: with racers about, keep to our own verge so the middle of the road stays open
+		# (the N35 has two lanes and racers overtake in ours). Swerve harder when something comes
+		# straight at us; something already on our verge: stay put and just brake.
+		var target_lane: float = Config.LANE_CENTERS[0]
+		if threat < 90 and threat_d > Config.OPP_VERGE + 1.6:
+			target_lane = Config.OPP_VERGE
+		elif racer < 180:
+			target_lane = lerpf(Config.LANE_CENTERS[0], Config.OPP_VERGE, 0.75)
+		_lane += (target_lane - _lane) * minf(1.0, dt * 2.2)
 		var look := 10 + maxf(0.0, spd) * 0.6
 		var target := track.point_at(v.s - look, _lane)
 		var err := wrapf(atan2(target.x - v.x, target.z - v.z) - v.heading, -PI, PI)
 		inp.steer = clampf(-err * 2.4 + v.ang_vel * 0.2, -1.0, 1.0)
-		var wanted := desired * 0.4 if threat < 45 else desired
+		var wanted := desired * 0.4 if threat < 45 else (desired * 0.75 if racer < 120 else desired)
 		inp.throttle = 0.7 if spd < wanted - 0.5 else 0.0
 		inp.brake = minf(1.0, (spd - wanted) / 8 + 0.3) if spd > wanted + 2 else 0.0
 		inp.handbrake = false
@@ -198,6 +231,9 @@ class OncomingDriver:
 		stuck = stuck + dt if spd < 2 or facing_wrong else 0.0
 
 
+## Where and until when (ticks in ms) the player is honking: traffic just ahead moves over.
+static var honk_s := 0.0
+static var honk_until := 0
 var vehicles: Array = []
 ## Physics oncoming cars for single-carriageway stretches.
 var against: Array = []

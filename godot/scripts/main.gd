@@ -3,6 +3,7 @@ extends Node3D
 ## src/game/Game.ts.
 ##
 ## Testing: Godot --path godot -- --autoshot=/tmp/shot.png [--autoplay] [--stage=4] [--wait=20] [--touch]
+## [--damage=150] (batter every racer at the start) [--at=9000] (start somewhere along the route)
 
 const FIXED_DT := 1.0 / 120.0
 
@@ -49,6 +50,12 @@ func _ready() -> void:
 	if OS.has_feature("mobile"):
 		_scale_max = 1.0
 		get_viewport().scaling_3d_scale = 0.8
+	# Arrows and controller symbols (→ ↺ ◀ ✕ △): in the browser there are no system fonts to fall back on.
+	var symbols: Font = load("res://assets/fonts/DejaVuSans-Bold.ttf")
+	for f in ["Bangers-Regular.ttf", "LiberationSans-Bold.ttf", "RussoOne-Regular.ttf"]:
+		var font: FontFile = load("res://assets/fonts/" + f)
+		font.allow_system_fallback = false # the same glyphs everywhere, so a missing one shows up here too
+		font.fallbacks = [symbols]
 	_show_loading()
 	# Two frames so the loading screen is on before the heavy lifting.
 	await get_tree().process_frame
@@ -371,6 +378,14 @@ func _parse_auto_args() -> void:
 			_auto.wait = float(a.substr(7))
 		elif a.begins_with("--stage="):
 			_auto.stage = int(a.substr(8))
+		elif a == "--showroom":
+			# Screenshots: the showroom camera without a menu in front of it.
+			menu.close()
+			_auto.menu = "showroom"
+		elif a.begins_with("--car="):
+			_preview_id = a.substr(6)
+		elif a.begins_with("--damage="):
+			_auto.damage = float(a.substr(9))
 		elif a.begins_with("--heat="):
 			_auto.heat = float(a.substr(7))
 		elif a.begins_with("--at="):
@@ -393,7 +408,7 @@ func _parse_auto_args() -> void:
 			# Screenshots: put the grid somewhere along the route.
 			track.features.startS = _auto.at
 		race.start()
-	elif _auto.has("menu"):
+	elif _auto.has("menu") and _auto.menu != "showroom":
 		menu.open(_auto.menu)
 
 
@@ -408,6 +423,15 @@ func _auto_step(dt: float) -> void:
 		race.player.nitro = 1.0
 		race.player.input.nitro = true
 		_auto.erase("heat")
+	if _auto.has("damage") and ((race.state == "racing" and race.race_time > 1.5) or (_auto.has("menu") and _auto.t > 0.5)):
+		# Screenshots: batter every racer so the damage model shows.
+		for v: Vehicle in race.racers:
+			for k in 6:
+				var zn: String = Vehicle.ZONES[k % 4]
+				var lx: float = [0.0, 0.0, -0.8, 0.8][k % 4]
+				var lz: float = [1.8, -1.8, 0.4, -0.4][k % 4]
+				v.add_damage(zn, _auto.damage / 6.0, lx, lz, null, race.race_time, events)
+		_auto.erase("damage")
 	if _auto.t >= _auto.wait:
 		if DisplayServer.get_name() != "headless":
 			get_viewport().get_texture().get_image().save_png(_auto.shot)
@@ -419,6 +443,7 @@ func _auto_step(dt: float) -> void:
 		print("[auto] per frame: physics %.2f ms, visuals %.2f ms (sim %.1f s)" % [_auto.get("phys_us", 0) / 1000.0 / _auto.frames,
 			_auto.get("render_us", 0) / 1000.0 / _auto.frames, race.race_time])
 		var p := race.player
+		print("[auto] stats %s" % str(race.stats))
 		print("[auto] screenshot %s  t=%.1fs frames=%d state=%s pos=%d/8 s=%.0f speed=%d km/u dmg=%d stars=%d timeLeft=%.0f" % [
 			_auto.shot, _auto.t, _auto.frames, race.state, race.ranking().find(p) + 1, p.s - track.features.startS,
 			roundi(p.speed * 3.6), roundi(p.wreck_level), race.police.stars, race.time_left])
