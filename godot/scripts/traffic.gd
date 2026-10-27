@@ -128,6 +128,14 @@ class TrafficDriver:
 					right_busy = true
 			if racer_behind and not right_busy:
 				yield_to = Config.OWN_VERGE - right
+		# Honked at by the player close behind: move over (verge on the N35, right lane on the motorway).
+		var honked := Time.get_ticks_msec() < TrafficManager.honk_until and vs > TrafficManager.honk_s and vs - TrafficManager.honk_s < 90
+		if honked:
+			if track.is_single(vs):
+				yield_to = Config.OWN_VERGE - right
+			elif lane == left and _lane_free(others, right, 12, 30, spd):
+				lane = right
+				_lane_timer = 3.0
 		_yield_off += (yield_to - _yield_off) * minf(1.0, dt * 1.6)
 
 		# Steering: pure pursuit on our lane.
@@ -223,6 +231,9 @@ class OncomingDriver:
 		stuck = stuck + dt if spd < 2 or facing_wrong else 0.0
 
 
+## Where and until when (ticks in ms) the player is honking: traffic just ahead moves over.
+static var honk_s := 0.0
+static var honk_until := 0
 var vehicles: Array = []
 ## Physics oncoming cars for single-carriageway stretches.
 var against: Array = []

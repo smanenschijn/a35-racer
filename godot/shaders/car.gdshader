@@ -9,8 +9,7 @@ render_mode cull_disabled;
 uniform bool use_tex = false;
 uniform sampler2D tex : source_color, filter_linear_mipmap_anisotropic;
 uniform bool use_livery = false;
-// Top half: the side view (u rear → front, v roof → sill); bottom half: seen from above (u right → left side
-// of the car as seen from behind, v nose → tail).
+// Three rows: right side, left side (mirrored along the car so the text reads), and seen from above.
 uniform sampler2D livery : source_color, filter_linear_mipmap_anisotropic, repeat_disable;
 uniform vec4 livery_box = vec4(-2.0, 2.0, 0.2, 1.3); // z min, z max, y min, y max of the painted body
 uniform float livery_half_w = 0.9;
@@ -30,20 +29,20 @@ void vertex() {
 }
 
 vec4 livery_at(vec3 p, vec3 n) {
+	// Rows of 1/3: the car's left side (u rear → front), its right side (u front → rear), the top.
 	float u_side = (p.z - livery_box.x) / (livery_box.y - livery_box.x);
-	// Seen from the right (-x) the nose is on the viewer's left: mirror so text reads the right way round.
-	if (n.x < 0.0) u_side = 1.0 - u_side;
 	float v_side = (livery_box.w - p.y) / (livery_box.w - livery_box.z);
-	vec4 side = texture(livery, vec2(u_side, v_side * 0.5));
-	float u_top = 0.5 - p.x / (2.0 * livery_half_w);
-	float v_top = (livery_box.y - p.z) / (livery_box.y - livery_box.x);
-	vec4 top = texture(livery, vec2(u_top, 0.5 + v_top * 0.5));
+	// Seen from the car's right (-x) the nose is on the viewer's left: that side uses the mirrored row.
+	bool mirrored = n.x < 0.0;
+	vec2 uv_s = vec2(mirrored ? 1.0 - u_side : u_side, (clamp(v_side, 0.0, 1.0) + (mirrored ? 1.0 : 0.0)) / 3.0);
+	vec4 side = texture(livery, uv_s);
+	float u_top = (p.z - livery_box.x) / (livery_box.y - livery_box.x);
+	float v_top = (livery_half_w - p.x) / (2.0 * livery_half_w);
+	vec4 top = texture(livery, vec2(u_top, (2.0 + clamp(v_top, 0.0, 1.0)) / 3.0));
 	float ws = smoothstep(0.45, 0.75, abs(n.x));
 	float wt = smoothstep(0.5, 0.8, n.y);
-	vec4 o = side * ws + top * wt * (1.0 - ws);
-	// Inside the half rows: don't bleed over the edges of the projection.
-	o.a *= step(0.0, v_side) * step(v_side, 1.0) * step(0.0, u_side) * step(u_side, 1.0);
-	return o;
+	side.a *= step(0.0, v_side) * step(v_side, 1.0) * step(0.0, u_side) * step(u_side, 1.0);
+	return side * ws + top * wt * (1.0 - ws);
 }
 
 void fragment() {

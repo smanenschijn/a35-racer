@@ -52,6 +52,7 @@ var _prev_ds := {}
 var _player_scrape := 0.0
 var _sim_time := 0.0
 var _last_taunt := -99.0
+var _last_rival_horn := -99.0
 ## One extra stretch of clock per race when time runs out (costs a time penalty).
 var _last_chance_used := false
 var _help_shown := false
@@ -506,7 +507,17 @@ func _local_to_world(v: Vehicle, lx: float, lz: float, up: float) -> Vector3:
 
 
 ## Per-render-frame logic: input, state machine, real-time timers.
+## Each driver's horn.
+const HORNS := {"rx": "cucaracha", "supremo": "dixie", "golv": "toettoet", "civik": "dixie", "corso": "toettoet",
+	"calibro": "toettoet", "volvi": "koe", "spacewagen": "cucaracha"}
+
+
 func handle_input(c: InputCtl.Controls, real_dt: float) -> void:
+	if c.honk and state in ["racing", "countdown", "finished"]:
+		_audio.melody(HORNS.get(player.spec.id, "cucaracha"))
+		# Traffic ahead hears you and moves over.
+		TrafficManager.honk_s = player.s
+		TrafficManager.honk_until = Time.get_ticks_msec() + 2500
 	if c.nextTrack:
 		_music.next()
 	if c.volumeUp or c.volumeDown:
@@ -911,6 +922,10 @@ func _detect_near_misses() -> void:
 		if prev == null or o.wrecked or absf(ds) > 20:
 			continue
 		if signf(prev) != signf(ds):
+			# A rival overtaking you lets you hear it.
+			if o.is_racer and ds > 0 and _sim_time - _last_rival_horn > 8 and randf() < 0.45:
+				_last_rival_horn = _sim_time
+				_audio.melody(HORNS.get(o.spec.id, "toettoet"), 0.35)
 			var gap := absf(o.d - p.d) - p.half_w - o.half_w
 			var rel := absf(p.along_speed - o.along_speed)
 			var recent_contact := _sim_time - p.last_contact_time < 1 and p.last_hit_by == o

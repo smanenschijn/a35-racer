@@ -2,11 +2,13 @@ class_name Livery
 ## Racing liveries: stickers, start numbers, stripes and sponsor decals per driver, painted once into a
 ## texture the car shader projects onto the body (see shaders/car.gdshader).
 ##
-## Layout (1024×1024): top half is the side view (x = rear → front, y = roof → sill), bottom half is seen
-## from above (x = rear → front, y = left → right side of the car). Everything is drawn in metres through
+## Layout (1024×1536), three rows of 512: the left-hand side (x = rear → front), the right-hand side
+## (x = front → rear, so the layout matches and text still reads left to right), and the car seen from
+## above (x = rear → front, y = left → right). y in the side rows runs roof → sill. Everything is drawn in metres through
 ## the Ctx helpers, so the stickers keep their shape on long and short cars alike.
 
 const SIZE := 1024
+const ROW := 512
 
 static var _cache := {}
 
@@ -22,31 +24,44 @@ class Ctx:
 	var font_num: Font
 	var font_txt: Font
 	var font_fun: Font
+	## Second pass: the right-hand side (mirrored along the car); the top row is drawn in the first pass only.
+	var mirror := false
 
 	func sx(z: float) -> float:
+		var u := (z - z0) / (z1 - z0)
+		return (1.0 - u if mirror else u) * SIZE
+
+	func tx(z: float) -> float:
 		return (z - z0) / (z1 - z0) * SIZE
 
 	func sy(y: float) -> float:
-		return (y1 - y) / (y1 - y0) * SIZE * 0.5
+		return (y1 - y) / (y1 - y0) * ROW + (ROW if mirror else 0.0)
 
 	func ty(x: float) -> float:
-		return SIZE * 0.5 + (hw - x) / (2.0 * hw) * SIZE * 0.5
+		return 2.0 * ROW + (hw - x) / (2.0 * hw) * ROW
 
 	## Pixels per metre along the car, across the side band and across the top band.
 	func ppm_z() -> float:
 		return SIZE / (z1 - z0)
 
 	func ppm_y() -> float:
-		return SIZE * 0.5 / (y1 - y0)
+		return ROW / (y1 - y0)
 
 	func ppm_x() -> float:
-		return SIZE * 0.5 / (2.0 * hw)
+		return ROW / (2.0 * hw)
 
 	func side_rect(za: float, zb: float, ya: float, yb: float, col: Color) -> void:
-		c.draw_rect(Rect2(Vector2(sx(minf(za, zb)), sy(maxf(ya, yb))), Vector2(absf(sx(zb) - sx(za)), absf(sy(ya) - sy(yb)))), col)
+		side_rect_raw(za, zb, ya, yb, col)
+
+	func side_rect_raw(za: float, zb: float, ya: float, yb: float, col: Color) -> void:
+		var xa := sx(za)
+		var xb := sx(zb)
+		c.draw_rect(Rect2(Vector2(minf(xa, xb), sy(maxf(ya, yb))), Vector2(absf(xb - xa), absf(sy(ya) - sy(yb)))), col)
 
 	func top_rect(za: float, zb: float, xa: float, xb: float, col: Color) -> void:
-		c.draw_rect(Rect2(Vector2(sx(minf(za, zb)), ty(maxf(xa, xb))), Vector2(absf(sx(zb) - sx(za)), absf(ty(xa) - ty(xb)))), col)
+		if mirror:
+			return
+		c.draw_rect(Rect2(Vector2(tx(minf(za, zb)), ty(maxf(xa, xb))), Vector2(absf(tx(zb) - tx(za)), absf(ty(xa) - ty(xb)))), col)
 
 	## A slanted band along the side (parallelogram), slant in metres.
 	func side_band(za: float, zb: float, ya: float, yb: float, slant: float, col: Color) -> void:
@@ -70,17 +85,43 @@ class Ctx:
 
 	## Text on the bonnet or roof, readable from the chase camera (glyphs point forward).
 	func top_text(text: String, z: float, x: float, h: float, col: Color, font: Font, w := 99.0, outline := Color(0, 0, 0, 0)) -> void:
+		if mirror:
+			return
 		var px := int(h * ppm_z() * 1.25)
 		var size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, px)
 		var k := ppm_x() / ppm_z()
 		var scale := minf(1.0, (w * ppm_x()) / maxf(1.0, size.x * k))
 		# Rotated a quarter turn: glyph up = forward (+x in the texture), reading left to right across the car.
-		c.draw_set_transform_matrix(Transform2D(Vector2(0, k * scale), Vector2(-scale, 0), Vector2(sx(z), ty(x))))
+		c.draw_set_transform_matrix(Transform2D(Vector2(0, k * scale), Vector2(-scale, 0), Vector2(tx(z), ty(x))))
 		var at := Vector2(-size.x / 2.0, font.get_ascent(px) / 2.0 - font.get_descent(px) * 0.4)
 		if outline.a > 0:
 			c.draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, px, maxi(2, px / 7), outline)
 		c.draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, px, col)
 		c.draw_set_transform(Vector2.ZERO)
+
+	## Rust blooming through the paint (and a few holes).
+	func rust(za: float, zb: float, ya: float, yb: float, amount: int, seed_v: int) -> void:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_v
+		var k := ppm_z() / ppm_y()
+		for i in amount:
+			var z := rng.randf_range(za, zb)
+			var y := rng.randf_range(ya, yb)
+			var r := rng.randf_range(0.02, 0.07) * ppm_y()
+			c.draw_set_transform(Vector2(sx(z), sy(y)), 0.0, Vector2(k, 1.0))
+			c.draw_circle(Vector2.ZERO, r * 1.4, Color(0.45, 0.22, 0.08, 0.55))
+			c.draw_circle(Vector2.ZERO, r, Color(0.36, 0.16, 0.06, 0.9))
+			if rng.randf() < 0.25:
+				c.draw_circle(Vector2.ZERO, r * 0.35, Color(0.05, 0.04, 0.03, 1.0))
+			c.draw_set_transform(Vector2.ZERO)
+
+	## A replacement panel from the scrapyard, still in grey primer.
+	func primer(za: float, zb: float, ya: float, yb: float) -> void:
+		side_rect(za, zb, ya, yb, Color(0.52, 0.53, 0.52, 0.97))
+		for i in 30:
+			var z := randf_range(za, zb)
+			var y := randf_range(ya, yb)
+			c.draw_circle(Vector2(sx(z), sy(y)), 1.5 + randf() * 3, Color(0.42, 0.43, 0.42, 0.8))
 
 	## Round start-number plate on the door.
 	func side_roundel(z: float, y: float, r: float, bg: Color, fg: Color, num: String, ring := Color.BLACK) -> void:
@@ -92,8 +133,10 @@ class Ctx:
 		side_text(num, z, y, r * 1.15, fg, font_num, r * 1.7)
 
 	func top_roundel(z: float, x: float, r: float, bg: Color, fg: Color, num: String, ring := Color.BLACK) -> void:
+		if mirror:
+			return
 		var k := ppm_x() / ppm_z()
-		c.draw_set_transform(Vector2(sx(z), ty(x)), 0.0, Vector2(1.0, k))
+		c.draw_set_transform(Vector2(tx(z), ty(x)), 0.0, Vector2(1.0, k))
 		c.draw_circle(Vector2.ZERO, r * ppm_z() * 1.08, ring)
 		c.draw_circle(Vector2.ZERO, r * ppm_z(), bg)
 		c.draw_set_transform(Vector2.ZERO)
@@ -154,19 +197,22 @@ static func for_car(id: String, box: Vector4, hw: float) -> Texture2D:
 		return _cache[key]
 	Tex._fonts()
 	var num_font: Font = load("res://assets/fonts/RussoOne-Regular.ttf")
-	var tex := Tex.paint(SIZE, SIZE, func(c: Control) -> void:
-		var x := Ctx.new()
-		x.c = c
-		x.z0 = box.x
-		x.z1 = box.y
-		x.y0 = box.z
-		x.y1 = box.w
-		x.hw = hw
-		x.font_num = num_font
-		x.font_txt = Tex.font_sign
-		x.font_fun = Tex.font_banner
-		c.draw_rect(Rect2(0, 0, SIZE, SIZE), Color(0, 0, 0, 0))
-		Callable(Livery, DESIGNS[id]).call(x)
+	var tex := Tex.paint(SIZE, 3 * ROW, func(c: Control) -> void:
+		c.draw_rect(Rect2(0, 0, SIZE, 3 * ROW), Color(0, 0, 0, 0))
+		for mirror in [false, true]:
+			var x := Ctx.new()
+			x.c = c
+			x.z0 = box.x
+			x.z1 = box.y
+			x.y0 = box.z
+			x.y1 = box.w
+			x.hw = hw
+			x.mirror = mirror
+			x.font_num = num_font
+			x.font_txt = Tex.font_sign
+			x.font_fun = Tex.font_banner
+			seed(hash(id))
+			Callable(Livery, DESIGNS[id]).call(x)
 	, true, true)
 	_cache[key] = tex
 	return tex
@@ -219,6 +265,8 @@ static func _supremo(x: Ctx) -> void:
 ## Henk-Jan: blue Golv G60 with flames licking back from the nose.
 static func _golv(x: Ctx) -> void:
 	var d := _door(x)
+	# Scrapyard rear door in primer, then the flames on top of it all.
+	x.primer(x.z0 + 0.95, d + 0.55, 0.3, 0.74)
 	x.side_flames(x.z1 - 0.1, 1.7, 0.32, 0.72, ORANGE, YELLOW)
 	x.side_roundel(d - 0.15, 0.6, 0.17, WHITE, Color("1d4fd8"), "60")
 	x.sticker("G60 TUNING", x.z0 + 0.5, 0.66, 0.55, 0.1, BLACK, Color("29c5ff"), x.font_txt)
@@ -234,6 +282,8 @@ static func _civik(x: Ctx) -> void:
 	for i in 3:
 		x.side_band(x.z0 + 0.4 + i * 0.16, x.z0 + 0.48 + i * 0.16, 0.32, 0.7, 0.35, Color("ff2d8b") if i % 2 == 0 else WHITE)
 	x.side_roundel(d + 0.1, 0.58, 0.17, WHITE, BLACK, "01", Color("ff2d8b"))
+	# The front wing came from a different Civik.
+	x.side_rect(x.z1 - 1.05, x.z1 - 0.12, 0.28, 0.74, Color(0.85, 0.82, 0.1, 0.95))
 	x.sticker("UT RACING", x.z1 - 0.6, 0.66, 0.52, 0.1, Color("e4002b"), WHITE, x.font_fun)
 	x.sticker("YOLO", x.z1 - 0.95, 0.42, 0.28, 0.09, YELLOW, BLACK, x.font_fun)
 	x.sticker("STUDENTENKORTING", d + 0.1, 0.36, 0.7, 0.07, BLACK, WHITE, x.font_txt)
@@ -269,6 +319,7 @@ static func _spacewagen(x: Ctx) -> void:
 			x.c.draw_circle(Vector2(cos(a), sin(a)) * r * x.ppm_y() * 0.9, r * x.ppm_y() * 0.6, cols[i % cols.size()])
 		x.c.draw_circle(Vector2.ZERO, r * x.ppm_y() * 0.45, ORANGE)
 		x.c.draw_set_transform(Vector2.ZERO)
+	x.rust(x.z0 + 0.2, x.z0 + 1.0, 0.25, 0.45, 10, 1953)
 	x.sticker("OMA AAN BOORD", x.z0 + 0.6, 0.62, 0.62, 0.09, Color("ffd1e8"), Color("8a1c5c"), x.font_txt)
 	x.sticker("IK REM OOK VOOR DIEREN", d, 0.36, 0.95, 0.07, WHITE, BLACK, x.font_txt)
 	x.side_roundel(d + 0.35, 0.6, 0.15, WHITE, Color("b03a7a"), "7")
@@ -283,6 +334,7 @@ static func _calibro(x: Ctx) -> void:
 	x.side_roundel(d, 0.6, 0.18, WHITE, BLACK, "18")
 	x.sticker("HERAKLUS ALMELO", x.z1 - 0.7, 0.68, 0.75, 0.1, WHITE, BLACK, x.font_fun)
 	x.sticker("ERVE ASITOH", x.z0 + 0.55, 0.68, 0.55, 0.08, Color("d30f1c"), WHITE, x.font_txt)
+	x.rust(x.z0 + 0.1, x.z1 - 0.2, 0.22, 0.38, 12, 18)
 	x.top_text("HERAKLUS", d, 0.0, 0.2, WHITE, x.font_fun, 1.4)
 
 
@@ -293,6 +345,7 @@ static func _volvi(x: Ctx) -> void:
 	x.side_text("OUDE EGBERINK", d + 0.1, 0.55, 0.12, WHITE, x.font_fun, 1.9)
 	x.side_text("Wierden  ·  06-1234 5678", d + 0.1, 0.45, 0.05, WHITE, x.font_txt, 1.6)
 	x.sticker("KUMP WAL GOED", x.z0 + 0.5, 0.36, 0.55, 0.07, Color("5b3a1a"), WHITE, x.font_txt)
+	x.rust(x.z0 + 0.1, x.z1 - 0.1, 0.22, 0.5, 26, 240)
 	# Mud flung up from the fields.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 240
