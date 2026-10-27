@@ -163,7 +163,8 @@ func _flush() -> void:
 				mm.set_instance_color(i, e.cols[i])
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
-		mmi.material_override = e.mat
+		if e.mat != null:
+			mmi.material_override = e.mat
 		mmi.position = o
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if e.cast else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		root.add_child(mmi)
@@ -369,8 +370,10 @@ func build() -> Node3D:
 	_ground()
 	for sp in _spans:
 		_underpass(sp.c, sp.half, sp.canal, sp.rail)
+	_ditches()
 	_trees()
 	_farms()
+	_farmland()
 	_city_blocks()
 	_flush()
 	return root
@@ -849,44 +852,201 @@ func _underpass(c: float, half: float, canal: bool, rail := false) -> void:
 	root.add_child(holder)
 
 
+## Ditches (sloten) along the foot of the embankments, broken where something crosses.
+func _ditches() -> void:
+	var t := track
+	var water := mat(Color("23333a"), 0.06, 0.4)
+	var y := func(_s: float) -> float: return 0.02
+	var s0 := 0.0
+	var s := 0.0
+	var runs := []
+	while s < t.length:
+		var stop := _blocked(s, 1.0, 0.0) or s >= t.length - 4
+		if stop and s - s0 > 30:
+			runs.append([s0, s])
+		if stop:
+			s0 = s + 4
+		s += 4.0
+	for run in runs:
+		var toe := func(ss: float) -> float: return VERGE + 3.5 + t.height_at(ss) * 1.8
+		ribbon({"s0": run[0], "s1": run[1], "dL": toe, "dR": func(ss: float) -> float: return VERGE + 5.6 + t.height_at(ss) * 1.8,
+			"yL": y, "yR": y, "step": 6.0}, water)
+		var left := func(ss: float) -> float: return (LEFT_SINGLE if t.is_single(ss) else LEFT_DUAL) - 3.5 - t.height_at(ss) * 1.8
+		ribbon({"s0": run[0], "s1": run[1], "dL": func(ss: float) -> float: return left.call(ss) - 2.1, "dR": left,
+			"yL": y, "yR": y, "step": 6.0}, water)
+
+
+## Which kind of tree grows here: pines and spruce on the Sallandse Heuvelrug, willows by the water,
+## oak and birch in the wooded banks (houtwallen) everywhere else.
+func _tree_kind(s: float) -> String:
+	var r := randf()
+	for lm in track.features.landmarks:
+		if lm.id == "heuvelrug" and absf(s - lm.s) < 1100:
+			return "den" if r < 0.6 else ("spar" if r < 0.75 else "berk")
+	for w in track.features.waters:
+		if absf(s - w.s) < 160:
+			return "wilg" if r < 0.55 else "eik"
+	if r < 0.52:
+		return "eik"
+	if r < 0.74:
+		return "berk"
+	if r < 0.82:
+		return "populier"
+	if r < 0.88:
+		return "wilg"
+	return "spar" if r < 0.94 else "den"
+
+
+func _tree_at(kind: String, p: Vector3, scale := 1.0) -> void:
+	var sc := scale * (0.75 + randf() * 0.5)
+	var b := Basis(Vector3.UP, randf() * TAU).scaled(Vector3(sc, sc * (0.9 + randf() * 0.2), sc))
+	var tint := Color(0.8 + randf() * 0.25, 0.82 + randf() * 0.2, 0.75 + randf() * 0.2)
+	add_instance(Props.tree(kind, randi() % 3), Props.foliage_material(), Transform3D(b, Vector3(p.x, 0, p.z)), tint)
+
+
 func _trees() -> void:
 	var t := track
-	var trunk := CylinderMesh.new()
-	trunk.top_radius = 0.18
-	trunk.bottom_radius = 0.28
-	trunk.height = 3
-	trunk.radial_segments = 5
-	trunk.rings = 1
-	var trunk_mat := mat(Color("4a3626"), 1.0)
-	var crown := SphereMesh.new()
-	crown.radius = 2.4
-	crown.height = 6.0 # 1.25× taller than wide
-	crown.radial_segments = 7
-	crown.rings = 4
-	var crown_mat := mat(Color.WHITE, 0.95)
-	crown_mat.vertex_color_use_as_albedo = true
-	# Clumps of trees ("houtwallen") with gaps for fields.
+	# Wooded banks (houtwallen) in clumps with gaps for the fields.
 	var s := 0.0
 	while s < t.length:
 		for side in [1, -1]:
 			if _blocked(s, side):
 				continue
 			var density := 0.5 + 0.5 * sin(s / 70 + side * 2.1) * sin(s / 23 + side)
-			if randf() > density * 0.55:
+			if randf() > density * 0.62:
 				continue
-			var left_near := LEFT_SINGLE - 5.0 if t.is_single(s) else LEFT_DUAL - 5.0
-			var near := VERGE + 5.0 + t.height_at(s) * 1.8 if side > 0 else left_near - t.height_at(s) * 1.8
-			var d: float = near + side * pow(randf(), 1.6) * 70
-			var p := t.point_at(s + randf() * 4, d)
-			var sc := 0.8 + randf() * 0.9
-			var b := Basis(Vector3.UP, randf() * PI).scaled(Vector3(sc, sc, sc))
-			add_instance(trunk, trunk_mat, Transform3D(b, Vector3(p.x, 1.5 * sc, p.z)))
-			add_instance(crown, crown_mat, Transform3D(b, Vector3(p.x, 4.6 * sc, p.z)),
-				Color.from_hsv(0.22 + randf() * 0.08, 0.6 + randf() * 0.2, 0.3 + randf() * 0.15))
+			var left_near := LEFT_SINGLE - 6.0 if t.is_single(s) else LEFT_DUAL - 6.0
+			var near := VERGE + 7.0 + t.height_at(s) * 1.8 if side > 0 else left_near - t.height_at(s) * 1.8
+			var d: float = near + side * pow(randf(), 1.6) * 80
+			_tree_at(_tree_kind(s), t.point_at(s + randf() * 4, d))
 		s += 4
+	# Poplar windbreaks running away from the road now and then.
+	s = 300.0
+	while s < t.length - 300:
+		var side := 1 if randf() < 0.5 else -1
+		if not _blocked(s, side, 40) and t.features.landmarks.all(func(lm): return lm.id != "heuvelrug" or absf(s - lm.s) > 1100):
+			var fr := t.frame(s)
+			var base := t.point_at(s, side * (40.0 + randf() * 30))
+			var dir := Vector3(fr.rx, 0, fr.rz) * side
+			var along := Vector3(fr.fx, 0, fr.fz) * (randf() - 0.5) * 0.4
+			for k in 10 + randi() % 8:
+				_tree_at("populier", base + (dir + along).normalized() * k * 7.5, 1.1)
+		s += 450 + randf() * 500
+	# Avenue trees along the side roads at junctions.
+	for j in t.features.junctions:
+		if j.kind != "road":
+			continue
+		var fr := t.frame(j.s)
+		var right := Vector3(fr.rx, 0, fr.rz)
+		var fwd := Vector3(fr.fx, 0, fr.fz)
+		for side in [1.0, -1.0]:
+			if (side > 0 and not j.right) or (side < 0 and not j.left):
+				continue
+			var dir: Vector3 = (right * side * cos(j.skew) + fwd * sin(j.skew)).normalized()
+			var across := Vector3(dir.z, 0, -dir.x)
+			var start: float = Config.PAVED + 14.0 if side > 0 or t.is_single(j.s) else -Config.OPP_OUT + 10.0
+			var base: Vector3 = Vector3(fr.x, 0, fr.z) + right * side * start
+			for k in 14:
+				for e in [-1.0, 1.0]:
+					_tree_at("eik", base + dir * k * 11.0 + across * e * (j.width / 2.0 + 3.0), 1.05)
 
 
-## Apartment and office blocks where the road passes the towns.
+## Farmsteads: a Twentse farmhouse, a black barn, oaks around the yard and a row of wrapped bales.
+func _farms() -> void:
+	var t := track
+	var placed := 0
+	for tries in 110 * 4:
+		if placed >= 110:
+			break
+		var s := 150 + randf() * (t.length - 300)
+		var side := 1 if randf() < 0.5 else -1
+		if _blocked(s, side, 80) or _in_town(s):
+			continue
+		placed += 1
+		var d := 70 + randf() * 220 if side > 0 else -90 - randf() * 220
+		var p := t.point_at(s, d)
+		var fr := t.frame(s)
+		# Mostly gable end to the road, like the old farms along the lanes.
+		var yaw := fr.heading + (PI / 2 if side > 0 else -PI / 2) + (randf() - 0.5) * 0.5
+		var b := Basis(Vector3.UP, yaw)
+		var at := Vector3(p.x, 0, p.z)
+		add_instance(Props.farmhouse(randf() < 0.3), null, Transform3D(b, at))
+		var barn_at := at + b * Vector3(16 + randf() * 6, 0, -8 - randf() * 8)
+		add_instance(Props.barn(), null, Transform3D(Basis(Vector3.UP, yaw + (PI / 2 if randf() < 0.5 else 0.0)), barn_at))
+		# Yard trees.
+		for k in 5 + randi() % 4:
+			var a := randf() * TAU
+			_tree_at("eik", at + Vector3(cos(a), 0, sin(a)) * (17 + randf() * 10), 1.15)
+		# Bales along the yard.
+		var bale_col := "f2f2f0" if randf() < 0.75 else ("1a1a1a" if randf() < 0.5 else "3f6a2e")
+		var row := at + b * Vector3(-14, 0, -6)
+		for k in 4 + randi() % 6:
+			var bp := row + b * Vector3(0, 0, -k * 1.3)
+			add_instance(Props.bale(bale_col), Props.foliage_material(), Transform3D(b, bp))
+			if randf() < 0.4:
+				add_instance(Props.bale(bale_col), Props.foliage_material(), Transform3D(b, bp + Vector3(0, 1.22, 0)))
+
+
+## Cows in the meadows and maize fields along the road.
+func _farmland() -> void:
+	var t := track
+	var cows := 0
+	for tries in 90 * 4:
+		if cows >= 90:
+			break
+		var s := 200 + randf() * (t.length - 400)
+		var side := 1 if randf() < 0.5 else -1
+		if _blocked(s, side, 60) or _in_town(s):
+			continue
+		cows += 1
+		var centre := t.point_at(s, side * (35 + randf() * 90))
+		var fr := t.frame(s)
+		var variant := randi() % 3
+		for k in 5 + randi() % 10:
+			var off := Vector3((randf() - 0.5) * 50, 0, (randf() - 0.5) * 50)
+			var yaw := fr.heading + randf() * TAU
+			var sc := 0.95 + randf() * 0.1
+			add_instance(Props.cow(variant if randf() < 0.8 else (randi() % 2)), Props.foliage_material(),
+				Transform3D(Basis(Vector3.UP, yaw).scaled(Vector3(sc, sc, sc)), Vector3(centre.x + off.x, 0, centre.z + off.z)), null, false)
+	# Maize: tall blocks of green, right up to the ditch now and then.
+	var maize := mat(Color.WHITE, 0.95, 0.0, Tex.maize())
+	maize.uv1_triplanar = true
+	maize.uv1_world_triplanar = true
+	maize.uv1_scale = Vector3(0.25, 0.25, 0.25)
+	var unit := BoxMesh.new()
+	unit.size = Vector3.ONE
+	var fields := 0
+	for tries in 70 * 4:
+		if fields >= 70:
+			break
+		var s := 200 + randf() * (t.length - 400)
+		var side := 1 if randf() < 0.5 else -1
+		if _blocked(s, side, 70) or _in_town(s):
+			continue
+		fields += 1
+		var w := 30 + randf() * 50
+		var l := 40 + randf() * 80
+		var near := (VERGE + 9.0 + t.height_at(s) * 1.8) if side > 0 else ((LEFT_SINGLE if t.is_single(s) else LEFT_DUAL) - 9.0 - t.height_at(s) * 1.8)
+		var p := t.point_at(s, near + side * (w / 2 + randf() * 40))
+		var fr := t.frame(s)
+		add_instance(unit, maize, Transform3D(Basis(Vector3.UP, fr.heading).scaled(Vector3(w, 2.4, l)), Vector3(p.x, 1.2, p.z)))
+
+
+## Built-up areas near the start and finish of every stage.
+func _in_town(s: float) -> bool:
+	for st in track.features.stages:
+		if (s > st.startS - 300 and s < st.startS + 900) or (s > st.finishS - 1300 and s < st.finishS + 250):
+			return true
+	return false
+
+
+const COMPANIES := [["Tukker Transport", "1d4fd8"], ["Twentse Kabel", "c4161c"], ["Storq Hengelo", "0b6b2e"],
+	["Ten Kaat Textiel", "6a2c8c"], ["Boekelo Bier", "c9a227"], ["Saksen Staal", "444b52"], ["Almelo Logistiek", "e36a00"],
+	["Hengelose Koek", "a0522d"], ["Thuisbesteld.nl", "ff7a00"], ["Salland Zuivel", "2a7ab8"]]
+
+
+## Towns: terraced streets and detached houses, apartment blocks closer in, and business-park halls along
+## the motorway stretches.
 func _city_blocks() -> void:
 	var t := track
 	var f := t.features
@@ -894,6 +1054,34 @@ func _city_blocks() -> void:
 	for st in f.stages:
 		zones.append([maxf(0, st.startS - 300), st.startS + 900])
 		zones.append([st.finishS - 1300, st.finishS + 250])
+	var roofs := ["9a3b22", "3a3a3e", "7a2f1c"]
+	for tries in 260 * 5:
+		var z: Array = zones[randi() % zones.size()]
+		var s: float = z[0] + randf() * (z[1] - z[0])
+		var side := 1 if randf() < 0.5 else -1
+		if _blocked(s, side, 50):
+			continue
+		var fr := t.frame(s)
+		var d := (85 + randf() * 240) * side if side > 0 else -(100 + randf() * 240)
+		var p := t.point_at(s, d)
+		var at := Vector3(p.x, 0, p.z)
+		var face := fr.heading + (PI / 2 if side > 0 else -PI / 2) # front towards the road
+		var r := randf()
+		if r < 0.45:
+			# A street of terraced rows, fronts to the road, back to back further out.
+			for k in 3:
+				var off := Basis(Vector3.UP, face) * Vector3(0, 0, -k * 26.0)
+				add_instance(Props.terrace(roofs[randi() % roofs.size()]), null,
+					Transform3D(Basis(Vector3.UP, face + (PI if k % 2 == 1 else 0.0)), at + off))
+		elif r < 0.75:
+			for k in 3:
+				var off := Basis(Vector3.UP, face) * Vector3((k - 1) * 18.0, 0, randf() * 6)
+				add_instance(Props.villa(roofs[randi() % roofs.size()]), null, Transform3D(Basis(Vector3.UP, face + (randf() - 0.5) * 0.2), at + off))
+				_tree_at("berk" if randf() < 0.5 else "eik", at + off + Basis(Vector3.UP, face) * Vector3(8, 0, 6))
+		elif s > f.stages[min(2, f.stages.size() - 1)].startS:
+			var c: Array = COMPANIES[randi() % COMPANIES.size()]
+			add_instance(Props.hall(c[0], Color(c[1])), null, Transform3D(Basis(Vector3.UP, face), at))
+	# A few apartment and office blocks closer to the centres.
 	var walls := ["8c7c6c", "b9b2a6", "5e4a40"]
 	var box := BoxMesh.new()
 	box.size = Vector3.ONE
@@ -913,42 +1101,19 @@ func _city_blocks() -> void:
 		m.emission_operator = BaseMaterial3D.EMISSION_OP_MULTIPLY
 		m.emission_energy_multiplier = 1.4
 		var placed := 0
-		for tries in 110 * 8:
-			if placed >= 110:
+		for tries in 40 * 8:
+			if placed >= 40:
 				break
 			var z: Array = zones[randi() % zones.size()]
 			var s: float = z[0] + randf() * (z[1] - z[0])
 			var side := 1 if randf() < 0.5 else -1
 			if _blocked(s, side, 60):
 				continue
-			var d := 80 + randf() * 260 if side > 0 else -95 - randf() * 260
+			var d := 180 + randf() * 260 if side > 0 else -200 - randf() * 260
 			var p := t.point_at(s, d)
 			p.y = 0
 			var fr := t.frame(s)
 			var b := Basis(Vector3.UP, fr.heading + (0.0 if randf() < 0.5 else PI / 2))
-			var hh := 9 + pow(randf(), 2) * 38
-			add_instance(unit, m, Transform3D(b.scaled(Vector3(14 + randf() * 22, hh, 12 + randf() * 14)), p))
+			var hh := 12 + pow(randf(), 2) * 34
+			add_instance(unit, m, Transform3D(b.scaled(Vector3(16 + randf() * 20, hh, 12 + randf() * 12)), p))
 			placed += 1
-
-
-func _farms() -> void:
-	var t := track
-	var walls := _box(10, 4, 18)
-	var wall_mat := mat(Color("8e4a32"), 0.9)
-	var roof := PrismMesh.new()
-	roof.size = Vector3(12.4, 4.3, 18.6)
-	var roof_mat := mat(Color("2f2a28"), 0.8)
-	var placed := 0
-	for tries in 60 * 4:
-		if placed >= 60:
-			break
-		var s := 100 + randf() * (t.length - 200)
-		var side := 1 if randf() < 0.5 else -1
-		if _blocked(s, side, 80):
-			continue
-		placed += 1
-		var d := 90 + randf() * 180 if side > 0 else -110 - randf() * 180
-		var p := t.point_at(s, d)
-		var b := Basis(Vector3.UP, randf() * PI)
-		add_instance(walls, wall_mat, Transform3D(b, Vector3(p.x, 2, p.z)))
-		add_instance(roof, roof_mat, Transform3D(b, Vector3(p.x, 4 + 2.15, p.z)))

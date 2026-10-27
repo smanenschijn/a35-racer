@@ -290,6 +290,217 @@ static func blob() -> ImageTexture:
 	, true, true)
 
 
+# ------------------------------------------------------------------ buildings (Props)
+
+static func _bricks(c: Control, w: float, h: float, base: Color, bw := 22.0, bh := 8.0) -> void:
+	c.draw_rect(Rect2(0, 0, w, h), Color(0.62, 0.58, 0.52))
+	var rows := int(h / bh) + 1
+	for r in rows:
+		var off := (bw / 2.0) if r % 2 == 1 else 0.0
+		var x := -off
+		while x < w:
+			var v := randf() * 0.16 - 0.08
+			c.draw_rect(Rect2(x + 1, r * bh + 1, bw - 2, bh - 2), Color(base.r + v, base.g + v * 0.8, base.b + v * 0.6))
+			x += bw
+
+
+## A window: white frame, dark glass with a sky reflection, maybe lit (emission map gets the glass).
+static func _window(c: Control, glow: Control, x: float, y: float, w: float, h: float, lit: bool, frame := Color("f2f0ea")) -> void:
+	c.draw_rect(Rect2(x - 3, y - 3, w + 6, h + 6), frame)
+	c.draw_polygon(PackedVector2Array([Vector2(x, y), Vector2(x + w, y), Vector2(x + w, y + h), Vector2(x, y + h)]),
+		PackedColorArray([Color("50606c"), Color("2a3540"), Color("1d242b"), Color("3a4954")]))
+	c.draw_rect(Rect2(x + w / 2 - 1.5, y, 3, h), frame)
+	c.draw_rect(Rect2(x, y + h * 0.4 - 1.5, w, 3), frame)
+	if glow != null and lit:
+		glow.draw_rect(Rect2(x, y, w, h), Color(1.0, 0.78, 0.45))
+
+
+## Brick wall with a couple of windows: [albedo, emission]. kind: farm | plain
+static func brick_wall(kind: String) -> Array:
+	var key := "brick|" + kind
+	if _cache.has(key):
+		return _cache[key]
+	var seed_v := randi()
+	var base := Color("8a3f2a") if kind == "farm" else Color("9a5a3c")
+	var draw := func(c: Control, glow: bool) -> void:
+		seed(seed_v)
+		if glow:
+			c.draw_rect(Rect2(0, 0, 512, 256), Color.BLACK)
+		else:
+			_bricks(c, 512, 256, base)
+		var g: Control = c if glow else null
+		# Two windows per tile; farm windows small with green shutters.
+		for i in 2:
+			var x := 90.0 + i * 256.0
+			if glow:
+				if randf() < 0.45:
+					c.draw_rect(Rect2(x, 90, 80, 100), Color(1.0, 0.78, 0.45))
+				continue
+			_window(c, null, x, 90, 80, 100, false)
+			if kind == "farm":
+				c.draw_rect(Rect2(x - 46, 86, 40, 108), Color("1f5a32"))
+				c.draw_rect(Rect2(x + 86, 86, 40, 108), Color("1f5a32"))
+				c.draw_rect(Rect2(x - 46, 86, 40, 108), Color("f2f0ea"), false, 3)
+				c.draw_rect(Rect2(x + 86, 86, 40, 108), Color("f2f0ea"), false, 3)
+	var albedo := paint(512, 256, func(c: Control) -> void: draw.call(c, false))
+	var emit := paint(512, 256, func(c: Control) -> void: draw.call(c, true))
+	_cache[key] = [albedo, emit]
+	return _cache[key]
+
+
+## Front gable of a Twentse farmhouse: green barn doors with white trim, small windows, the owl board.
+static func farm_gable() -> ImageTexture:
+	return cached("farm_gable", 512, 300, func(c: Control) -> void:
+		_bricks(c, 512, 300, Color("8a3f2a"))
+		# Timber top part (above ~4 m): dark planks.
+		for x in range(0, 512, 14):
+			c.draw_rect(Rect2(x, 0, 12, 120), Color(0.16 + randf() * 0.04, 0.13, 0.1))
+		c.draw_rect(Rect2(0, 118, 512, 6), Color("f2f0ea"))
+		# Owl board (uilenbord) in the peak.
+		c.draw_colored_polygon(PackedVector2Array([Vector2(226, 0), Vector2(286, 0), Vector2(270, 50), Vector2(242, 50)]), Color("f2f0ea"))
+		c.draw_circle(Vector2(256, 22), 8, Color("1a1a1a"))
+		# The big doors (niendeur) with their white frame and diagonal braces.
+		c.draw_rect(Rect2(176, 140, 160, 160), Color("f2f0ea"))
+		for k in 2:
+			var x := 184.0 + k * 74
+			c.draw_rect(Rect2(x, 148, 70, 152), Color("1f5a32"))
+			c.draw_line(Vector2(x, 300), Vector2(x + 70, 150), Color("f2f0ea"), 5)
+		# Windows either side.
+		for x in [60.0, 400.0]:
+			_window(c, null, x, 180, 52, 64, false)
+	)
+
+
+static func roof_tiles(hex: String) -> ImageTexture:
+	return cached("tiles|" + hex, 256, 256, func(c: Control) -> void:
+		var base := Color(hex)
+		c.draw_rect(Rect2(0, 0, 256, 256), base.darkened(0.35))
+		for r in 16:
+			var off := 8.0 if r % 2 == 1 else 0.0
+			for k in 17:
+				var v := randf() * 0.14 - 0.07
+				var col := Color(base.r + v, base.g + v, base.b + v)
+				c.draw_rect(Rect2(k * 16 - off + 1, r * 16 + 1, 14, 13), col)
+				c.draw_rect(Rect2(k * 16 - off + 1, r * 16 + 11, 14, 3), col.darkened(0.25))
+		# Moss and weathering.
+		for i in 40:
+			c.draw_circle(Vector2(randf() * 256, randf() * 256), 2 + randf() * 6, Color(0.25, 0.3, 0.15, 0.18))
+	)
+
+
+static func thatch() -> ImageTexture:
+	return cached("thatch", 256, 256, func(c: Control) -> void:
+		c.draw_rect(Rect2(0, 0, 256, 256), Color("6e5a3a"))
+		for i in 2600:
+			var x := randf() * 256
+			var y := randf() * 256
+			var v := randf() * 0.25
+			c.draw_line(Vector2(x, y), Vector2(x + (randf() - 0.5) * 2, y + 6 + randf() * 10), Color(0.42 + v, 0.35 + v * 0.8, 0.22 + v * 0.5, 0.7), 1.0)
+		for i in 30:
+			c.draw_circle(Vector2(randf() * 256, randf() * 256), 4 + randf() * 10, Color(0.2, 0.26, 0.12, 0.2))
+	)
+
+
+## Black-tarred vertical planks (Twentse schuur).
+static func planks() -> ImageTexture:
+	return cached("planks", 256, 256, func(c: Control) -> void:
+		for x in range(0, 256, 16):
+			var v := randf() * 0.05
+			c.draw_rect(Rect2(x, 0, 15, 256), Color(0.1 + v, 0.09 + v, 0.085 + v))
+			c.draw_rect(Rect2(x + 15, 0, 1, 256), Color(0.03, 0.03, 0.03))
+		_noise(c, 256, 256, 3000, 0.06)
+	)
+
+
+static func corrugated(hex: String) -> ImageTexture:
+	return cached("corr|" + hex, 128, 128, func(c: Control) -> void:
+		var base := Color(hex)
+		for x in 128:
+			var k := 0.82 + 0.18 * sin(x / 128.0 * TAU * 8)
+			c.draw_rect(Rect2(x, 0, 1, 128), Color(base.r * k, base.g * k, base.b * k))
+		for i in 12:
+			c.draw_rect(Rect2(randf() * 128, randf() * 128, 2, 10 + randf() * 30), Color(0.4, 0.28, 0.18, 0.18))
+	)
+
+
+## Metal cladding of a business hall with a coloured band and a row of windows near the top.
+static func cladding(band: Color) -> ImageTexture:
+	return cached("clad|" + band.to_html(), 128, 256, func(c: Control) -> void:
+		for x in 128:
+			var k := 0.86 + 0.14 * sin(x / 128.0 * TAU * 6)
+			c.draw_rect(Rect2(x, 0, 1, 256), Color(0.68 * k, 0.7 * k, 0.72 * k))
+		c.draw_rect(Rect2(0, 200, 128, 26), band)
+		c.draw_rect(Rect2(10, 30, 108, 26), Color("2a3540"))
+		c.draw_rect(Rect2(0, 240, 128, 16), Color(0.25, 0.25, 0.26))
+	)
+
+
+## One terraced house per tile: door, front window, two upstairs windows. [albedo, emission]
+static func house_facade() -> Array:
+	if _cache.has("house_facade"):
+		return _cache["house_facade"]
+	var seed_v := randi()
+	var draw := func(c: Control, glow: bool) -> void:
+		seed(seed_v)
+		var g: Control = c if glow else null
+		if glow:
+			c.draw_rect(Rect2(0, 0, 256, 256), Color.BLACK)
+		else:
+			_bricks(c, 256, 256, Color("8d5536"), 18, 6)
+			c.draw_rect(Rect2(0, 120, 256, 6), Color("f2f0ea"))
+			# Door with a little canopy.
+			c.draw_rect(Rect2(20, 168, 44, 88), Color(["1f3f7a", "7a1f1f", "1f5a32", "3a3a3a"][randi() % 4]))
+			c.draw_rect(Rect2(14, 160, 56, 8), Color("dcdcdc"))
+		var lit := randf() < 0.5
+		if glow:
+			if lit:
+				c.draw_rect(Rect2(96, 160, 140, 70), Color(1.0, 0.78, 0.45))
+			if randf() < 0.4:
+				c.draw_rect(Rect2(40, 26, 76, 66), Color(1.0, 0.75, 0.4))
+		else:
+			_window(c, null, 96, 160, 140, 70, false)
+			_window(c, null, 40, 26, 76, 66, false)
+			_window(c, null, 150, 26, 76, 66, false)
+	var albedo := paint(256, 256, func(c: Control) -> void: draw.call(c, false))
+	var emit := paint(256, 256, func(c: Control) -> void: draw.call(c, true))
+	_cache["house_facade"] = [albedo, emit]
+	return _cache["house_facade"]
+
+
+static func villa_facade() -> Array:
+	if _cache.has("villa_facade"):
+		return _cache["villa_facade"]
+	var seed_v := randi()
+	var draw := func(c: Control, glow: bool) -> void:
+		seed(seed_v)
+		if glow:
+			c.draw_rect(Rect2(0, 0, 256, 160), Color.BLACK)
+			if randf() < 0.6:
+				c.draw_rect(Rect2(110, 50, 110, 70), Color(1.0, 0.78, 0.45))
+			return
+		_bricks(c, 256, 160, Color("a0623e"), 18, 6)
+		c.draw_rect(Rect2(30, 70, 40, 90), Color("4a3a2c"))
+		_window(c, null, 110, 50, 110, 70, false)
+	var albedo := paint(256, 160, func(c: Control) -> void: draw.call(c, false))
+	var emit := paint(256, 160, func(c: Control) -> void: draw.call(c, true))
+	_cache["villa_facade"] = [albedo, emit]
+	return _cache["villa_facade"]
+
+
+## Maize field seen from the side and above: rows of tall green stalks.
+static func maize() -> ImageTexture:
+	return cached("maize", 256, 256, func(c: Control) -> void:
+		c.draw_rect(Rect2(0, 0, 256, 256), Color("2f4a1a"))
+		for i in 900:
+			var x := randf() * 256
+			var y := randf() * 256
+			var v := randf() * 0.2
+			c.draw_line(Vector2(x, y), Vector2(x + (randf() - 0.5) * 14, y + 10 + randf() * 18), Color(0.3 + v, 0.48 + v, 0.16 + v * 0.5), 2.0)
+		for i in 60:
+			c.draw_circle(Vector2(randf() * 256, randf() * 256), 2, Color(0.85, 0.75, 0.4, 0.7))
+	)
+
+
 ## ANWB direction sign before a junction: blue, white text, an arrow per side road.
 static func direction_sign(left: String, right: String) -> ImageTexture:
 	_fonts()
